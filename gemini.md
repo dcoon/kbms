@@ -44,3 +44,4 @@ This project is a mobile application developed using **Expo (React Native)** and
 - **New Components:** Place in `src/components`. If it's a generic UI element, place in `src/components/ui`.
 - **Assets:** Place images in `assets/images` and import them using `require` or `import`.
 - **Icons:** Use generic icons from `@expo/vector-icons` (e.g., Ionicons) to ensure cross-platform compatibility.
+- **Tests:** Do NOT create new tests for changes. Only update existing tests if they are affected by a change.
