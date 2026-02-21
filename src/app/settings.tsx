@@ -1,126 +1,75 @@
 import React, { useState } from 'react';
-import { Platform, ScrollView, StyleSheet, Switch, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollView, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Text, List, Switch, useTheme, Divider, Card } from 'react-native-paper';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Collapsible } from '@/components/ui/collapsible';
 import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
 
 export default function SettingsScreen() {
-  const safeAreaInsets = useSafeAreaInsets();
-  const insets = {
-    ...safeAreaInsets,
-    bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
-  };
   const theme = useTheme();
-
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [bluetoothEnabled, setBluetoothEnabled] = useState(false);
 
-  const contentPlatformStyle = Platform.select({
-    android: {
-      paddingTop: insets.top,
-      paddingLeft: insets.left,
-      paddingRight: insets.right,
-      paddingBottom: insets.bottom,
-    },
-    web: {
-      paddingTop: Spacing.six,
-      paddingBottom: Spacing.four,
-    },
-  });
-
   return (
-    <ScrollView
-      style={[styles.scrollView, { backgroundColor: theme.background }]}
-      contentInset={insets}
-      contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
-      <ThemedView style={styles.container}>
-        <ThemedView style={styles.titleContainer}>
-          <ThemedText type="subtitle">Settings</ThemedText>
-          <ThemedText style={styles.centerText} themeColor="textSecondary">
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <ScrollView contentInsetAdjustmentBehavior="automatic">
+        <View style={{ padding: 20 }}>
+          <Text variant="headlineSmall" style={{ fontWeight: 'bold', marginBottom: 8 }}>Settings</Text>
+          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 20 }}>
             Manage your Battery Management System configuration and preferences.
-          </ThemedText>
-        </ThemedView>
+          </Text>
 
-        <ThemedView style={styles.sectionsWrapper}>
-          <Collapsible title="Bluetooth Connection">
-             <View style={styles.settingRow}>
-                <ThemedText type="small">Enable Bluetooth</ThemedText>
-                <Switch
-                  value={bluetoothEnabled}
-                  onValueChange={setBluetoothEnabled}
-                />
-             </View>
-             <ThemedText type="small" themeColor="textSecondary" style={{marginTop: 8}}>
-                {bluetoothEnabled ? "Searching for BMS..." : "Bluetooth is off"}
-             </ThemedText>
-          </Collapsible>
-
-          <Collapsible title="Battery Configuration">
-            <View style={styles.settingRow}>
-               <ThemedText type="small">Capacity (Ah)</ThemedText>
-               <ThemedText type="code">100</ThemedText>
-            </View>
-            <View style={styles.settingRow}>
-               <ThemedText type="small">Nominal Voltage (V)</ThemedText>
-               <ThemedText type="code">48</ThemedText>
-            </View>
-          </Collapsible>
-
-          <Collapsible title="Alerts & Notifications">
-            <View style={styles.settingRow}>
-                <ThemedText type="small">Push Notifications</ThemedText>
-                <Switch
-                  value={notificationsEnabled}
-                  onValueChange={setNotificationsEnabled}
-                />
-             </View>
-             <ThemedText type="small" themeColor="textSecondary" style={{marginTop: 8}}>
-                Receive alerts for overvoltage and overheating.
-             </ThemedText>
-          </Collapsible>
-        </ThemedView>
-        {Platform.OS === 'web' && <WebBadge />}
-      </ThemedView>
-    </ScrollView>
+          <Card style={{ backgroundColor: theme.colors.surface, borderRadius: 16 }} elevation={1}>
+            <List.Section>
+              <List.Subheader>Connectivity</List.Subheader>
+              <List.Item
+                title="Bluetooth Enabled"
+                description={bluetoothEnabled ? "Searching for BMS..." : "Bluetooth is currently off"}
+                left={props => <List.Icon {...props} icon="bluetooth" />}
+                right={() => (
+                  <Switch
+                    value={bluetoothEnabled}
+                    onValueChange={setBluetoothEnabled}
+                    color={theme.colors.primary}
+                  />
+                )}
+              />
+              <Divider />
+              <List.Subheader>Battery Configuration</List.Subheader>
+              <List.Item
+                title="Capacity"
+                description="Total energy storage capacity"
+                left={props => <List.Icon {...props} icon="battery-charging" />}
+                right={() => <Text variant="bodyLarge" style={{ alignSelf: 'center', marginRight: 16, fontWeight: 'bold' }}>100 Ah</Text>}
+              />
+              <List.Item
+                title="Nominal Voltage"
+                description="System design voltage"
+                left={props => <List.Icon {...props} icon="flash" />}
+                right={() => <Text variant="bodyLarge" style={{ alignSelf: 'center', marginRight: 16, fontWeight: 'bold' }}>48 V</Text>}
+              />
+              <Divider />
+              <List.Subheader>Preferences</List.Subheader>
+              <List.Item
+                title="Push Notifications"
+                description="Alerts for overvoltage and overheating"
+                left={props => <List.Icon {...props} icon="bell-outline" />}
+                right={() => (
+                  <Switch
+                    value={notificationsEnabled}
+                    onValueChange={setNotificationsEnabled}
+                    color={theme.colors.primary}
+                  />
+                )}
+              />
+            </List.Section>
+          </Card>
+          
+          <View style={{ marginTop: 40, alignItems: 'center' }}>
+            <WebBadge />
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  container: {
-    maxWidth: MaxContentWidth,
-    flexGrow: 1,
-  },
-  titleContainer: {
-    gap: Spacing.three,
-    alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.six,
-  },
-  centerText: {
-    textAlign: 'center',
-  },
-  sectionsWrapper: {
-    gap: Spacing.five,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
-  },
-  settingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    paddingVertical: Spacing.one,
-  },
-});

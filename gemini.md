@@ -45,3 +45,9 @@ This project is a mobile application developed using **Expo (React Native)** and
 - **Assets:** Place images in `assets/images` and import them using `require` or `import`.
 - **Icons:** Use generic icons from `@expo/vector-icons` (e.g., Ionicons) to ensure cross-platform compatibility.
 - **Tests:** Do NOT create new tests for changes. Only update existing tests if they are affected by a change.
+
+## Native vs Simulator vs Web Code
+- Never call BLE or push notification libraries when running on the web or inside a simulator.
+- Check which platform is running before calling native only modules and libraries. Only initialize and run native only functionality on physical devices.
+- Only use react native paper for styling and themes. 
+- Never add style or theme unless asked. Always try to seperated common styling into a dedicated file. Only inline styling when it is specific to the component in the file.

@@ -1,76 +1,45 @@
 import React from 'react';
-import { StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View } from 'react-native';
+import { Image } from 'expo-image';
+import { Card, Text, useTheme } from 'react-native-paper';
 
 interface StatusCardProps {
   label: string;
   value: string | number;
   unit?: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string;
   color: string;
-  style?: ViewStyle;
 }
 
-export function StatusCard({ label, value, unit, icon, color, style }: StatusCardProps) {
+export function StatusCard({ label, value, unit, icon, color }: StatusCardProps) {
+  const theme = useTheme();
+  
   return (
-    <View style={[styles.card, style]}>
-      <View style={[styles.iconContainer, { backgroundColor: color + '20' }]}>
-        <Ionicons name={icon} size={24} color={color} />
-      </View>
-      <View style={styles.textContainer}>
-        <Text style={styles.label}>{label}</Text>
-        <View style={styles.valueRow}>
-          <Text style={styles.value}>{value}</Text>
-          {unit && <Text style={styles.unit}>{unit}</Text>}
+    <Card style={{ margin: 4, flex: 1, backgroundColor: theme.colors.surface }}>
+      <Card.Content style={{ flexDirection: 'row', alignItems: 'center', padding: 12 }}>
+        <View style={{ 
+          width: 44, 
+          height: 44, 
+          borderRadius: 22, 
+          backgroundColor: color + '15', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          marginRight: 12
+        }}>
+          <Image 
+            source={icon} 
+            contentFit="contain" 
+            style={{ width: 22, height: 22, tintColor: color }} 
+          />
         </View>
-      </View>
-    </View>
+        <View style={{ flex: 1 }}>
+          <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>{label}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+            <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>{value}</Text>
+            {unit && <Text variant="bodySmall" style={{ marginLeft: 2, color: theme.colors.onSurfaceVariant }}>{unit}</Text>}
+          </View>
+        </View>
+      </Card.Content>
+    </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  textContainer: {
-    flex: 1,
-  },
-  label: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-    fontWeight: '500',
-  },
-  valueRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  value: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-  },
-  unit: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
-    fontWeight: '500',
-  },
-});

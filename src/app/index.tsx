@@ -1,41 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, SafeAreaView, TouchableOpacity, Dimensions } from 'react-native';
-import { Link } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, ScrollView, RefreshControl } from 'react-native';
+import { Link, Stack } from 'expo-router';
+import { Image } from 'expo-image';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Device from 'expo-device';
+import { Text, Card, useTheme, IconButton } from 'react-native-paper';
+
 import { StatusCard } from '../components/status-card';
-import { BatteryData, MOCK_BATTERY_DATA } from '../constants/battery-types';
+import { BatteryData } from '../constants/battery-types';
+import { MOCK_BATTERY_DATA } from '../constants/mock-data';
 import { useBLE } from '../hooks/use-ble';
-import { useAlerts } from '../hooks/use-alerts';
-
-const { width } = Dimensions.get('window');
-
-function AlertBar({ alerts }: { alerts: any[] }) {
-  if (alerts.length === 0) return null;
-
-  return (
-    <View style={styles.alertContainer}>
-      {alerts.map((alert, index) => (
-        <View key={index} style={[styles.alertItem, alert.severity === 'critical' ? styles.alertCritical : styles.alertWarning]}>
-          <Ionicons name={alert.severity === 'critical' ? 'alert-circle' : 'warning'} size={20} color="#fff" />
-          <Text style={styles.alertText}>{alert.message}</Text>
-        </View>
-      ))}
-    </View>
-  );
-}
 
 export default function DashboardScreen() {
+  const theme = useTheme();
   const { connectedDevice, batteryMetrics } = useBLE();
   const [batteryData, setBatteryData] = useState<BatteryData>(MOCK_BATTERY_DATA);
-  const { activeAlerts } = useAlerts(batteryData);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Fallback simulation when disconnected
+  // Simulation using mock data
   useEffect(() => {
-    if (connectedDevice) {
+    if (Device.isDevice && connectedDevice) {
       setBatteryData(prev => ({
         ...prev,
         soc: batteryMetrics.soc > 0 ? batteryMetrics.soc : prev.soc,
-        status: activeAlerts.some(a => a.severity === 'critical') ? 'Critical' : activeAlerts.length > 0 ? 'Warning' : 'Healthy',
       }));
       return;
     }
@@ -50,278 +37,117 @@ export default function DashboardScreen() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [connectedDevice, batteryMetrics, activeAlerts]);
+  }, [connectedDevice, batteryMetrics]);
+
+  const onRefresh = useCallback(() => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 1500);
+  }, []);
 
   const getStatusColor = (status: BatteryData['status']) => {
     switch (status) {
-      case 'Healthy': return '#4ade80'; // Emerald-400
-      case 'Warning': return '#fbbf24'; // Amber-400
-      case 'Critical': return '#ef4444'; // Red-500
-      default: return '#9ca3af'; // Gray-400
+      case 'Healthy': return '#34C759';
+      case 'Warning': return '#FF9500';
+      case 'Critical': return '#FF3B30';
+      default: return theme.colors.onSurfaceVariant;
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <Stack.Screen options={{ title: "Dashboard", headerShown: false }} />
+      <ScrollView 
+        contentInsetAdjustmentBehavior="automatic"
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />
+        }
+      >
+        <View style={{ padding: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View>
-            <Text style={styles.welcomeText}>Welcome back,</Text>
-            <Text style={styles.title}>Battery Monitor</Text>
+            <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>WELCOME BACK</Text>
+            <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>{Device.isDevice ? 'KiloVault Monitor' : 'KiloVault System'}</Text>
           </View>
           <Link href="/devices" asChild>
-            <TouchableOpacity style={styles.deviceButton}>
-              <Ionicons name="bluetooth" size={24} color="#208AEF" />
-            </TouchableOpacity>
+            <IconButton icon="bluetooth" iconColor={theme.colors.primary} containerColor={theme.colors.surface} style={{ elevation: 2 }} />
           </Link>
         </View>
 
-        <AlertBar alerts={activeAlerts} />
-
         {/* Main SOC Card */}
-        <View style={styles.socCard}>
-          <View style={styles.socHeader}>
-            <Text style={styles.socLabel}>State of Charge</Text>
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(batteryData.status) + '20' }]}>
-              <View style={[styles.statusDot, { backgroundColor: getStatusColor(batteryData.status) }]} />
-              <Text style={[styles.statusText, { color: getStatusColor(batteryData.status) }]}>{batteryData.status}</Text>
+        <Card style={{ margin: 20, backgroundColor: theme.colors.surface, borderRadius: 24 }} elevation={2}>
+          <Card.Content style={{ padding: 24 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Text variant="titleMedium" style={{ color: theme.colors.onSurfaceVariant, fontWeight: '600' }}>State of Charge</Text>
+              <View style={{ backgroundColor: getStatusColor(batteryData.status) + '15', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                <Text variant="labelSmall" style={{ color: getStatusColor(batteryData.status), fontWeight: 'bold' }}>{batteryData.status.toUpperCase()}</Text>
+              </View>
             </View>
-          </View>
-          
-          <View style={styles.socValueContainer}>
-            <Text style={styles.socValue}>{batteryData.soc}</Text>
-            <Text style={styles.percentSymbol}>%</Text>
-          </View>
-          
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${batteryData.soc}%`, backgroundColor: getStatusColor(batteryData.status) }]} />
-          </View>
-        </View>
+            
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 20 }}>
+              <Text style={{ fontSize: 72, fontWeight: '800', color: theme.colors.onSurface }}>{batteryData.soc}</Text>
+              <Text variant="headlineSmall" style={{ color: theme.colors.onSurfaceVariant, marginLeft: 4 }}>%</Text>
+            </View>
+            
+            <View style={{ height: 12, backgroundColor: theme.colors.surfaceVariant, borderRadius: 6, overflow: 'hidden' }}>
+              <View style={{ width: `${batteryData.soc}%`, height: '100%', backgroundColor: getStatusColor(batteryData.status) }} />
+            </View>
+          </Card.Content>
+        </Card>
 
         {/* Grid of Status Cards */}
-        <View style={styles.grid}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, marginBottom: 8 }}>
           <StatusCard
             label="Voltage"
             value={batteryData.voltage}
             unit="V"
-            icon="flash"
-            color="#3b82f6"
-            style={styles.gridItem}
+            icon="sf:bolt.fill"
+            color="#007AFF"
           />
           <StatusCard
             label="Current"
             value={batteryData.current}
             unit="A"
-            icon="swap-horizontal"
-            color="#8b5cf6"
-            style={styles.gridItem}
+            icon="sf:arrow.left.and.right.circle.fill"
+            color="#5856D6"
           />
+        </View>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16 }}>
           <StatusCard
             label="Temperature"
             value={batteryData.temperature}
             unit="°C"
-            icon="thermometer"
-            color="#f97316"
-            style={styles.gridItem}
+            icon="sf:thermometer.medium"
+            color="#FF9500"
           />
           <StatusCard
             label="Capacity"
             value={batteryData.capacity}
             unit="Ah"
-            icon="battery-full"
-            color="#10b981"
-            style={styles.gridItem}
+            icon="sf:battery.100.bolt"
+            color="#34C759"
           />
         </View>
 
         {/* Health Summary Card */}
-        <View style={styles.healthCard}>
-          <Text style={styles.healthTitle}>Cycle Count</Text>
-          <View style={styles.cycleRow}>
-            <Ionicons name="refresh-circle" size={32} color="#6366f1" />
-            <Text style={styles.cycleValue}>{batteryData.cycles}</Text>
-            <Text style={styles.cycleLabel}>Cycles</Text>
-          </View>
-          <Text style={styles.healthDescription}>
-            Your battery is in excellent condition. {batteryData.cycles} cycles is low for this capacity.
-          </Text>
-        </View>
+        <Card style={{ margin: 20, backgroundColor: theme.colors.surface, borderRadius: 20 }} elevation={1}>
+          <Card.Content>
+            <Text variant="titleMedium" style={{ fontWeight: 'bold', marginBottom: 16 }}>System Health</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: theme.colors.secondaryContainer, justifyContent: 'center', alignItems: 'center', marginRight: 16 }}>
+                <Image source="sf:arrow.2.squarepath" contentFit="contain" style={{ width: 24, height: 24, tintColor: theme.colors.secondary }} />
+              </View>
+              <View>
+                <Text variant="titleLarge" style={{ fontWeight: 'bold' }}>{batteryData.cycles}</Text>
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>Charge Cycles</Text>
+              </View>
+            </View>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, lineHeight: 20 }}>
+              Your battery is in excellent condition. Regular monitoring ensures long-term performance and reliability.
+            </Text>
+          </Card.Content>
+        </Card>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  welcomeText: {
-    fontSize: 16,
-    color: '#64748b',
-    fontWeight: '500',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1e293b',
-  },
-  deviceButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  socCard: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 24,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  socHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  socLabel: {
-    fontSize: 16,
-    color: '#64748b',
-    fontWeight: '600',
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 6,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-  },
-  socValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 20,
-  },
-  socValue: {
-    fontSize: 64,
-    fontWeight: 'bold',
-    color: '#1e293b',
-  },
-  percentSymbol: {
-    fontSize: 24,
-    color: '#64748b',
-    marginLeft: 4,
-    fontWeight: '600',
-  },
-  progressBarContainer: {
-    height: 12,
-    backgroundColor: '#f1f5f9',
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  progressBar: {
-    height: '100%',
-    borderRadius: 6,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  gridItem: {
-    width: (width - 60) / 2,
-    marginBottom: 20,
-  },
-  healthCard: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  healthTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: 16,
-  },
-  cycleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  cycleValue: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1e293b',
-    marginLeft: 12,
-  },
-  cycleLabel: {
-    fontSize: 16,
-    color: '#64748b',
-    marginLeft: 8,
-    fontWeight: '500',
-  },
-  healthDescription: {
-    fontSize: 14,
-    color: '#64748b',
-    lineHeight: 20,
-  },
-  alertContainer: {
-    marginBottom: 20,
-  },
-  alertItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 8,
-  },
-  alertCritical: {
-    backgroundColor: '#ef4444',
-  },
-  alertWarning: {
-    backgroundColor: '#fbbf24',
-  },
-  alertText: {
-    color: '#fff',
-    marginLeft: 10,
-    fontWeight: '600',
-    flex: 1,
-  },
-});
