@@ -11,6 +11,7 @@ export interface DeviceCardProps {
   lastSeen?: number;
   isConnected?: boolean;
   onPress?: () => void;
+  manufacturerId?: string;
 }
 
 function SignalIcon({ rssi }: { rssi: number }) {
@@ -47,6 +48,7 @@ export function DeviceCard({
   lastSeen,
   isConnected,
   onPress,
+  manufacturerId,
 }: DeviceCardProps) {
   const theme = useTheme();
   const statusColor = isConnected ? '#34C759' : theme.colors.onSurfaceVariant;
@@ -69,7 +71,16 @@ export function DeviceCard({
           
           <View style={{ flex: 1 }}>
             <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>{name}</Text>
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>{id}</Text>
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>{id}</Text>
+              {manufacturerId && (
+                <View style={{ backgroundColor: theme.colors.secondaryContainer, paddingHorizontal: 6, borderRadius: 4 }}>
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSecondaryContainer, fontSize: 10, fontWeight: 'bold' }}>
+                    ID: {manufacturerId.toUpperCase()}
+                  </Text>
+                </View>
+              )}
+            </View>
             {!isConnected && lastSeen && (
               <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
                  Seen: {formatLastSeen(lastSeen)}

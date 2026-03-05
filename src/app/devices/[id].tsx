@@ -12,19 +12,35 @@ import { MOCK_BATTERY_DATA } from '../../constants/mock-data';
 import { useBLE } from '../../hooks/use-ble';
 
 export default function DeviceDetailScreen() {
-  const { id } = useGlobalSearchParams();
+  const { id, nativeDevice, name, isMock } = useGlobalSearchParams();
   const theme = useTheme();
   const { width } = useWindowDimensions();
-  const { connectedDevice, batteryMetrics } = useBLE();
+  const { connectedDevice, batteryMetrics, connectToDevice } = useBLE();
   const [batteryData, setBatteryData] = useState<BatteryData>(MOCK_BATTERY_DATA);
+
+  // Connection logic
+  useEffect(() => {
+    const deviceId = (id || nativeDevice) as string;
+    if (deviceId) {
+      connectToDevice({
+        id: deviceId,
+        name: (name as string) || 'Battery Monitor',
+        isMock: isMock === 'true',
+      });
+    }
+  }, [id, nativeDevice, name, isMock, connectToDevice]);
 
   // BLE Update and Mock Simulation
   useEffect(() => {
+    const deviceId = (id || nativeDevice) as string;
     // Only use BLE data on real devices when the IDs match
-    if (ExpoDevice.isDevice && connectedDevice && connectedDevice.id === id) {
+    if (ExpoDevice.isDevice && connectedDevice && connectedDevice.id === deviceId) {
       setBatteryData(prev => ({
         ...prev,
         soc: batteryMetrics.soc > 0 ? batteryMetrics.soc : prev.soc,
+        voltage: batteryMetrics.voltage > 0 ? batteryMetrics.voltage : prev.voltage,
+        current: batteryMetrics.current !== 0 ? batteryMetrics.current : prev.current,
+        temperature: batteryMetrics.temperature !== 0 ? batteryMetrics.temperature : prev.temperature,
       }));
       return;
     }
@@ -40,7 +56,7 @@ export default function DeviceDetailScreen() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [connectedDevice, batteryMetrics, id]);
+  }, [connectedDevice, batteryMetrics, id, nativeDevice]);
 
   const getStatusColor = (status: BatteryData['status']) => {
     switch (status) {
@@ -51,14 +67,18 @@ export default function DeviceDetailScreen() {
     }
   };
 
+  const displayName = name || id || nativeDevice || 'Battery Monitor';
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Stack.Screen options={{ title: "Device Details", headerShown: true }} />
       <ScrollView contentInsetAdjustmentBehavior="automatic">
         <View style={{ padding: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <View style={{ flex: 1 }}>
-            <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>{ExpoDevice.isDevice ? 'CONNECTED DEVICE' : 'SIMULATED DEVICE'}</Text>
-            <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>{id}</Text>
+            <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+              {connectedDevice ? 'CONNECTED DEVICE' : (isMock === 'true' ? 'MOCK DEVICE' : 'SIMULATED DEVICE')}
+            </Text>
+            <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>{displayName}</Text>
           </View>
           <View style={{ backgroundColor: getStatusColor(batteryData.status) + '15', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
             <Text variant="labelSmall" style={{ color: getStatusColor(batteryData.status), fontWeight: 'bold' }}>{batteryData.status.toUpperCase()}</Text>

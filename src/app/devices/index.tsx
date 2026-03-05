@@ -1,13 +1,13 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, FlatList, RefreshControl } from 'react-native';
 import { Stack, router } from 'expo-router';
 import * as ExpoDevice from 'expo-device';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, useTheme, Button, Chip } from 'react-native-paper';
+import { Text, useTheme, Button, Chip, Banner } from 'react-native-paper';
 
 import { DeviceCard } from '../../components/device-card';
-import { useBLE } from '../../hooks/use-ble';
+import { useBLE, AugmentedDevice } from '../../hooks/use-ble';
 
 type SortBy = 'name' | 'rssi' | 'lastSeen';
 type SortOrder = 'asc' | 'desc';
@@ -16,66 +16,46 @@ export default function DevicesScreen() {
   const theme = useTheme();
   const {
     allDevices,
-    requestPermissions,
     scanForDevices,
-    stopScanning,
+    isScanning,
+    error,
   } = useBLE();
-  const [isScanning, setIsScanning] = useState(false);
-  const [mockDevices, setMockDevices] = useState<{id: string, name: string, rssi: number, lastSeen: number}[]>([]);
+  
   const [sortBy, setSortBy] = useState<SortBy>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
+  // Initial scan
+  useEffect(() => {
+    scanForDevices();
+  }, []);
+
   const sortedDevices = useMemo(() => {
-    const source = ExpoDevice.isDevice ? allDevices : mockDevices;
-    return [...source].sort((a, b) => {
+    return [...allDevices].sort((a, b) => {
       let comparison = 0;
       if (sortBy === 'name') {
-        const nameA = a.name || a.localName || 'Unnamed Device';
-        const nameB = b.name || b.localName || 'Unnamed Device';
-        comparison = nameA.localeCompare(nameB);
+        comparison = a.name.localeCompare(b.name);
       } else if (sortBy === 'rssi') {
-        comparison = (a.rssi || 0) - (b.rssi || 0);
+        comparison = a.rssi - b.rssi;
       } else if (sortBy === 'lastSeen') {
-        comparison = (a.lastSeen || 0) - (b.lastSeen || 0);
+        comparison = a.lastSeen - b.lastSeen;
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [ExpoDevice.isDevice, allDevices, mockDevices, sortBy, sortOrder]);
-
-  const scanForDevicesHandler = useCallback(async () => {
-    setIsScanning(true);
-    if (!ExpoDevice.isDevice) {
-      setTimeout(() => {
-        setMockDevices([
-          { id: '1', name: 'Smart Battery A', rssi: -59, lastSeen: Date.now() - 5000 },
-          { id: '2', name: 'KiloVault Unit B', rssi: -84, lastSeen: Date.now() - 300000 },
-          { id: '3', name: 'Solar Storage X', rssi: -45, lastSeen: Date.now() - 60000 },
-        ]);
-        setIsScanning(false);
-      }, 2000);
-      return;
-    }
-
-    const isPermissionsEnabled = await requestPermissions();
-    if (isPermissionsEnabled) {
-      scanForDevices();
-      setTimeout(() => {
-        stopScanning();
-        setIsScanning(false);
-      }, 10000);
-    } else {
-      setIsScanning(false);
-    }
-  }, [requestPermissions, scanForDevices, stopScanning]);
+  }, [allDevices, sortBy, sortOrder]);
 
   const onRefresh = useCallback(() => {
-    scanForDevicesHandler();
-  }, [scanForDevicesHandler]);
+    scanForDevices();
+  }, [scanForDevices]);
 
-  const handleConnect = useCallback((item: any) => {
+  const handleConnect = useCallback((item: AugmentedDevice) => {
     router.push({
       pathname: '/devices/[id]',
-      params: { id: item.id }
+      params: { 
+        id: item.id,
+        name: item.name,
+        isMock: item.isMock ? 'true' : 'false',
+        nativeDevice: item.id
+      }
     });
   }, []);
 
@@ -88,17 +68,18 @@ export default function DevicesScreen() {
     }
   };
 
-  const renderItem = useCallback(({ item }: { item: any }) => (
+  const renderItem = useCallback(({ item }: { item: AugmentedDevice }) => (
     <DeviceCard
-      name={item.name || item.localName || 'Unnamed Device'}
+      name={item.name}
       id={item.id}
       rssi={item.rssi}
       lastSeen={item.lastSeen}
       onPress={() => handleConnect(item)}
+      manufacturerId={item.manufacturerId}
     />
   ), [handleConnect]);
 
-  const SortButton = ({ field, label, icon }: { field: SortBy, label: string, icon: string }) => {
+  const SortButton = ({ field, label }: { field: SortBy, label: string }) => {
     const isActive = sortBy === field;
     const direction = sortOrder === 'asc' ? '↑' : '↓';
 
@@ -118,6 +99,25 @@ export default function DevicesScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Stack.Screen options={{ title: "Scan Devices", headerShown: true }} />
+      
+      <Banner
+        visible={!!error}
+        actions={[
+          {
+            label: 'Retry',
+            onPress: onRefresh,
+          },
+        ]}
+        icon={({ size }) => (
+          <Image
+            source="sf:exclamationmark.triangle.fill"
+            style={{ width: size, height: size, tintColor: theme.colors.error }}
+          />
+        )}
+      >
+        {error}
+      </Banner>
+
       <FlatList
         data={sortedDevices}
         renderItem={renderItem}
@@ -139,13 +139,13 @@ export default function DevicesScreen() {
               {!ExpoDevice.isDevice ? 'Showing simulated devices for development' : 'Tap a device to view detailed battery metrics'}
             </Text>
             <View style={{ flexDirection: 'row', marginBottom: 8 }}>
-              <SortButton field="name" label="Name" icon="alphabetical" />
-              <SortButton field="rssi" label="Signal" icon="signal" />
-              <SortButton field="lastSeen" label="Recent" icon="clock" />
+              <SortButton field="name" label="Name" />
+              <SortButton field="rssi" label="Signal" />
+              <SortButton field="lastSeen" label="Recent" />
             </View>
           </View>
         }
-        ListEmptyComponent={!isScanning ? (
+        ListEmptyComponent={!isScanning && !error ? (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60, paddingHorizontal: 40 }}>
             <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: theme.colors.surfaceVariant, justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
                <Image source="sf:antenna.radiowaves.left.and.right" style={{ width: 40, height: 40, tintColor: theme.colors.primary }} />

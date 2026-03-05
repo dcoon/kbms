@@ -18,6 +18,7 @@ export interface BatteryMetrics {
 class BLEService {
   private _bleManager: BleManager | null = null;
   private connectedDevice: Device | null = null;
+  private discoveredDevices: Map<string, Device> = new Map();
   private batteryMetrics: BatteryMetrics = {
     soc: 0,
     voltage: 0,
@@ -42,6 +43,10 @@ class BLEService {
 
   getConnectedDevice(): Device | null {
     return this.connectedDevice;
+  }
+
+  getDiscoveredDevice(id: string): Device | undefined {
+    return this.discoveredDevices.get(id);
   }
 
   async requestPermissions(): Promise<boolean> {
@@ -69,6 +74,7 @@ class BLEService {
         return;
       }
       if (device && (device.name || device.localName)) {
+        this.discoveredDevices.set(device.id, device);
         onDeviceFound(device);
       }
     });

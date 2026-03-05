@@ -51,3 +51,4 @@ This project is a mobile application developed using **Expo (React Native)** and
 - Check which platform is running before calling native only modules and libraries. Only initialize and run native only functionality on physical devices.
 - Only use react native paper for styling and themes. 
 - Never add style or theme unless asked. Always try to seperated common styling into a dedicated file. Only inline styling when it is specific to the component in the file.
+- Never add unit tests unless explicitly asked to do so. Never add a testing framework unless asked to do so.
