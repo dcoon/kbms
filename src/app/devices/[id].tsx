@@ -1,62 +1,64 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, useWindowDimensions } from 'react-native';
-import { Stack, useGlobalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
+import { Stack, useGlobalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, useWindowDimensions, View } from 'react-native';
+import { Card, Surface, Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as ExpoDevice from 'expo-device';
-import { Text, Card, useTheme, Surface } from 'react-native-paper';
 
+import { useBleContext } from '@/components/ble-provider';
 import { StatusCard } from '../../components/status-card';
 import { BatteryData } from '../../constants/battery-types';
 import { MOCK_BATTERY_DATA } from '../../constants/mock-data';
-import { useBLE } from '../../hooks/use-ble';
+// import { useBLE } from '../../hooks/use-ble';
 
 export default function DeviceDetailScreen() {
-  const { id, nativeDevice, name, isMock } = useGlobalSearchParams();
+  const ble = useBleContext();
+
+  const { id } = useGlobalSearchParams();
   const theme = useTheme();
   const { width } = useWindowDimensions();
-  const { connectedDevice, batteryMetrics, connectToDevice } = useBLE();
+  // const { connectedDevice, batteryData, connectToDevice } = useBLE();
   const [batteryData, setBatteryData] = useState<BatteryData>(MOCK_BATTERY_DATA);
 
   // Connection logic
   useEffect(() => {
-    const deviceId = (id || nativeDevice) as string;
-    if (deviceId) {
-      connectToDevice({
-        id: deviceId,
-        name: (name as string) || 'Battery Monitor',
-        isMock: isMock === 'true',
+    if (id) {
+      const deviceId = typeof id === 'string' ? id : id[0];
+      console.info("Attempting to connect to device with ID: ", deviceId);
+      ble?.connectToBattery(deviceId, (data) => {
+        console.info("Received battery update from BLE service: ", data);
+        setBatteryData(data);
       });
     }
-  }, [id, nativeDevice, name, isMock, connectToDevice]);
+  }, [id]);
 
   // BLE Update and Mock Simulation
-  useEffect(() => {
-    const deviceId = (id || nativeDevice) as string;
-    // Only use BLE data on real devices when the IDs match
-    if (ExpoDevice.isDevice && connectedDevice && connectedDevice.id === deviceId) {
-      setBatteryData(prev => ({
-        ...prev,
-        soc: batteryMetrics.soc > 0 ? batteryMetrics.soc : prev.soc,
-        voltage: batteryMetrics.voltage > 0 ? batteryMetrics.voltage : prev.voltage,
-        current: batteryMetrics.current !== 0 ? batteryMetrics.current : prev.current,
-        temperature: batteryMetrics.temperature !== 0 ? batteryMetrics.temperature : prev.temperature,
-      }));
-      return;
-    }
+  // useEffect(() => {
+  //   const deviceId = (id || nativeDevice) as string;
+  //   // Only use BLE data on real devices when the IDs match
+  //   if (ExpoDevice.isDevice && connectedDevice && connectedDevice.id === deviceId) {
+  //     setBatteryData(prev => ({
+  //       ...prev,
+  //       soc: batteryData.soc > 0 ? batteryData.soc : prev.soc,
+  //       voltage: batteryData.voltage > 0 ? batteryData.voltage : prev.voltage,
+  //       current: batteryData.current !== 0 ? batteryData.current : prev.current,
+  //       temperature: batteryData.temperature !== 0 ? batteryData.temperature : prev.temperature,
+  //     }));
+  //     return;
+  //   }
 
-    // Default simulation for emulators OR disconnected real devices
-    const interval = setInterval(() => {
-      setBatteryData(prev => ({
-        ...prev,
-        voltage: +(prev.voltage + (Math.random() * 0.1 - 0.05)).toFixed(2),
-        current: +(prev.current + (Math.random() * 0.5 - 0.25)).toFixed(2),
-        soc: Math.max(0, Math.min(100, +(prev.soc + (Math.random() * 0.1 - 0.05)).toFixed(1))),
-      }));
-    }, 3000);
+  //   // Default simulation for emulators OR disconnected real devices
+  //   const interval = setInterval(() => {
+  //     setBatteryData(prev => ({
+  //       ...prev,
+  //       voltage: +(prev.voltage + (Math.random() * 0.1 - 0.05)).toFixed(2),
+  //       current: +(prev.current + (Math.random() * 0.5 - 0.25)).toFixed(2),
+  //       soc: Math.max(0, Math.min(100, +(prev.soc + (Math.random() * 0.1 - 0.05)).toFixed(1))),
+  //     }));
+  //   }, 3000);
 
-    return () => clearInterval(interval);
-  }, [connectedDevice, batteryMetrics, id, nativeDevice]);
+  //   return () => clearInterval(interval);
+  // }, [connectedDevice, batteryData, id, nativeDevice]);
 
   const getStatusColor = (status: BatteryData['status']) => {
     switch (status) {
@@ -67,7 +69,7 @@ export default function DeviceDetailScreen() {
     }
   };
 
-  const displayName = name || id || nativeDevice || 'Battery Monitor';
+  const displayName =  id  || 'Battery Monitor';
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -76,7 +78,7 @@ export default function DeviceDetailScreen() {
         <View style={{ padding: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <View style={{ flex: 1 }}>
             <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              {connectedDevice ? 'CONNECTED DEVICE' : (isMock === 'true' ? 'MOCK DEVICE' : 'SIMULATED DEVICE')}
+              {"Connected Device"}
             </Text>
             <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>{displayName}</Text>
           </View>

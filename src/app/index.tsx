@@ -1,43 +1,30 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, ScrollView, RefreshControl } from 'react-native';
-import { Link, Stack } from 'expo-router';
-import { Image } from 'expo-image';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Device from 'expo-device';
-import { Text, Card, useTheme, IconButton } from 'react-native-paper';
+import { Image } from 'expo-image';
+import { Link, Stack } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { RefreshControl, ScrollView, View } from 'react-native';
+import { Card, IconButton, Text, useTheme } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useBleContext } from '@/components/ble-provider';
 import { StatusCard } from '../components/status-card';
 import { BatteryData } from '../constants/battery-types';
 import { MOCK_BATTERY_DATA } from '../constants/mock-data';
-import { useBLE } from '../hooks/use-ble';
+// import { useBLE } from '../hooks/use-ble';
+
+
+
 
 export default function DashboardScreen() {
   const theme = useTheme();
-  const { connectedDevice, batteryMetrics } = useBLE();
+
+  const ble = useBleContext();
+
+  // const { connectedDevice, batteryMetrics } = useBLE();
   const [batteryData, setBatteryData] = useState<BatteryData>(MOCK_BATTERY_DATA);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Simulation using mock data
-  useEffect(() => {
-    if (Device.isDevice && connectedDevice) {
-      setBatteryData(prev => ({
-        ...prev,
-        soc: batteryMetrics.soc > 0 ? batteryMetrics.soc : prev.soc,
-      }));
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setBatteryData(prev => ({
-        ...prev,
-        voltage: +(prev.voltage + (Math.random() * 0.1 - 0.05)).toFixed(2),
-        current: +(prev.current + (Math.random() * 0.5 - 0.25)).toFixed(2),
-        soc: Math.max(0, Math.min(100, +(prev.soc + (Math.random() * 0.1 - 0.05)).toFixed(1))),
-      }));
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [connectedDevice, batteryMetrics]);
 
   const onRefresh = useCallback(() => {
     setIsRefreshing(true);

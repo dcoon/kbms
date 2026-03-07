@@ -1,11 +1,17 @@
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { BleProvider } from '@/components/ble-provider';
 import React from 'react';
 import { PaperProvider } from 'react-native-paper';
-import { theme } from '../constants/paper-theme';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-export default function AppLayout() {
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
+
+
+export default function TabLayout() {
+
   return (
-    <PaperProvider theme={theme}>
+    <BleProvider>
+      <SafeAreaProvider>
+        <PaperProvider>
       <NativeTabs>
         <NativeTabs.Trigger name="index">
           <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
@@ -23,5 +29,7 @@ export default function AppLayout() {
         </NativeTabs.Trigger>
       </NativeTabs>
     </PaperProvider>
+    </SafeAreaProvider>
+    </BleProvider>
   );
 }
