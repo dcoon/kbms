@@ -1,34 +1,17 @@
-import { Image } from 'expo-image';
+import { Device, DeviceId } from '@/services/ble-service';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
 import { View } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Card, Text, useTheme, TouchableRipple } from 'react-native-paper';
+import { Card, TouchableRipple, useTheme } from 'react-native-paper';
+
+import { SignalIcon } from '@/components/signal-icon';
+import { FavoriteIcon } from './favorite-icon';
 
 export interface DeviceCardProps {
-  name: string;
-  id: string;
-  rssi?: number;
-  lastSeen?: number;
-  isConnected?: boolean;
-  onPress?: () => void;
-  manufacturerId?: string;
-}
-
-function SignalIcon({ rssi }: { rssi: number }) {
-  const theme = useTheme();
-  let name: keyof typeof MaterialCommunityIcons.glyphMap = 'signal-cellular-outline';
-  let color = theme.colors.onSurfaceVariant;
-  
-  if (rssi >= -55) {
-    name = 'signal-cellular-3';
-    color = '#34C759';
-  } else if (rssi >= -65) {
-    name = 'signal-cellular-2';
-  } else if (rssi >= -75) {
-    name = 'signal-cellular-1';
-  }
-
-  return <MaterialCommunityIcons name={name} size={18} color={color} />;
+  device?: Device;
+  isFavorite?: boolean; // Optional prop to indicate if the device is a favorite
+  onDevicePress?: (deviceId: DeviceId) => void;
+  onFavoritePress?: (deviceId: DeviceId) => void; // Optional callback for favorite action
 }
 
 function formatLastSeen(timestamp?: number) {
@@ -42,65 +25,43 @@ function formatLastSeen(timestamp?: number) {
 }
 
 export function DeviceCard({
-  name,
-  id,
-  rssi,
-  lastSeen,
-  isConnected,
-  onPress,
-  manufacturerId,
+  device,
+  isFavorite,
+  onDevicePress,
+  onFavoritePress
 }: DeviceCardProps) {
   const theme = useTheme();
-  const statusColor = isConnected ? '#34C759' : theme.colors.onSurfaceVariant;
+  const statusColor = device?.isConnected ? '#34C759' : theme.colors.onSurfaceVariant;
+
+
+
+    function rightContent() {
+      const icon = onDevicePress ? 'chevron-right' : 'battery-unknown';
+
+      return (
+        <View style={{ alignItems: 'flex-end' }}>
+          <SignalIcon rssi={device?.rssi ?? 0} />
+            <MaterialCommunityIcons name={icon} size={20} color={theme.colors.onSurfaceVariant} />
+        </View>
+      );
+    }
+
+
+    function LeftContent () {
+      return (
+        <FavoriteIcon deviceId={device?.id} isFavorite={isFavorite} onFavoritePress={onFavoritePress} />
+      );
+    }
+  
 
   return (
-    <Card style={{ marginHorizontal: 16, marginBottom: 12, backgroundColor: theme.colors.surface }}>
-      <TouchableRipple onPress={onPress} style={{ borderRadius: 12 }}>
-        <Card.Content style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12 }}>
-          <View style={{ 
-            width: 48, 
-            height: 48, 
-            borderRadius: 24, 
-            backgroundColor: theme.colors.primaryContainer, 
-            justifyContent: 'center', 
-            alignItems: 'center',
-            marginRight: 16
-          }}>
-            <Image source="sf:wave.3.right" contentFit="contain" style={{ width: 24, height: 24, tintColor: isConnected ? '#34C759' : theme.colors.primary }} />
-          </View>
-          
-          <View style={{ flex: 1 }}>
-            <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>{name}</Text>
-            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>{id}</Text>
-              {manufacturerId && (
-                <View style={{ backgroundColor: theme.colors.secondaryContainer, paddingHorizontal: 6, borderRadius: 4 }}>
-                  <Text variant="bodySmall" style={{ color: theme.colors.onSecondaryContainer, fontSize: 10, fontWeight: 'bold' }}>
-                    ID: {manufacturerId.toUpperCase()}
-                  </Text>
-                </View>
-              )}
-            </View>
-            {!isConnected && lastSeen && (
-              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
-                 Seen: {formatLastSeen(lastSeen)}
-              </Text>
-            )}
-          </View>
+          <TouchableRipple onPress={() => onDevicePress && device?.id && onDevicePress(device.id)} style={{ borderRadius: 12 }}>
 
-          <View style={{ alignItems: 'flex-end', gap: 4 }}>
-            {rssi !== undefined && <SignalIcon rssi={rssi} />}
-            {isConnected ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#34C75915', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
-                 <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#34C759', marginRight: 4 }} />
-                 <Text variant="labelSmall" style={{ color: '#34C759', fontWeight: 'bold' }}>Connected</Text>
-              </View>
-            ) : (
-              <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.onSurfaceVariant} />
-            )}
-          </View>
-        </Card.Content>
-      </TouchableRipple>
+    <Card style={{ marginHorizontal: 16, marginBottom: 12, backgroundColor: theme.colors.surface }}>
+        <Card.Title title={device?.name} subtitle={device?.id} left={LeftContent}  right={() => rightContent()}/>
+
     </Card>
+          </TouchableRipple>
+
   );
 }

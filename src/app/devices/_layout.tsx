@@ -4,7 +4,7 @@ export default function DeviceLayout() {
   return (
     <Stack
       screenOptions={{
-        headerShown: true,
+        headerShown: false,
         headerTransparent: true,
         headerBackTitle: 'Back',
       }}

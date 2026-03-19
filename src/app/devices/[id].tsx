@@ -1,66 +1,40 @@
-import { Image } from 'expo-image';
-import { Stack, useGlobalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, useWindowDimensions, View } from 'react-native';
-import { Card, Surface, Text, useTheme } from 'react-native-paper';
+import { Appbar, List, Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useBleContext } from '@/components/ble-provider';
+import { Device, DeviceId } from '@/services/ble-service';
+
+import { DeviceCard } from '@/components/device-card';
+import { FavoriteIcon } from '@/components/favorite-icon';
+import { uilog as log } from '@/services/log'; // import log from '@/services/log';
 import { StatusCard } from '../../components/status-card';
-import { BatteryData } from '../../constants/battery-types';
-import { MOCK_BATTERY_DATA } from '../../constants/mock-data';
+// import { BatteryData } from '../../constants/battery-types';
+// import { MOCK_BATTERY_DATA } from '../../constants/mock-data';
 // import { useBLE } from '../../hooks/use-ble';
+
 
 export default function DeviceDetailScreen() {
   const ble = useBleContext();
-
-  const { id } = useGlobalSearchParams();
+  const { id } = useLocalSearchParams();
   const theme = useTheme();
   const { width } = useWindowDimensions();
-  // const { connectedDevice, batteryData, connectToDevice } = useBLE();
-  const [batteryData, setBatteryData] = useState<BatteryData>(MOCK_BATTERY_DATA);
+  const [device, setDevice] = useState<Device>();
 
-  // Connection logic
   useEffect(() => {
     if (id) {
-      const deviceId = typeof id === 'string' ? id : id[0];
+      const deviceId = id as DeviceId;
       console.info("Attempting to connect to device with ID: ", deviceId);
-      ble?.connectToBattery(deviceId, (data) => {
-        console.info("Received battery update from BLE service: ", data);
-        setBatteryData(data);
+      ble?.connectToBattery(deviceId, (device) => {
+        log.info("Successfully connected to device: ", device.id, device.name);
+        setDevice(device);
       });
     }
-  }, [id]);
+  }, [id, ble]);
 
-  // BLE Update and Mock Simulation
-  // useEffect(() => {
-  //   const deviceId = (id || nativeDevice) as string;
-  //   // Only use BLE data on real devices when the IDs match
-  //   if (ExpoDevice.isDevice && connectedDevice && connectedDevice.id === deviceId) {
-  //     setBatteryData(prev => ({
-  //       ...prev,
-  //       soc: batteryData.soc > 0 ? batteryData.soc : prev.soc,
-  //       voltage: batteryData.voltage > 0 ? batteryData.voltage : prev.voltage,
-  //       current: batteryData.current !== 0 ? batteryData.current : prev.current,
-  //       temperature: batteryData.temperature !== 0 ? batteryData.temperature : prev.temperature,
-  //     }));
-  //     return;
-  //   }
-
-  //   // Default simulation for emulators OR disconnected real devices
-  //   const interval = setInterval(() => {
-  //     setBatteryData(prev => ({
-  //       ...prev,
-  //       voltage: +(prev.voltage + (Math.random() * 0.1 - 0.05)).toFixed(2),
-  //       current: +(prev.current + (Math.random() * 0.5 - 0.25)).toFixed(2),
-  //       soc: Math.max(0, Math.min(100, +(prev.soc + (Math.random() * 0.1 - 0.05)).toFixed(1))),
-  //     }));
-  //   }, 3000);
-
-  //   return () => clearInterval(interval);
-  // }, [connectedDevice, batteryData, id, nativeDevice]);
-
-  const getStatusColor = (status: BatteryData['status']) => {
+  const getStatusColor = (status: string | undefined) => {
     switch (status) {
       case 'Healthy': return '#34C759';
       case 'Warning': return '#FF9500';
@@ -69,95 +43,147 @@ export default function DeviceDetailScreen() {
     }
   };
 
-  const displayName =  id  || 'Battery Monitor';
+  function getProgressBarColor(value: number | undefined, maxValue: number, minValue: number = 0) {
+
+    if (value === undefined) return theme.colors.onSurfaceVariant;
+    const percentage = (value - minValue) / (maxValue - minValue) * 100;
+    if (percentage < 30) return '#FF3B30'; // Critical
+    if (percentage < 70) return '#FF9500'; // Warning
+    return '#34C759'; // Healthy
+  }
+
+  const batteryData = device?.batteryInfo;
+
+
+  function onFavoritePress(deviceId: DeviceId | undefined) {
+    log.debug("onFavoritePress called with device ID: ", deviceId);
+
+  }
+
+  function LeftContent() {
+    return (
+      <View>
+        <FavoriteIcon deviceId={device?.id} isFavorite={device?.isFavorite} onFavoritePress={(deviceId) => onFavoritePress(deviceId)} />
+      </View>
+    );
+  }
+
+  function RightContent() {
+    return (
+      <View>
+        <View style={{ backgroundColor: getStatusColor(batteryData?.status) + '15', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
+          <Text variant="labelSmall" style={{ color: getStatusColor(batteryData?.status), fontWeight: 'bold' }}>{batteryData?.status?.toUpperCase()}</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <Stack.Screen options={{ title: "Device Details", headerShown: true }} />
+      <Appbar.Header>
+        <Appbar.BackAction onPress={() => router.back()} />
+        <Appbar.Content title={device?.name || device?.id} />
+      </Appbar.Header>
       <ScrollView contentInsetAdjustmentBehavior="automatic">
-        <View style={{ padding: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <View style={{ flex: 1 }}>
-            <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              {"Connected Device"}
-            </Text>
-            <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>{displayName}</Text>
-          </View>
-          <View style={{ backgroundColor: getStatusColor(batteryData.status) + '15', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
-            <Text variant="labelSmall" style={{ color: getStatusColor(batteryData.status), fontWeight: 'bold' }}>{batteryData.status.toUpperCase()}</Text>
-          </View>
-        </View>
 
-        {/* Main SOC Card */}
-        <Card style={{ margin: 20, backgroundColor: theme.colors.surface, borderRadius: 24 }} elevation={2}>
-          <Card.Content style={{ padding: 24 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <Text variant="titleMedium" style={{ color: theme.colors.onSurfaceVariant, fontWeight: '600' }}>State of Charge</Text>
-              <Image source="sf:battery.100" style={{ width: 20, height: 20, tintColor: theme.colors.onSurfaceVariant }} />
-            </View>
-            
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 20 }}>
-              <Text style={{ fontSize: 72, fontWeight: '800', color: theme.colors.onSurface, fontVariant: ['tabular-nums'] }}>{batteryData.soc}</Text>
-              <Text variant="headlineSmall" style={{ color: theme.colors.onSurfaceVariant, marginLeft: 4 }}>%</Text>
-            </View>
-            
-            <View style={{ height: 12, backgroundColor: theme.colors.surfaceVariant, borderRadius: 6, overflow: 'hidden' }}>
-              <View style={{ width: `${batteryData.soc}%`, height: '100%', backgroundColor: getStatusColor(batteryData.status) }} />
-            </View>
-          </Card.Content>
-        </Card>
+        <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
+          <DeviceCard device={device} isFavorite={device?.isFavorite} />
 
-        {/* Grid of Status Cards */}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, marginBottom: 8 }}>
-          <StatusCard
-            label="Voltage"
-            value={batteryData.voltage}
-            unit="V"
-            icon="sf:bolt.fill"
-            color="#007AFF"
-          />
-          <StatusCard
-            label="Current"
-            value={batteryData.current}
-            unit="A"
-            icon="sf:arrow.left.and.right.circle.fill"
-            color="#5856D6"
-          />
-        </View>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, marginBottom: 20 }}>
-          <StatusCard
-            label="Temperature"
-            value={batteryData.temperature}
-            unit="°C"
-            icon="sf:thermometer.medium"
-            color="#FF9500"
-          />
-          <StatusCard
-            label="Capacity"
-            value={batteryData.capacity}
-            unit="Ah"
-            icon="sf:battery.100.bolt"
-            color="#34C759"
-          />
-        </View>
+          <List.AccordionGroup>
+            <List.Subheader>Battery Information</List.Subheader>
+            <List.Accordion
+              id="device-info"
+              title="Status"
+              left={() => <List.Icon icon="car-battery" 
+              />
 
-        {/* Health Summary Card */}
-        <Card style={{ margin: 20, backgroundColor: theme.colors.surface, borderRadius: 20 }} elevation={1}>
-          <Card.Content>
-            <Text variant="titleMedium" style={{ fontWeight: 'bold', marginBottom: 16 }}>System Health</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-              <Surface style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: theme.colors.secondaryContainer, justifyContent: 'center', alignItems: 'center', marginRight: 16 }} elevation={0}>
-                <Image source="sf:arrow.2.squarepath" contentFit="contain" style={{ width: 24, height: 24, tintColor: theme.colors.secondary }} />
-              </Surface>
-              <View>
-                <Text variant="titleLarge" style={{ fontWeight: 'bold' }}>{batteryData.cycles}</Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>Charge Cycles</Text>
-              </View>
-            </View>
-            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, lineHeight: 20 }}>
-              Your battery is in excellent condition. Low cycle count indicates a relatively new or well-maintained cell. Regular monitoring ensures optimal performance.
-            </Text>
-          </Card.Content>
-        </Card>
+              }
+            >
+              <StatusCard
+                label="State of Charge (SOC) %"
+                value={batteryData?.soc}
+                maxValue={100}
+                unit="%"
+                icon="battery-high"
+                color={getProgressBarColor(batteryData?.soc, 100)}
+              />
+              <StatusCard
+                label="Voltage"
+                value={batteryData?.voltage}
+                unit="V"
+                icon="flash-triangle-outline"
+                color="#007AFF"
+              />
+              <StatusCard
+                label="Current"
+                value={batteryData?.current}
+                unit="A"
+                icon="current-dc"
+                color="#5856D6"
+              />
+              <StatusCard
+                label="Temperature"
+                value={batteryData?.temperature}
+                unit="°C"
+                icon="thermometer"
+                color="#FF9500"
+              />
+              <StatusCard
+                label="Cycles"
+                value={batteryData?.cycles}
+                unit="cycles"
+                icon="chart-donut"
+                color="#34C759"
+              />
+            </List.Accordion>
+
+            <List.Accordion
+              id="device-cells"
+              title="Cells"
+              left={() => <List.Icon icon="battery-high" />}
+            >
+              <List.Item
+                title="Cell 1 Voltage"
+                description="Voltage of cell 1"
+                left={() => <List.Icon icon="flash-triangle-outline" color="green" />}
+                right={() => (
+                  <Text variant="bodyMedium">{true ? `${13.7} V` : 'N/A'}</Text>
+                )}
+                style={{ backgroundColor: '#34C75915', marginVertical: 4, borderRadius: 8 }}
+              />
+
+            </List.Accordion>
+
+            <List.Accordion
+              id="device-details"
+              title="Information"
+              left={() => <List.Icon icon="information-outline" />}
+            >
+              <StatusCard
+                label="Name"
+                value={device?.name}
+                icon="information-outline"
+                color="#34C759"
+              />
+              <StatusCard
+                label="Capacity"
+                value={batteryData?.capacity}
+                unit="Ah"
+                icon="car-battery"
+                color="#34C759"
+              />
+              <StatusCard
+                label="Signal"
+                value={device?.rssi}
+                unit="dBm"
+                icon="signal-cellular-outline"
+                color="#34C759"
+              />
+
+            </List.Accordion>
+          </List.AccordionGroup>
+
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

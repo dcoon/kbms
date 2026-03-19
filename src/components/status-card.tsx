@@ -1,45 +1,42 @@
+import { Icon, List, Text, useTheme } from 'react-native-paper';
+
 import React from 'react';
-import { View } from 'react-native';
-import { Image } from 'expo-image';
-import { Card, Text, useTheme } from 'react-native-paper';
+import { DimensionValue } from 'react-native';
 
 interface StatusCardProps {
   label: string;
-  value: string | number;
+  value: string | number | undefined | null;
+  minValue?: number;
+  maxValue?: number;
   unit?: string;
-  icon: string;
+  icon?: string;
   color: string;
 }
 
-export function StatusCard({ label, value, unit, icon, color }: StatusCardProps) {
+export function StatusCard({ label, value, unit, icon, color, minValue=0, maxValue }: StatusCardProps) {
   const theme = useTheme();
+
+
+  let showProgressBar = false;
+  let progressBarValue: DimensionValue = 0;
+
+  if(minValue !== undefined && maxValue !== undefined && value !== undefined ) {   
+    showProgressBar = true;
+    const v = Number(value);
+    const percentage = (v - minValue) / (maxValue - minValue) * 100;
+
+    progressBarValue = `${percentage}%`; //v  / (maxValue - minValue);
+  }
+
+  function LeftContent() {
+    return icon ? (
+        <Icon source={icon} size={20} color={color} />
+    ) : null;
+  }
   
   return (
-    <Card style={{ margin: 4, flex: 1, backgroundColor: theme.colors.surface }}>
-      <Card.Content style={{ flexDirection: 'row', alignItems: 'center', padding: 12 }}>
-        <View style={{ 
-          width: 44, 
-          height: 44, 
-          borderRadius: 22, 
-          backgroundColor: color + '15', 
-          justifyContent: 'center', 
-          alignItems: 'center',
-          marginRight: 12
-        }}>
-          <Image 
-            source={icon} 
-            contentFit="contain" 
-            style={{ width: 22, height: 22, tintColor: color }} 
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>{label}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-            <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>{value}</Text>
-            {unit && <Text variant="bodySmall" style={{ marginLeft: 2, color: theme.colors.onSurfaceVariant }}>{unit}</Text>}
-          </View>
-        </View>
-      </Card.Content>
-    </Card>
+
+    <List.Item title={label}  left={() =>LeftContent()}  right ={() => <Text>{value}</Text>}  />
+    
   );
 }

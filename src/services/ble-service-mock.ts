@@ -1,28 +1,8 @@
 
-import { BatteryData } from "@/constants/battery-types";
-import { BLEServiceInterface, Device } from "@/services/ble-service";
+import { BatteryInfo, BlankDevice, BLEServiceInterface, Device } from "@/services/ble-service";
 import { blelog as log } from '@/services/log';
 import { BleError, Characteristic, DeviceId } from "react-native-ble-plx";
 
-/**
- * A mock Device object for testing purposes when BLE is not available.
- * It uses Partial<Device> to satisfy component requirements without implementing 
- * all class methods of react-native-ble-plx Device.
- */
-export const mockDevice: Device = {
-  id: 'DE:AD:BE:EF:00:01',
-  name: 'Sample BLE Heart Rate Monitor',
-  localName: 'HeartRate_Mock',
-  rssi: -58,
-  mtu: 23,
-  isConnectable: true,
-  manufacturerData: null,
-  serviceData: null,
-  serviceUUIDs: ['180d'],
-  txPowerLevel: null,
-  solicitedServiceUUIDs: null,
-  overflowServiceUUIDs: null,
-};
 
 /**
  * Generates an array of mock devices for UI testing.
@@ -33,7 +13,11 @@ export const generateMockDevices = (count: number): Device[] => {
     name: `Mock Device ${i + 1}`,
     localName: `MOCK_${i + 1}`,
     rssi: -50 - Math.floor(Math.random() * 40),
-  }));
+    isConnected: Math.random() > 0.5,
+    lastSeen: Date.now() - Math.floor(Math.random() * 10000000),
+
+
+  })) as Device[];
 };
 
 /**
@@ -49,12 +33,11 @@ export function BLEServiceMock (): BLEServiceInterface {
     let devices: Device[] = [];
     let isScanning = false;
 
-  
 
     function scanForDevices(onDeviceFound: (device: Device) => void, onError: (error: BleError) => void): void {
         log.info("BLEServiceMock: scanForDevices called");
         isScanning = true;
-        devices = generateMockDevices(5);
+        devices = generateMockDevices(10);
         for (const device of devices) {
           onDeviceFound(device as Device);
         };
@@ -89,10 +72,10 @@ export function BLEServiceMock (): BLEServiceInterface {
 
 
 
-    function connectToBattery(id: DeviceId, onBatteryUpdate: (data: BatteryData) => void): void {  
+    function connectToBattery(id: DeviceId, onBatteryUpdate: (device: Device) => void): void {  
       log.info("BLEServiceMock: connectToBattery called");    
       const interval = setInterval(() => {
-        const mockBatteryData: BatteryData = {  
+        const mockBatteryData: BatteryInfo = {  
           soc: Math.floor(Math.random() * 100),
           voltage: Math.floor(Math.random() * 100),
           current: Math.floor(Math.random() * 100),
@@ -106,7 +89,10 @@ export function BLEServiceMock (): BLEServiceInterface {
           // cycleCount: Math.floor(Math.random() * 1000)
 
         };
-        onBatteryUpdate(mockBatteryData);
+
+        const device = new BlankDevice(id);
+        device.batteryInfo = mockBatteryData;
+        onBatteryUpdate(device);
       }, 3000);
     } 
 
@@ -142,6 +128,8 @@ export function BLEServiceMock (): BLEServiceInterface {
     scanForDevices,
     stopScanning,
     getDevices,
-    connectToBattery
+    // monitorCharacteristic,
+    connectToBattery,
+    // disconnectFromBattery
   }; 
 }

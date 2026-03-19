@@ -44,3 +44,6 @@ app-example
 
 # general
 *.zip
+
+# VS Code
+/.vscode

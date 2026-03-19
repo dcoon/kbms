@@ -1,18 +1,91 @@
-import { BatteryData } from '@/constants/battery-types';
-import { MOCK_BATTERY_DATA } from '@/constants/mock-data';
 import { blelog as log } from '@/services/log';
 import * as ExpoDevice from 'expo-device';
 import { PermissionsAndroid, Platform } from 'react-native';
-import { decode } from 'react-native-base64';
-import { Device as BleDevice, BleError, BleManager, Characteristic, Descriptor, DeviceId, LogLevel, Service, UUID } from 'react-native-ble-plx';
+import base64 from 'react-native-base64';
+import { Device as BleDevice, DeviceId as BleDeviceId, BleError, BleManager, Characteristic, LogLevel } from 'react-native-ble-plx';
 
 // Standard Bluetooth GATT UUIDs
 const BATTERY_SERVICE_UUID = '180f';
 const BATTERY_LEVEL_CHAR_UUID = '2a19';
 
+const UUID_SERVICE = "0000ffe0-0000-1000-8000-00805f9b34fb";
+const UUID_NOTIFY = "0000ffe4-0000-1000-8000-00805f9b34fb";
+const UUID_RENAME = "0000ffe6-0000-1000-8000-00805f9b34fb";
+const UUID_WRITE = "0000ffe1-0000-1000-8000-00805f9b34fb";
 
-export type Device = Partial<BleDevice>;
+export type DeviceId = BleDeviceId;
 
+export type Device = {
+  id: DeviceId;
+  name: string | null;
+  localName: string | null;
+  rssi: number | null;
+  lastSeen: number;
+  isConnected: boolean;
+  isFavorite?: boolean;
+  batteryInfo?: BatteryInfo;
+}
+
+export type BatteryInfo = {
+  voltage: number;
+  current: number;
+  capacity: number;
+  temperature: number;
+  cycles: number;
+  soc: number;
+  status: 'Healthy' | 'Warning' | 'Critical';
+};
+
+export class BlankDevice implements Device {
+  id: DeviceId = "unknown";
+  name: string | null = "Unknown Device";
+  localName: string | null = null;
+  rssi: number | null = null;
+  lastSeen: number = Date.now();
+  isConnected: boolean = false;
+  batteryInfo?: BatteryInfo = undefined;
+
+  constructor(id: DeviceId) {
+    this.id = id;
+  } 
+}
+
+class BleDeviceWrapper implements Device {
+  _device: BleDevice;
+  
+  constructor(bleDevice: BleDevice) { 
+    this._device = bleDevice;
+  }
+
+  get id(): DeviceId {
+    return this._device.id;
+  }
+
+  get name(): string | null {
+    return this._device.name || this._device.localName || null;
+  }
+
+  get rssi(): number | null {
+    return this._device.rssi;
+  }
+
+  get lastSeen(): number {
+    return Date.now();
+  }
+
+  get batteryInfo(): BatteryInfo | undefined {
+    // This is a placeholder implementation. In a real implementation, you would read the battery characteristic from the device and parse it into a BatteryInfo object.
+    return undefined;
+  }
+
+  get isConnected(): boolean {
+    return false; // this._device.isConnected();
+  }
+
+  get localName(): string | null {
+    return this._device.localName || null;
+  }
+}
 
 export type BLEServiceInterface = {
   isScanning: boolean;
@@ -20,15 +93,15 @@ export type BLEServiceInterface = {
   stopScanning: () => void;
   getDevices: () => Device[];
   // monitorCharacteristic: (deviceId: string, serviceUUID: string, characteristicUUID: string, onUpdate: (error: Error | null , characteristic: Characteristic | null) => void) => void;
-  connectToBattery: (id: DeviceId,onBatteryUpdate: (data: BatteryData) => void) => void; 
+  connectToBattery: (id: DeviceId, onBatteryUpdate: (device: Device) => void) => void;
 }
 
 
 
- export function isBluetoothAvailable(): boolean {
-    const available =  ExpoDevice.isDevice && Platform.OS !== 'web';
-    return available;
-  }
+export function isBluetoothAvailable(): boolean {
+  const available = ExpoDevice.isDevice && Platform.OS !== 'web';
+  return available;
+}
 
 /**
  * BLE service implementation.
@@ -43,18 +116,18 @@ export type BLEServiceInterface = {
 export function BLEService(): BLEServiceInterface {
 
   let bleManager: BleManager;
-try {
+  try {
     bleManager = new BleManager();
     bleManager.setLogLevel(LogLevel.Verbose);
     bleManager.onStateChange((state) => {
       log.info("BLEService: BLE state changed to", state);
     }, true);
-  
-} catch (error) {
-    log.error("Failed to initialize BLE Manager: ", error);  
-}
-  
-  
+
+  } catch (error) {
+    log.error("Failed to initialize BLE Manager: ", error);
+  }
+
+
   let isScanning = false;
 
   function getDevices(): Device[] {
@@ -67,9 +140,9 @@ try {
 
 
 
-async function requestPermissionsAndroid(): Promise<boolean> {
+  async function requestPermissionsAndroid(): Promise<boolean> {
 
-  log.info("BLEService: Running on Android, requesting permissions...");
+    log.info("BLEService: Running on Android, requesting permissions...");
 
 
     if ((ExpoDevice.platformApiLevel ?? -1) >= 31) { // Android 12+
@@ -81,9 +154,9 @@ async function requestPermissionsAndroid(): Promise<boolean> {
       ]);
       log.debug("BLEService: Permissions result 2: ", granted);
       return granted['android.permission.BLUETOOTH_SCAN'] === PermissionsAndroid.RESULTS.GRANTED &&
-             granted['android.permission.BLUETOOTH_CONNECT'] === PermissionsAndroid.RESULTS.GRANTED &&
-             (granted['android.permission.ACCESS_FINE_LOCATION'] === PermissionsAndroid.RESULTS.GRANTED || 
-              granted['android.permission.ACCESS_FINE_LOCATION'] === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN);
+        granted['android.permission.BLUETOOTH_CONNECT'] === PermissionsAndroid.RESULTS.GRANTED &&
+        (granted['android.permission.ACCESS_FINE_LOCATION'] === PermissionsAndroid.RESULTS.GRANTED ||
+          granted['android.permission.ACCESS_FINE_LOCATION'] === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN);
     } else { // Android 11-
       log.info("BLEService: Android API level < 31, requesting ACCESS_FINE_LOCATION permission...");
       const granted = await PermissionsAndroid.request(
@@ -127,26 +200,26 @@ async function requestPermissionsAndroid(): Promise<boolean> {
     } else {
       log.warn("BLEService: Running on unknown platform", Platform.OS);
       return false;
-    }   
-    
+    }
+
   }
 
   async function scanForDevices(onDeviceFound: (device: Device) => void, onError: (error: BleError) => void) {
 
-   
+
 
     const permission = await requestPermissions();
-      if (!permission) {
-        log.error("Bluetooth permissions denied");
-        return;
-      } else {
-        log.info("Bluetooth permissions granted, starting scan...");
-        // startScanning(onDeviceFound, onError);
-      }
-    
+    if (!permission) {
+      log.error("Bluetooth permissions denied");
+      return;
+    } else {
+      log.info("Bluetooth permissions granted, starting scan...");
+      // startScanning(onDeviceFound, onError);
+    }
+
     log.info("BLEService: Starting device scan...");
     isScanning = true;
-    
+
     bleManager.startDeviceScan(null, null, (error, device) => {
       if (error) {
         onError(error);
@@ -154,7 +227,7 @@ async function requestPermissionsAndroid(): Promise<boolean> {
       }
       if (device && (device.name || device.localName)) {
         // this.discoveredDevices.set(device.id, device);
-        onDeviceFound(device);
+        onDeviceFound(new BleDeviceWrapper(device));
       }
     });
   }
@@ -164,120 +237,223 @@ async function requestPermissionsAndroid(): Promise<boolean> {
     bleManager.stopDeviceScan();
   }
 
-  async function connectToDevice(deviceId: string): Promise<Device> {
-      stopScanning();
-      return bleManager.connectToDevice(deviceId, { autoConnect: true });
-  }
+  // async function connectToDevice(deviceId: string): Promise<Device> {
+  //   stopScanning();
+  //   return bleManager.connectToDevice(deviceId, { autoConnect: true });
+  // }
 
-  async function disconnectFromDevice(deviceId: string) {
-    return bleManager.cancelDeviceConnection(deviceId);
-  }
+  // async function disconnectFromDevice(deviceId: string) {
+  //   return bleManager.cancelDeviceConnection(deviceId);
+  // }
 
-  async function getServicesForDevice(deviceId: string): Promise<Service[]> {
-    try {
-      const services = await bleManager.servicesForDevice(deviceId);
-      return services;
-    } catch (e) {
-      log.error('Failed to get services:', e);
-      throw e;
-    }
-  }
+  // async function getServicesForDevice(deviceId: string): Promise<Service[]> {
+  //   try {
+  //     const services = await bleManager.servicesForDevice(deviceId);
+  //     return services;
+  //   } catch (e) {
+  //     log.error('Failed to get services:', e);
+  //     throw e;
+  //   }
+  // }
 
-  function decodeBLEData(value: string | null) {
-    if (!value) return null;
-    const decodedValue = decode(value);
-    const buffer = new Uint8Array(decodedValue.length);
-    for (let i = 0; i < decodedValue.length; i++) {
-      buffer[i] = decodedValue.charCodeAt(i);
-    }
-    return buffer;
-  }
+  // function decodeBLEData(value: string | null) {
+  //   if (!value) return null;
+  //   const decodedValue = decode(value);
+  //   const buffer = new Uint8Array(decodedValue.length);
+  //   for (let i = 0; i < decodedValue.length; i++) {
+  //     buffer[i] = decodedValue.charCodeAt(i);
+  //   }
+  //   return buffer;
+  // }
 
-  async function characteristicsForDevice(deviceId: string, serviceUUID: string) {
-    try {
-      const characteristics = await bleManager.characteristicsForDevice(deviceId, serviceUUID);
-      return characteristics;
-    } catch (e) {
-      log.error('Failed to get characteristics:', e);
-      throw e;
-    }
-  }
+  // async function characteristicsForDevice(deviceId: string, serviceUUID: string) {
+  //   try {
+  //     const characteristics = await bleManager.characteristicsForDevice(deviceId, serviceUUID);
+  //     return characteristics;
+  //   } catch (e) {
+  //     log.error('Failed to get characteristics:', e);
+  //     throw e;
+  //   }
+  // }
 
-async function descriptorsForCharacteristic(deviceId: DeviceId, serviceUUID: UUID, characteristicUUID: UUID): Promise<Descriptor[]> {
-  try {
-    const descriptors = await bleManager.descriptorsForDevice(deviceId, serviceUUID, characteristicUUID);
-    return descriptors;
-  } catch (e) {
-    log.error('Failed to get descriptors:', e);
-    throw e;
-    }
-  }
-
-
-  function devicesToString(devices: Device[]): string {
-    return devices.map(d => `${d.name || 'Unknown'} (${d.id})`).join(', ');
-  }
+  // async function descriptorsForCharacteristic(deviceId: DeviceId, serviceUUID: UUID, characteristicUUID: UUID): Promise<Descriptor[]> {
+  //   try {
+  //     const descriptors = await bleManager.descriptorsForDevice(deviceId, serviceUUID, characteristicUUID);
+  //     return descriptors;
+  //   } catch (e) {
+  //     log.error('Failed to get descriptors:', e);
+  //     throw e;
+  //   }
+  // }
 
 
-  async function getDevice(id: DeviceId): Promise<Device | undefined> {
-    log.debug("Getting device with ID: ", id);
-    const devices = await bleManager.devices([id]);
-    
-    return devices.find(d => d && d.id === id);
+  // function devicesToString(devices: Device[]): string {
+  //   return devices.map(d => `${d.name || 'Unknown'} (${d.id})`).join(', ');
+  // }
 
-  } 
 
-  async function getConnectedDevice(id: DeviceId): Promise<Device | undefined> {
-    log.debug("Getting connected device with ID: ", id);
+  // async function getDevice(id: DeviceId): Promise<Device | undefined> {
+  //   log.debug("Getting device with ID: ", id);
+  //   const devices = await bleManager.devices([id]);
 
-    const device = await getDevice(id);
+  //   return devices.find(d => d && d.id === id);
 
-    return device?.isConnected ? device : device?.connect?.();
-  }
+  // }
 
-  async function getConnectedAndDiscoveredDevice(id: DeviceId): Promise<Device | undefined> {
+  // async function getConnectedDevice(id: DeviceId): Promise<Device | undefined> {
+  //   log.debug("Getting connected device with ID: ", id);
+
+  //   const device = await getDevice(id);
+
+  //   return device?.isConnected ? device : device?.connect?.();
+  // }
+
+  async function getConnectedAndDiscoveredDevice(id: DeviceId): Promise<BleDevice> {
     log.debug("Getting connected and discovered device with ID: ", id);
 
     const isDeviceConnected = await bleManager.isDeviceConnected(id);
-    log.debug("Is device connected? ", isDeviceConnected);
-    if(!isDeviceConnected) {    
+    // log.debug("Is device connected? ", isDeviceConnected);
+    if (!isDeviceConnected) {
       log.debug("Connecting to device with ID: ", id);
       await bleManager.connectToDevice(id, { autoConnect: true });
     }
 
-    log.debug("Calling discoverAllServicesAndCharacteristicsForDevice with ID: ", id);
+    // log.debug("Calling discoverAllServicesAndCharacteristicsForDevice with ID: ", id);
     return bleManager.discoverAllServicesAndCharacteristicsForDevice(id);
-      
-  } 
 
-  function monitorCharacteristic(deviceId: string, serviceUUID: string, characteristicUUID: string, onUpdate: (error: Error | null , characteristic: Characteristic | null) => void) {
+  }
+
+  async function dumpServicesForDevice(deviceId: string) {
+    const device = await getConnectedAndDiscoveredDevice(deviceId);
+    const info = {};
+
+    const services = await bleManager.servicesForDevice(deviceId);
+
+    for (const service of services) {
+      const service2 = { ...service, characteristics: [] as any[] };
+
+      Object.assign(info, { [service.uuid as keyof typeof info]: service2 });
+      const characteristics = await bleManager.characteristicsForDevice(deviceId, service.uuid);
+      for (const characteristic of characteristics) {
+        const characteristic2 = { ...characteristic, descriptors: [] as any[] };
+        service2.characteristics.push(characteristic2);
+        // Object.assign(service2, { [characteristic.uuid as keyof typeof service2]: characteristic2 });
+        if (characteristic.isReadable) {
+          const value = await bleManager.readCharacteristicForDevice(deviceId, service.uuid, characteristic.uuid);
+          characteristic2.value = value.value + " (" + base64.decode(value.value ? value.value : "") + ")";
+
+        }
+        const descriptors = await bleManager.descriptorsForDevice(deviceId, service.uuid, characteristic.uuid);
+        for (const descriptor of descriptors) {
+          const descriptor2 = { ...descriptor };
+          characteristic2.descriptors.push(descriptor2);
+          // Object.assign(characteristic2, { [descriptor.uuid as keyof typeof characteristic2]: descriptor2 });
+        }
+
+      }
+    }
+
+    log.debug("Device services and characteristics: ", JSON.stringify(info, null, 2));
+
+  }
+
+  function monitorCharacteristic(deviceId: string, serviceUUID: string, characteristicUUID: string, onUpdate: (error: Error | null, characteristic: Characteristic | null) => void) {
     log.info("Monitoring characteristic for device: ", deviceId, "serviceUUID: ", serviceUUID, "characteristicUUID: ", characteristicUUID);
 
     const device = getConnectedAndDiscoveredDevice(deviceId).then((device) => {
-      log.debug("Device found for monitoring: ", device?.id, "isConnected: ", device?.isConnected?.());
-      if (device) {
+      // log.debug("Device found for monitoring: ", device?.id, "isConnected: ", device?.isConnected?.());
+      if (device && device.id) {
+        dumpServicesForDevice(device.id);
         bleManager.monitorCharacteristicForDevice(deviceId, serviceUUID, characteristicUUID, onUpdate);
       }
     });
 
   }
 
+  function stringToBytes(str: string): Uint8Array {
+    const bytes = new Uint8Array(str.length);
+    for (let i = 0; i < str.length; i++) {
+      bytes[i] = str.charCodeAt(i);
+    }
+    return bytes;
+  }
 
-  function connectToBattery(id: DeviceId, onBatteryUpdate: (data: BatteryData) => void): void {  
-    log.info("BLEService: connectToBattery called");   
+  async function dumpCharacteristicNotifications(deviceId: string, serviceUUID: string, characteristicUUID: string) {
+
+    const device = await getConnectedAndDiscoveredDevice(deviceId);
+    log.info("dumpCharacteristicNotifications for device: ", device);
+
+    if (device && device.id) {
+      bleManager.monitorCharacteristicForDevice(deviceId, serviceUUID, characteristicUUID, (error, characteristic) => {
+        if (error) {
+          log.error("Error monitoring characteristic: ", error);
+          return;
+        } else if (characteristic) {
+          // log.info("Received characteristic update: ", characteristic.value);
+          // bleManager.readCharacteristicForDevice(deviceId, serviceUUID, characteristicUUID).then((char) => {
+          // onUpdate(characteristic);
+          if (characteristic.value) {
+            const value = base64.decode(characteristic.value);
+            // const arr = stringToBytes(value);
+            console.log(characteristic.value);
+          }
+          // console.log(characteristic.value + " (" + base64.decode(characteristic.value ? characteristic.value : "AAAA")  + ")");
+          // });
+        }
+      });
+    }
+  }
+  function connectToBattery(id: DeviceId, onBatteryUpdate: (device: Device) => void): void {
+    log.info("BLEService: connectToBattery called");
     bleManager.stopDeviceScan();
 
-    monitorCharacteristic(id, BATTERY_SERVICE_UUID, BATTERY_LEVEL_CHAR_UUID, (error, characteristic) => {
-      if (error) {
-        log.error("Error monitoring battery characteristic: ", error);
-        return;
-      } else if (characteristic) {
-        log.info("Received battery characteristic update: ", characteristic.value);
-        const data = MOCK_BATTERY_DATA; // Replace with actual parsing of characteristic.value
-        onBatteryUpdate(data);
-      }
-    });
+    // dumpServicesForDevice(id);
+    dumpCharacteristicNotifications(id, UUID_SERVICE, UUID_NOTIFY);
   }
+
+  // function connectToBattery2(id: DeviceId, onBatteryUpdate: (data: BatteryData) => void): void {
+  //   log.info("BLEService: connectToBattery called");
+  //   bleManager.stopDeviceScan();
+
+  //   // monitorCharacteristic(id, UUID_SERVICE, UUID_NOTIFY, (error, characteristic) => {
+  //   //   if (error) {
+  //   //     log.error("Error monitoring battery characteristic: ", error);
+  //   //     return;
+  //   //   } else if (characteristic) {
+  //   //     log.info("Received battery characteristic update: ", characteristic.value);
+  //   //     bleManager.readCharacteristicForDevice(id, UUID_SERVICE, UUID_NOTIFY).then((char) => {
+  //   //       log.info("Read battery characteristic: ", char.value);
+  //   //     });
+  //   //     const data = MOCK_BATTERY_DATA; // Replace with actual parsing of characteristic.value
+  //   //     onBatteryUpdate(data);
+  //   //   }
+  //   // });
+
+  //   const device = getConnectedAndDiscoveredDevice(id).then((device) => {
+
+  //     if (device && device.isConnected) {
+  //       log.info("Device is connected, starting to monitor battery characteristic...");
+  //       if (device && device.id) {
+  //         bleManager.monitorCharacteristicForDevice(device.id, UUID_SERVICE, UUID_NOTIFY, (error, characteristic) => {
+  //           if (error) {
+  //             log.error("Error monitoring battery characteristic: ", error);
+  //             return;
+  //           } else if (characteristic) {
+  //             log.info("Received battery characteristic update: ", characteristic.value);
+  //             bleManager.readCharacteristicForDevice(id, UUID_SERVICE, UUID_NOTIFY).then((char) => {
+  //               log.info("Read battery characteristic: ", char.value);
+
+  //             });
+  //           }
+  //         });
+
+  //       } else {
+  //         log.info("Device is not connected, attempting to connect...");
+  //       }
+
+  //     }
+  //   });
+  // }
 
   return {
     isScanning,
