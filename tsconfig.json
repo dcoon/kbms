@@ -2,6 +2,7 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "target": "ES6",
     "paths": {
       "@/*": [
         "./src/*"
@@ -9,10 +10,7 @@
       "@/assets/*": [
         "./assets/*"
       ]
-    },
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "target": "es2020",
+    }
   },
   "include": [
     "**/*.ts",

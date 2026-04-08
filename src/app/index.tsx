@@ -1,91 +1,47 @@
+import { List } from '@/components/list/list-item';
+import { ScreenLayout } from '@/components/ui/screen-layout';
+import { Favorite, Settings } from '@/services/settings/settings-service';
 import { router } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList } from 'react-native';
-import { Appbar, Card, List, TouchableRipple, useTheme } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAtom } from 'jotai';
+import { ScrollView } from 'react-native';
+import { DeviceId } from 'react-native-ble-plx';
+import { Card, List as PaperList, TouchableRipple } from 'react-native-paper';
 
-import { useBleContext } from '@/components/ble-provider';
-import { DeviceCard } from '@/components/device-card';
-import { EventType, useEventBusContext } from '@/components/event-bus-provider';
-import { useSettingsContext } from '@/components/settings-provider';
-import { UserSettings } from '@/constants/user-settings';
-import { Device, DeviceId } from '@/services/ble-service';
-import { uilog as log } from '@/services/log';
+import { DeviceListItem } from '@/components/ble/device-list-item';
+import { isBluetoothAvailable } from '@/services/ble/ble-types';
+import log from '@/services/log/log-service';
 
 
 
 
-export default function DashboardScreen() {
-  const theme = useTheme();
-  theme.dark = true;
+const LOG_SRC = "HomeScreen";
 
-  const settings = useSettingsContext<UserSettings>();
-  const ble = useBleContext();
-  const eventBus = useEventBusContext();
+function onDevicePress(device: DeviceId | any) {
+  // Extract ID if a device object is passed (as per DeviceListItem)
+  const id = typeof device === 'string' ? device : device?.id;
+  const LOG_PREFIX = LOG_SRC + ": onDevicePress";
+  if (id) {
 
-  const [favorites, setFavorites] = useState<Device[]>([]);
+    log.debug(LOG_PREFIX, "called with device: ", id);
 
-  // const initializeFavorites = useEffect(() => {
-  //   if (settings?.favorites) {
-  //   log.debug("HomeScreen: Initializing favorites from settings: ", settings.favorites);
-
-  //     const favoriteDevices = settings.favorites.map((favorite) => { const d = new Device({id: favorite.id, name: favorite.name}); d.isFavorite = true; return d; }); // Create Device objects with isFavorite set to true
-  //     setFavorites(favoriteDevices);
-  //   }
-  // }, [settings]);
-
-
-  const subscribeToNotifications = useEffect(() => {
-    const subscription = eventBus && eventBus.subscribe((notification) => {
-      log.debug("Received notification: ", notification);
-      // Handle the notification as needed
-      if (notification.type === EventType.SettingsChanged) {
-        const [key, value, newSettings] = notification.data;
-        onSettingsChanged(key, value, newSettings);
-      }
+    router.navigate({
+      pathname: '/devices/[deviceid]/battery',
+      params: { deviceid: id }
     });
-
-    return () => {
-      subscription?.unsubscribe();
-    };
-  }, [eventBus]);
-
-  const onSettingsChanged = useCallback((key?: string, value?: any, newSettings?: UserSettings) => {
-    log.debug("onSettingsChanged: ", key, value, newSettings);
+  }
+}
 
 
-    const newFavorites = key === 'favorites' && value !== undefined ? value : newSettings?.favorites;
-
-    if(newFavorites !== favorites) {
-      setFavorites(newFavorites);
-    }
-
-
-  }, []);
-
-
-  const onDevicePress = (deviceId: DeviceId) => {
-    log.debug("onDevicePress called with device: ", deviceId);
-
-    log.debug(`Navigating to device detail screen for device ID: ${deviceId}`);
-    router.push({
-      pathname: '/devices/[id]',
-      params: {
-        id: deviceId ?? '',
-      }
-    })
-  };
-
-
-  const ListEmptyComponent = () => (
+function FavoriteListEmptyComponent() {
+  return (
     <TouchableRipple onPress={() => router.push('/devices')}>
       <Card>
         <Card.Title title="No favorite devices yet" />
         <Card.Content>
-          <List.Item
+          <PaperList.Item
             title="Add a device"
             description="Go to the devices tab to add your favorite devices here."
-            left={() => <List.Icon icon="heart-outline" />}
+            left={() => <PaperList.Icon icon="heart-outline" />}
             right={() => (
               <List.Icon icon="arrow-right" />
             )}
@@ -94,42 +50,77 @@ export default function DashboardScreen() {
       </Card>
     </TouchableRipple>
   );
+}
 
+
+function FavoritesAccordion() {
+
+  const [favorites] = useAtom<Favorite[]>(Settings.favorites);
 
   return (
-    <SafeAreaView>
-      <Appbar.Header>
-        <Appbar.Content title="Home " />
-      </Appbar.Header>
+    <List.Accordion title="Favorites"
+      id="favorites"
+      description="Favorite devices for quick access"
+      icon="devices"
+      data={favorites}
+      hideIfNoData={false}
+      keyExtractor={(item: Favorite) => item.id}
+      renderItem={(item) => (<DeviceListItem device={item.item} onDevicePress={onDevicePress} />)}
+      listEmptyComponent={FavoriteListEmptyComponent}
+    >
+    </List.Accordion>
+  );
+}
 
-      <List.Section>
-        <List.Subheader>System Overview</List.Subheader>
-        <List.Item
-          title="All Batteries Status"
-          description="Placeholder for fancy graphs and stuff"
-          left={() => <List.Icon icon="battery" />}
-        />
 
-      </List.Section>
+function HomeSummaryAccordion() {
+  return (
 
-      <List.Section>
-        <List.Subheader>Favorites</List.Subheader>
-      </List.Section>
-
-      <FlatList
-        data={favorites}
-        renderItem={({ item }) => (
-          <DeviceCard
-            device={item}
-            isFavorite={true}
-            onDevicePress={onDevicePress}
-          />
-
-        )}
-        keyExtractor={(item, index) => item?.id || String(index)}
-        ListEmptyComponent={ListEmptyComponent}
+    <List.Section title="System Overview">
+      <PaperList.Item
+        title="All Batteries Status"
+        description="Placeholder for fancy graphs and stuff"
+        left={() => <List.Icon icon="battery" />}
       />
+    </List.Section>
+  );
+}
 
-    </SafeAreaView>
+
+function HelpOnBluetoothUnsupportedDevices() {
+
+  if (isBluetoothAvailable()) {
+    return null;
+  }
+
+  return (
+    <List.Accordion title="Bluetooth Unsupported" id="help" description="Bluetooth is not supported on this device" >
+      <List.Item title="Using Mock Data" description="Using mock data for testing purposes only" icon="help-circle-outline" />
+      <List.Item title="Battery" description="Devices named Battery can return battery data" icon="battery" />
+      <List.Item title="Devices" description="Devices named Device are not batteries" icon="devices" />
+      <List.Item title="Connection Errors" description="Clicking on devices with (will cause connection errors) in their name will intentionally cause connection errors" icon="alert-circle" />
+
+    </List.Accordion>
+  );
+}
+
+
+export function HomeView() {
+  return (    <ScrollView>
+          <List.AccordionGroup>
+            <HomeSummaryAccordion />
+            <FavoritesAccordion />
+            <HelpOnBluetoothUnsupportedDevices />
+          </List.AccordionGroup>
+        </ScrollView>
+  );
+}
+
+export default function HomeScreen() {
+
+  return (
+    <ScreenLayout title="Home">
+        <HomeView />
+    </ScreenLayout>
   );
 }

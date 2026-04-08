@@ -18,10 +18,17 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.kbms"
+      "package": "io.github.dcoon.kbms",
+      "permissions": [
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.BLUETOOTH_CONNECT"
+      ]
     },
     "web": {
-      "output": "single",
+      "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -29,9 +36,9 @@
       [
         "react-native-ble-plx",
         {
-          "isBackgroundEnabled": true,
+          "isBackgroundEnabled": false,
+          "neverForLocation": false,
           "modes": [
-            "peripheral",
             "central"
           ],
           "bluetoothAlwaysPermission": "Allow $(PRODUCT_NAME) to connect to bluetooth devices"
@@ -41,16 +48,44 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
+          "image": "./assets/images/icon.png",
+          "dark": {
+            "backgroundColor": "#208AEF",
+            "image": "./assets/images/icon.png",
+          },
+          "imageWidth": 200,
+        }
+      ],
+      [
+        "expo-file-system",
+        {
+          "supportsOpeningDocumentsInPlace": true,
+          "enableFileSharing": true
+        }
+      ],
+      [
+        "expo-sharing",
+        {
+          "ios": {
+            "enabled": true,
+            "activationRule": {
+              "supportsImageWithMaxCount": 5
+            }
+          },
           "android": {
-            "image": "./assets/images/splash-icon.png",
-            "imageWidth": 76
+            "enabled": true,
           }
         }
-      ]
+      ],
+      "expo-image",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "ios": {
+      "bundleIdentifier": "io.github.dcoon.kbms"
     }
   }
 }

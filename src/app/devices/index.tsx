@@ -1,227 +1,242 @@
-import { Device, useBleContext } from '@/components/ble-provider';
-import { uilog as log } from '@/services/log';
-import { router } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { FlatList } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { DeviceListItem } from '@/components/ble/device-list-item';
+import { IsScanningAction } from '@/components/ui/app-topbar';
+import { LoadableGuard } from '@/components/ui/loadable';
+import { ScreenLayout } from '@/components/ui/screen-layout';
+import { Bluetooth } from '@/services/ble/ble-service';
+import { Device } from '@/services/ble/ble-types';
+import { uilog as log } from '@/services/log/log-service';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useAtom } from 'jotai';
+import { useCallback, useMemo, useState } from 'react';
+import { FlatList, View } from 'react-native';
+import { Button, SegmentedButtons, Text } from 'react-native-paper';
 
-import { Appbar, Button, useTheme } from 'react-native-paper';
 
-import { DeviceCard } from '@/components/device-card';
-import DeviceListHeader, { SortButtonDefinition, SortKey, SortOrder } from '@/components/device-list-header';
-import { EventType, useEventBusContext } from '@/components/event-bus-provider';
-import { useSettingsContext } from '@/components/settings-provider';
-import { DeviceFavorite, UserSettings } from '@/constants/user-settings';
-import { DeviceId } from '@/services/ble-service';
-
-// type SortBy = 'name' | 'rssi' | 'lastSeen';
-// type SortOrder = 'asc' | 'desc';
 const LOG_SRC = "DevicesScreen";
 
-const sortButtons: SortButtonDefinition[] = [
-  { sortKey: 'name', label: 'Name' },
-  { sortKey: 'rssi', label: 'Signal' },
-  { sortKey: 'id', label: 'ID' },
+
+class SortOption {
+  value: string = "";
+  ascending: boolean = true;
+}
+
+const sortButtons = [
+  { value: 'name', label: 'Name' },
+  { value: 'rssi', label: 'Signal' },
+  { value: 'id', label: 'ID' },
 ];
 
-export default function DevicesScreen() {
-  const ble = useBleContext();
-  const settings = useSettingsContext<UserSettings>();
-  const eventBus = useEventBusContext();
-  const theme = useTheme();
+class FilterBy {
+  knownBatteryTypesOnly: boolean = false;
+}
 
 
-  const [devices, setDevices] = useState<Device[]>([]);
-  const [favorites, setFavorites] = useState<DeviceFavorite[]>([]);
-  const [isScanning, setIsScanning] = useState<boolean>(false);
-  const [sortKey, setSortKey] = React.useState<SortKey>('name');
-  const [sortOrder, setSortOrder] = React.useState<SortOrder>('asc');
-  const [sortFilter, setSortFilter] = React.useState<string>('all');
-
-  // const initializeFavorites = useEffect(() => {
-  //   log.debug("DevicesScreen: Initializing favorites from settings: ", settings?.favorites);
-  //   if (settings?.favorites) {
-
-  //     const favoriteDevices = settings.favorites.map((favorite) => { const d = new Device({ id: favorite.id, name: favorite.name }); d.isFavorite = true; return d; }); // Create Device objects with isFavorite set to true
-  //     setFavorites(favoriteDevices);
-  //   }
-  // }, [settings]);
-
-  const subscribeToNotifications = useEffect(() => {
-    const subscription = eventBus && eventBus.subscribe((notification) => {
-      // log.debug("Received notification: ", notification);
-      // Handle the notification as needed
-      if (notification.type === EventType.DeviceScanned) {
-        const device = notification.data as Device;
-        onDeviceFound(device);
-      } else if (notification.type === EventType.SettingsChanged) {
-        const [key, value, newSettings] = notification.data;
-        onSettingsChanged(key, value, newSettings);
-      }
-
-    });
-
-    return () => {
-      subscription?.unsubscribe();
-    };
-  }, [eventBus]);
-
-  const sortedDevices = useMemo(() => {
-
-    return [...devices]
-    .filter(device => {
-      if (sortFilter === 'all') {
-        return true;
-      }
-
-      log.error("TODO: filter by known service uuids");
-      return favorites.findIndex(fav => fav.id === device.id) !== -1;
-    })
-    .sort((a, b) => {
-
-      let valueA = a[sortKey as keyof Device];
-      let valueB = b[sortKey as keyof Device];
-
-      // log.debug(`Sorting by ${sortKey} in ${sortOrder} order. Comparing ${valueA} and ${valueB}`);
-
-      if (valueA && valueB) {
-        if (sortOrder === 'asc') {
-          return valueA < valueB ? -1 : valueA > valueB ? 1 : 0;
-
-        } else {
-          return valueA > valueB ? -1 : valueA < valueB ? 1 : 0;
-        }
-      } else {
-        return 0;
-      }
-    });
-
-  }, [devices, sortKey, sortOrder, sortFilter, favorites]);
-
-  const onSort = (key: SortKey, order: SortOrder, filter: string) => {
-    log.debug("Sorting by", key, order, filter, sortFilter);
-
-    if (sortKey !== key) {
-      setSortKey(key);
-    } else if (filter !== sortFilter) {
-      setSortFilter(filter);
-    } else {
-      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
-
-    }
-
-  };
-
-
-  const onDeviceFound = useCallback((device: Device) => {
-    log.info(LOG_SRC, "onDeviceFound called with device: ", device.id, device.name);
-
-
-    setDevices(prevDevices => {
-      const existingDeviceIndex = prevDevices.findIndex((d) => d.id === device.id);
-      if (existingDeviceIndex < 0) {
-        log.debug("Adding new device to list: ", device.id, device.name);
-        return [...prevDevices, device] as Device[];
-      } else {
-        log.debug("Device already known, updating: ", device.id, device.name);
-        const updatedDevices = [...prevDevices];
-        updatedDevices[existingDeviceIndex] = device;
-        return updatedDevices;
-      }
-    });
-
-  }, []);
-
-  const onSettingsChanged = useCallback((key?: string, value?: any, newSettings?: UserSettings) => {
-    log.debug("onSettingsChanged: ", key, value, newSettings);
-
-
-    const newFavorites = key === 'favorites' && value !== undefined ? value : newSettings?.favorites;
-
-    if (newFavorites !== favorites) {
-      setFavorites(newFavorites);
-    }
-
-  }, []);
-
-
-
-  const onScanButtonPress = (): void => {
-
-    log.info('Scan button pressed. Current scanning state:', isScanning);
-
-    if (isScanning) {
-      setIsScanning(false);
-      ble?.stopScanning()
-    } else {
-      setIsScanning(true);
-      ble?.scanForDevices()
-    }
-
-  }
-
-  const onDevicePress = useCallback((deviceId: DeviceId) => {
-    log.info('onDevicePress called with device ID:', deviceId);
-
-    if (deviceId) {
-      ble?.stopScanning();
-
-      setIsScanning(false);
-      router.push({
-        pathname: '/devices/[id]',
-        params: {
-          id: deviceId,
-        }
-      })
-    } else {
-      log.warn('Device ID is missing, cannot navigate to detail screen');
-    }
-  }, []);
-
-
-
-  function ListHeader() {
-    return (
-      <DeviceListHeader
-        buttons={sortButtons}
-        sortKey={sortKey}
-        sortOrder={sortOrder}
-        onSort={onSort}
-        filter={sortFilter}
-      />
-    );
-  }
-
-  function ListEmptyComponent() {
-    return (
-      <Button>No devices found</Button>
-    );
-  }
+function SortButtons({ sortBy, onSortChange }: { sortBy: SortOption, onSortChange: (value: string) => void }) {
 
   return (
-    <SafeAreaView>
-      <Appbar.Header>
-        <Appbar.Content title="Devices" />
-        <Appbar.Action icon={isScanning ? "stop" : "sync"} onPress={onScanButtonPress} />
-        <Appbar.BackAction onPress={() => router.back()} />
-      </Appbar.Header>
+    <SegmentedButtons
+      value={sortBy.value}
+      onValueChange={value => { }}
+      density="regular"
+      buttons={
+        sortButtons.map(button => ({
+          label: button.label,
+          value: button.value,
+          icon: sortBy.value === button.value ? (sortBy.ascending ? 'arrow-up' : 'arrow-down') : undefined,
+          onPress: () => onSortChange(button.value)
+        }))
+      }
+    />
+  );
+}
 
-      <FlatList
-        data={sortedDevices}
-        renderItem={({ item }) => <DeviceCard
-          device={item}
-          isFavorite={favorites.some(favorite => favorite.id === item.id)}
-          onDevicePress={onDevicePress}
-        />}
-        keyExtractor={item => item.id}
-        refreshing={isScanning}
-        ListEmptyComponent={ListEmptyComponent}
-        ListHeaderComponent={ListHeader}
+// function FilterButtons({ filterBy, onFilterChange }: { filterBy: FilterBy, onFilterChange: (value: FilterBy) => void }) {
 
-      />
+//   const filterIcon = filterBy.knownBatteryTypesOnly ? 'filter-off' : 'filter';
 
-    </SafeAreaView>
+//   return (
+//     // TODO: fix filter logic
+//     <Button mode="outlined" disabled={true}
+//       icon={filterIcon}
+//     >
+//       Filter
+//     </Button>
+//   );
+
+// }
+
+function ListHeaderComponent({ sortBy, onSortChange, filterBy, onFilterChange }: { sortBy: SortOption, onSortChange: (value: string) => void, filterBy?: FilterBy, onFilterChange?: (value: FilterBy) => void }) {
+  return (
+
+
+    <View style={{ flex: 1, flexDirection: 'row', padding: 8}}>
+      {/* <FilterButtons filterBy={filterBy} onFilterChange={onFilterChange} /> */}
+      <SortButtons sortBy={sortBy} onSortChange={onSortChange} />
+    </View>
+  );
+
+}
+
+function StartScanningButton() {
+  const [isScanningLoadable, setIsScanning] = useAtom(Bluetooth.scanning);
+  const isScanning = isScanningLoadable.state === "hasData" && isScanningLoadable.data as boolean;
+
+  // const LOG_PREFIX = LOG_SRC + ": StartScanningButton";
+  const msg = isScanning ? "Stop Scanning" : "Start Scanning";
+
+  return (
+    <LoadableGuard loadable={isScanningLoadable as any}>
+      <Button mode="outlined" onPress={() => {
+        setIsScanning(!isScanning);
+      }}>
+        {msg}
+      </Button>
+    </LoadableGuard>
+  );
+
+
+}
+
+function ListEmptyComponent() {
+
+
+  return (
+    <View style={{ marginTop: 32, alignItems: 'center' }}>
+      <Text variant="bodyMedium" style={{ marginBottom: 16 }}>
+        No devices found.
+      </Text>
+      <StartScanningButton />
+    </View>
+  );
+
+}
+
+
+
+function AppBarActions({ children }: { children?: React.ReactNode }) {
+
+  return (
+    <IsScanningAction />
   );
 }
 
 
+function DeviceList() {
+  const router = useRouter();
+  const [devices] = useAtom(Bluetooth.devices);
+  // const [developerMode] = useAtom(Settings.developerMode);
+  
+  const [sortBy, setSortBy] = useState<SortOption>(new SortOption());
+
+
+  // TODO: implement filter logic
+  // const [filterBy, setFilterBy] = useState<FilterBy>(new FilterBy());
+
+
+  const sortedDevices = useMemo(() => {
+    // const filteredDevices = filterBy.knownBatteryTypesOnly ? batteries : devices;
+    // const devicesToBeSorted = filteredDevices ? filteredDevices : [];
+    const sorted = [...devices].sort((a, b) => {
+
+      const sortOrder = sortBy.ascending ? 1 : -1;
+      switch (sortBy.value) {
+        case 'rssi':
+          const WORST_RSSI = -999;
+          const arssi = a.rssi ?? WORST_RSSI;
+          const brssi = b.rssi ?? WORST_RSSI;
+          return (arssi - brssi) * sortOrder;
+        case 'id':
+          const aid = a.id ?? '';
+          const bid = b.id ?? '';
+          return aid.localeCompare(bid) * sortOrder;
+        case 'name':
+        default:
+          const aname = a.name || a.localName || '';
+          const bname = b.name || b.localName || '';
+          return aname.localeCompare(bname) * sortOrder;
+      }
+    });
+    return sorted;
+  }, [devices, sortBy]);
+
+
+
+  function onSortChange(value: string) {
+    if (value === sortBy.value) {
+      // If the same sort option is selected, toggle ascending/descending
+      const newAscending = !sortBy.ascending;
+      // log.debug(LOG_SRC, ": Toggling sort order", sortBy, newAscending);
+      setSortBy((options) => ({ ...options, ascending: newAscending }));
+    } else {
+      // log.debug(LOG_SRC, ": Changing sort option to ", value, sortBy);
+      // If a different sort option is selected, set it as the new sort option
+      setSortBy((options) => ({ ...options, value: value }));
+
+    }
+  }
+
+  function onDevicePress(device: Device): void {
+
+    const LOG_PREFIX = LOG_SRC + ": onDevicePress";
+
+    log.debug(LOG_PREFIX, "called with device: ", device.id);
+
+    if (device.id) {
+
+      router.navigate({
+        pathname: "/devices/[deviceid]",
+        params: { deviceid: device.id }
+      });
+    }
+  }
+
+
+  return (
+    <FlatList
+      data={sortedDevices}
+      keyExtractor={(item) => item.id !== undefined ? item.id : ''}
+      renderItem={({ item }) => (
+        <DeviceListItem device={item} onDevicePress={() => onDevicePress(item)} />
+      )}
+      ListHeaderComponent={() => (
+        <ListHeaderComponent sortBy={sortBy} onSortChange={onSortChange} />
+      )}
+      ListEmptyComponent={() => (
+        <ListEmptyComponent />
+      )}
+    />
+
+  );
+
+}
+
+
+const StopScanningOnLeave = () => {
+  const [isScanningLoadable, setIsScanning] = useAtom(Bluetooth.scanning);
+
+  useFocusEffect( 
+    useCallback(() => {
+      const LOG_PREFIX = LOG_SRC + ": StopScanningOnLeave";
+      log.debug(LOG_PREFIX, ": called");
+      return () => {
+        log.debug(LOG_PREFIX, ": cleanup called");
+        setIsScanning(false);
+      };
+    }, [])
+  );
+  return null;
+}
+
+export default function DevicesScreen() {
+
+  return (
+
+    <ScreenLayout title="Devices"
+      actions={<AppBarActions />}
+    >
+      <StopScanningOnLeave />
+      <DeviceList />
+    </ScreenLayout>
+
+  );
+}
