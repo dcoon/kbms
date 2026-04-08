@@ -13,7 +13,7 @@ https://expo.dev/accounts/davidcoon/projects/kbms/builds/db17118e-b45d-47b0-86ef
 
  2. Run the app
 
-![[icon.png|59]]
+![Icon](assets/images/icon.png)
 
 
 On the Devices press the play icon in the upper right corner to start scanning for nearby batteries.  Click on a KiloVault battery. You MAY need to press play again to connect to the battery.  Graphs and data should appear within a few seconds.
