@@ -3,20 +3,16 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo run:android",
-    "android-clean": "expo run:android --no-build-cache",
-    "ios": "expo run:ios",
-    "web": "expo start --web",
-    "web-clear-cache": "expo start --web --clear",
+    "start": "cross-env APP_VARIANT=development npx expo start",
+    "android": "cross-env APP_VARIANT=development npx expo run:android",
+    "android-no-cache": "cross-env APP_VARIANT=development npx expo run:android --no-build-cache",
+    "ios": "cross-env APP_VARIANT=development npx expo run:ios",
+    "web": "cross-env APP_VARIANT=development npx expo start --web",
+    "web-no-cache": "cross-env APP_VARIANT=development npx expo start --web --clear",
     "lint": "expo lint",
-    "clean-npm": "rm -rf node_modules/ .expo package-lock.json && npm cache clean --force",
-    "build": "npm install && expo prebuild --clean && expo run:android",
-    "clean-start": "expo start -c",
     "doctor": "expo doctor",
     "help": "expo --help",
-    "clean": "rm -rf node_modules && rm -f package-lock.json && rm -rf android"
+    "clean": "cross-env APP_VARIANT=development rm -rf node_modules && rm -f package-lock.json && rm -rf .expo && rm -rf android && rm -rf ios"
   },
   "dependencies": {
     "@craftzdog/react-native-buffer": "^6.1.1",
@@ -27,6 +23,7 @@
     "date-fns": "^4.1.0",
     "expo": "~55.0.12",
     "expo-constants": "~55.0.6",
+    "expo-dev-client": "~55.0.23",
     "expo-device": "~55.0.13",
     "expo-document-picker": "~55.0.12",
     "expo-file-system": "~55.0.14",
@@ -64,6 +61,7 @@
     "@babel/plugin-transform-class-properties": "^7.28.6",
     "@types/react": "~19.2.2",
     "@types/react-native-base64": "^0.2.2",
+    "cross-env": "^10.1.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~55.0.0",
     "typescript": "~5.9.2"

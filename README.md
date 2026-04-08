@@ -1,50 +1,48 @@
-# Welcome to your Expo app 👋
+# Welcome to the KBMS project 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+KBMS is a mobile app to monitor and configure KiloVault HLX+ LiFePO4 batteries. It is a replacement for the now defunct KiloVault app. It is free and open source. KBMS 
 
-## Get started
+KBMS is still in its early stages and hasn't been submitted to app stores yet. But there is an early preview build available for testing (Android only).
 
-1. Install dependencies
+## Get the app
 
-   ```bash
-   npm install
-   ```
+1. Install the Android test build
 
-2. Start the app
+![[Pasted image 20260408134912.png|257]]
+https://expo.dev/accounts/davidcoon/projects/kbms/builds/db17118e-b45d-47b0-86ef-d49a5e648566
 
-   ```bash
-   npx expo start
-   ```
+ 2. Run the app
 
-In the output, you'll find options to open the app in a
+![[icon.png|59]]
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+On the Devices press the play icon in the upper right corner to start scanning for nearby batteries.  Click on a KiloVault battery. You MAY need to press play again to connect to the battery.  Graphs and data should appear within a few seconds.
 
-## Get a fresh project
+3. Troubleshooting
 
-When you're ready, run:
+Information and error messages will popup at the bottom of the screen.  The two most common are Bluetooth isn't on and Can't connect to device.  If you can't connect to a nearby battery or it doesn't show up when scanning on the Devices tab, try turning Bluetooth off and on again. 
 
-```bash
-npm run reset-project
-```
+If all else fails, go to Settings, change the Log Level to Info or Debug, reproduce the error, and Share the logs on the [discussion group](https://github.com/dcoon/kbms/discussions).
+## Contribute
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+1. Artwork
 
-## Learn more
+Icons, splash screens, graphs...all are welcome. Submit a pull request or post to the discussion group. 
 
-To learn more about developing your project with Expo, look at the following resources:
+2. Translations
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Internationalization is on the short term roadmap. We'll need help translating text and icons.
 
+3. Development
+
+This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app) and written in Typescript. Pull the repo and build using standard Expo tools. Submit a pull request with new features and fixes. If you need help with architecture, post questions in the discussions. 
 ## Join the community
 
-Join our community of developers creating universal apps.
+Join our community of developer~~s~~ and battery owners.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- [Wiki]([https://docs.expo.dev/develop/development-builds/introduction/](https://github.com/dcoon/kbms/wiki))
+- [Discussions](https://github.com/dcoon/kbms/discussions)
+- [Issues]([https://docs.expo.dev/workflow/ios-simulator/](https://github.com/dcoon/kbms/issues))
+
+
+

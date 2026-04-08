@@ -8,14 +8,14 @@
     "scheme": "kbms",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "bundleIdentifier": "io.github.dcoon.kbms"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundImage": "./assets/images/icon.png",
+        "monochromeImage": "./assets/images/icon.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "io.github.dcoon.kbms",
@@ -24,12 +24,15 @@
         "android.permission.BLUETOOTH_ADMIN",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.BLUETOOTH_SCAN",
-        "android.permission.BLUETOOTH_CONNECT"
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET"
       ]
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/icon.png"
     },
     "plugins": [
       "expo-router",
@@ -51,9 +54,9 @@
           "image": "./assets/images/icon.png",
           "dark": {
             "backgroundColor": "#208AEF",
-            "image": "./assets/images/icon.png",
+            "image": "./assets/images/icon.png"
           },
-          "imageWidth": 200,
+          "imageWidth": 200
         }
       ],
       [
@@ -73,7 +76,7 @@
             }
           },
           "android": {
-            "enabled": true,
+            "enabled": true
           }
         }
       ],
@@ -84,8 +87,28 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "ios": {
-      "bundleIdentifier": "io.github.dcoon.kbms"
+    "extra": {
+      "router": {},
+      "eas": {
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "expo-sharing-extension",
+                  "bundleIdentifier": "io.github.dcoon.kbms.expo-sharing-extension",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.io.github.dcoon.kbms"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "projectId": "2072ccb2-ece5-42c9-bcac-5fb39dc3f13b"
+      }
     }
   }
 }

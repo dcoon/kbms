@@ -209,6 +209,8 @@ function InformationAccordion({ device }: { device: Device }) {
 function CellDataAccodion({ device }: { device: Device }) {
   return (
     <List.Accordion title="Cell Data" id="cell-data" description="Cell Data" icon="information-outline">
+      <List.Item title="Not Implemented" description="Cell data isn't implemented yet" icon="battery-high" value={13.6} />
+
       <List.Item title="Cell 1 Data" description="Cell Data V" icon="battery-high" value={13.6} />
 
     </List.Accordion>
