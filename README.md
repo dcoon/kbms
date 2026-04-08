@@ -1,9 +1,10 @@
 # Welcome to the KBMS project 👋
 
-KBMS is a mobile app to monitor and configure KiloVault HLX+ LiFePO4 batteries. It is a replacement for the now defunct KiloVault app. It is free and open source. KBMS 
+KBMS is a mobile app to monitor and configure KiloVault HLX+ LiFePO4 batteries. It is a replacement for the now defunct KiloVault app. It is free and open source. 
 
 KBMS is still in its early stages and hasn't been submitted to app stores yet. But there is an early preview build available for testing (Android only).
-
+ Expect bugs! Check the discussion group for known issues and workarounds. 
+ 
 ## Get the app
 
 1. Install the Android test build
@@ -11,9 +12,11 @@ KBMS is still in its early stages and hasn't been submitted to app stores yet. B
 ![Text Build QR Code](assets/images/test-build-qr-code.png)
 https://expo.dev/accounts/davidcoon/projects/kbms/builds/db17118e-b45d-47b0-86ef-d49a5e648566
 
+Click Install on the build page to download; open with apk installer;  then say Yes or Allow to all the prompts. Be aware, you'll be side loading an app on your device without review by Google. Make sure you trust this project first.
+
  2. Run the app
 
-On the Devices press the play icon in the upper right corner to start scanning for nearby batteries.  Click on a KiloVault battery. You MAY need to press play again to connect to the battery.  Graphs and data should appear within a few seconds.
+On the Devices tab,  press the play icon in the upper right corner to start scanning for nearby batteries.  Click on a KiloVault battery. You MAY need to press play again to connect to the battery.  Graphs and data should appear within a few seconds.
 
 3. Troubleshooting
 
