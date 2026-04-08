@@ -8,13 +8,10 @@ KBMS is still in its early stages and hasn't been submitted to app stores yet. B
 
 1. Install the Android test build
 
-![[Pasted image 20260408134912.png|257]]
+![Text Build QR Code](assets/images/test-build-qr-code.png)
 https://expo.dev/accounts/davidcoon/projects/kbms/builds/db17118e-b45d-47b0-86ef-d49a5e648566
 
  2. Run the app
-
-![Icon](assets/images/icon.png)
-
 
 On the Devices press the play icon in the upper right corner to start scanning for nearby batteries.  Click on a KiloVault battery. You MAY need to press play again to connect to the battery.  Graphs and data should appear within a few seconds.
 
