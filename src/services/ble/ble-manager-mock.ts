@@ -248,6 +248,12 @@ export class BleManagerMock implements BleManager {
     log.info(LOG_PREFIX, "Subscribing to notifications ", deviceIdentifier, serviceUUID, characteristicUUID);
 
     const characteristic = this._characteristicForDevice(deviceIdentifier, serviceUUID, characteristicUUID) as MockCharacteristic;
+
+    if (!characteristic) {
+      log.warn(LOG_PREFIX, "Characteristic not found: ", deviceIdentifier, serviceUUID, characteristicUUID);
+      throw new Error("Characteristic not found: " + deviceIdentifier + ", service " + serviceUUID + ", characteristic " + characteristicUUID);
+    }
+
     characteristic.isNotifying = true;
 
 

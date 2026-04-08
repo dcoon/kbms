@@ -184,7 +184,7 @@ function DeviceList() {
     if (device.id) {
 
       router.navigate({
-        pathname: "/devices/[deviceid]",
+        pathname: "/devices/[deviceid]/battery",
         params: { deviceid: device.id }
       });
     }

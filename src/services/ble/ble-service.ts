@@ -461,7 +461,7 @@ const descriptors = atomFamily(
 // characteristic value
 
 
-const characteristicValueAsync = atomFamily((params : CharacteristicIdentifier) => atomWithRefresh(
+const characteristicValueAsync = atomFamily((params: CharacteristicIdentifier) => atomWithRefresh(
   async (get) => {
     // await get(connectedDeviceAsync(deviceId));
     await get(characteristicAsync(params));
@@ -543,8 +543,13 @@ const characteristicIsNotifyingAsync = atomFamily(
       if (value) {
         // start notifications
         await get(characteristicAsync(cid));
-        const sub = get(ble)?.monitorCharacteristicForDevice(cid.deviceId, cid.serviceUUID, cid.characteristicUUID, (error, characteristic) => onCharacteristicUpdate(error, characteristic, get, set));
-        set(subscription([cid.deviceId, cid.serviceUUID, cid.characteristicUUID]), sub as Subscription);
+        try {
+          const sub = await get(ble)?.monitorCharacteristicForDevice(cid.deviceId, cid.serviceUUID, cid.characteristicUUID, (error, characteristic) => onCharacteristicUpdate(error, characteristic, get, set));
+          set(subscription([cid.deviceId, cid.serviceUUID, cid.characteristicUUID]), sub as Subscription);
+        } catch (error) {
+          log.error(LOG_SRC + ": characteristicIsNotifyingAsync setter", "Failed to start monitoring characteristic: ", error);
+          set(Settings.snackbar, "Failed to start monitoring characteristic: " + error);
+        }
 
       } else {
         // stop notifications
