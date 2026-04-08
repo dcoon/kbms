@@ -9,7 +9,10 @@
       "@/assets/*": [
         "./assets/*"
       ]
-    }
+    },
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "target": "es2020",
   },
   "include": [
     "**/*.ts",

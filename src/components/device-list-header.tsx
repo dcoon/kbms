@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { SegmentedButtons } from 'react-native-paper';
+import { Button, SegmentedButtons } from 'react-native-paper';
 
 
 export type SortKey = string;
@@ -11,57 +11,49 @@ export interface SortButtonDefinition {
   label: string;
 }
 
-interface SortButtonProps {
-  definition: SortButtonDefinition;
-  isActive: boolean;
-  sortOrder: SortOrder;
-  onPress: (sortKey: SortKey, sortOrder: SortOrder) => void;
-}
-
-// const SortButton = ({ definition, isActive, sortOrder, onPress }: SortButtonProps) => {
-//   // log.debug("Rendering SortButton with definition: ", definition, " isActive: ", isActive, " order: ", sortOrder);
-
-//   const arrow = sortOrder === 'asc' ? '↑' : '↓';
-
-//   return (
-//     <Chip
-//       selected={isActive}
-//       onPress={() => onPress(definition.sortKey, sortOrder)}
-//       showSelectedOverlay
-//       compact
-//     >
-//       {definition.label}{isActive ? ` ${arrow}` : ''}
-//     </Chip>
-//   );
-// };
+// interface SortButtonProps {
+//   definition: SortButtonDefinition;
+//   isActive: boolean;
+//   sortOrder: SortOrder;
+//   onPress: (sortKey: SortKey, sortOrder: SortOrder) => void;
+// }
 
 
 interface DeviceListHeaderProps {
   buttons: SortButtonDefinition[];
   sortKey: string;
   sortOrder: SortOrder;
-  onSort: (key2: SortKey, order: SortOrder) => void;
+  filter: string;
+  onSort: (key2: SortKey, order: SortOrder, filter: string) => void;
 }
 
-const DeviceListHeader = ({ buttons, sortKey, sortOrder, onSort }: DeviceListHeaderProps) => {
+const DeviceListHeader = ({ buttons, sortKey, sortOrder, filter: sortFilter, onSort }: DeviceListHeaderProps) => {
   // log.debug("Rendering DeviceListHeader with buttons: ", buttons, " key: ", sortKey, " order: ", sortOrder);
 
-  return (  
-      <View style={{ padding: 12, backgroundColor: 'transparent' }}>
-        {
 
 
-          <SegmentedButtons
-            value={sortKey}
-            onValueChange={value => onSort(value, sortOrder)}
-            density='small'
-            buttons={buttons.map(button => ({
-              label: button.label,
-              value: button.sortKey,
-            }))}
-          />
-        }
-      </View>
+  return (
+    <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 12, backgroundColor: 'transparent' }}>
+
+
+
+
+      <Button mode="text" onPress={() => onSort(sortKey, sortOrder, sortFilter === 'all' ? 'known' : 'all')} icon={sortFilter === 'all' ? 'filter-off' : 'filter'}>
+        {sortFilter === 'all' ? '' : 'KiloVault'}
+      </Button>
+
+
+      <SegmentedButtons
+        value={sortKey}
+        onValueChange={value => onSort(value, sortOrder, sortFilter)}
+        density='small'
+        buttons={buttons.map(button => ({
+          label: button.label,
+          value: button.sortKey,
+        }))}
+      />
+
+    </View>
   );
 };
 

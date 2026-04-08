@@ -82,7 +82,6 @@ export const DeviceList: React.FC<DeviceListProps> = ({
         renderItem={({ item }) => (
           <DeviceCard
             device={item}
-            isFavorite={favorites?.some(fav => fav === item.id) ?? false}
             onDevicePress={onDevicePress}
             onFavoritePress={onFavoritePress}
           />

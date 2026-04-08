@@ -1,7 +1,7 @@
 // import { BatteryData } from "./BatteryData";
 // import { SmartPowerUtil } from "./SmartPowerUtil";
 
-import { pipe, map, filter, tap, mergeMap, scan, from, OperatorFunction } from 'rxjs';
+import { filter, from, map, mergeMap, OperatorFunction, pipe, scan } from 'rxjs';
 
 
 
@@ -10,28 +10,22 @@ export const KV_MESSAGE_LENGTH_MINIMUM = 38;
 export const KV_MESSAGE_HEAD = 176;
 export const KV_MESSAGE_TAIL = 82;
 
-export interface BatteryData {
+export class BatteryData {
     deviceId?: string;
     batteryType?: number;
     status?: number;
     infoStatus?: number;
     afeStatus?: number;
-    voltage: number;
-    current: number;
-    capacity: number;
-    soc: number;
-    cycles: number;
-    temperature: number;
-}
-
-class BatteryDataObject implements BatteryData {
     voltage: number = 0;
     current: number = 0;
     capacity: number = 0;
     soc: number = 0;
     cycles: number = 0;
-    status: number = 0;
     temperature: number = 0;
+
+    static isBatteryData(obj: any): obj is BatteryData {
+        return obj && typeof obj === 'object' && 'deviceId' in obj && 'current' in obj && 'voltage' in obj;
+    }
 }
 
 
@@ -152,7 +146,7 @@ export function decodeMessageFromString(msg: string, battery: BatteryData): bool
 }
 
 export function decodeMessageToBatteryData(buffer: Buffer): BatteryData | null {
-    const battery = new BatteryDataObject();
+    const battery = new BatteryData();
     const success = decodeMessage(buffer, battery);
     return success ? battery : null;
 }

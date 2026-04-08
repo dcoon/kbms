@@ -1,54 +1,48 @@
 import { theme } from '@/constants/paper-theme';
-import { DeviceId } from '@/services/ble-service';
+import { DeviceFavorite, UserSettings } from '@/constants/user-settings';
+import { Device } from '@/services/ble-service';
 import { uilog as log } from '@/services/log';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
 import { Pressable } from 'react-native';
 import { useSettingsContext } from './settings-provider';
 
-type DeviceCallback = (deviceId: DeviceId) => void;
+type OnFavoritePressCallback = (device: Device) => void;
 
 interface FavoriteIconProps {
-  deviceId: DeviceId | undefined;
-  isFavorite?: boolean | undefined;
-  onFavoritePress?: DeviceCallback;
+  device: Device | undefined;
+  isFavorite?: boolean;
+  onFavoritePress?: OnFavoritePressCallback;
 }
 
 
-export const FavoriteIcon = ({ deviceId, isFavorite, onFavoritePress }: FavoriteIconProps) => {
+export const FavoriteIcon = ({ device, isFavorite = false, onFavoritePress }: FavoriteIconProps) => {
 
-  const settings = useSettingsContext();
-
+  const settings = useSettingsContext<UserSettings>();
+  
   onFavoritePress = onFavoritePress || onFavoritePressDefault;
 
-  if(deviceId && isFavorite === undefined) {
-    isFavorite =settings?.favorites.includes(deviceId);
-  }
-  
   const icon = isFavorite ? 'heart' : 'heart-outline';
   const statusColor = isFavorite ? 'red' : theme.colors.onSurfaceVariant; //theme.colors.error : theme.colors.onSurfaceVariant;
-  
 
-  function onFavoritePressDefault(deviceId: DeviceId) : void {
 
-  // const onFavoritePressDefault = useCallback<DeviceCallback>(deviceId: DeviceId) => {
-    log.debug("onFavoritePressDefault called with device ID: ", deviceId);
+  function onFavoritePressDefault(device: Device): void {
+
+    // log.info("onFavoritePressDefault called with device ID: ", device.id);
 
     if (settings) {
-      const favorites = settings.favorites.filter(fav => fav !== deviceId) as DeviceId[];
-      const favIndex = settings.favorites.findIndex(fav => fav === deviceId);
-      log.debug("onFavoritePressDefault new favorites: ", settings.favorites, favorites, favIndex);
-
-      settings.favorites = favIndex > -1 ? [...favorites] : [...favorites, deviceId];
+      const favorites = settings.favorites.filter(fav => fav.id !== device.id) as DeviceFavorite[];
+      const favIndex = settings.favorites.findIndex(fav => fav.id === device.id);
+      log.info("onFavoritePressDefault new favorites: ", device.id, settings.favorites, favorites, favIndex);
+      settings.favorites = favIndex > -1 ? [...favorites] : [...favorites, { id: device.id, name: device.name } as DeviceFavorite];
 
 
     }
-
   };
 
-  
+
   return (
-    <Pressable onPress={() => onFavoritePress(deviceId!)} style={{ padding: 8 }}>
+    <Pressable onPress={() => device && onFavoritePress(device)} style={{ padding: 8 }}>
       <MaterialCommunityIcons name={icon} size={20} color={statusColor} />
     </Pressable>
   );

@@ -1,24 +1,10 @@
 
-import { BatteryInfo, BlankDevice, BLEServiceInterface, Device } from "@/services/ble-service";
+import { EventBus, EventDefault, EventType } from "@/components/event-bus-provider";
+import { BatteryData, BLEServiceInterface, Device } from "@/services/ble-service";
 import { blelog as log } from '@/services/log';
-import { BleError, Characteristic, DeviceId } from "react-native-ble-plx";
+import { DeviceId } from "react-native-ble-plx";
+import { interval, map, Subscription } from "rxjs";
 
-
-/**
- * Generates an array of mock devices for UI testing.
- */
-export const generateMockDevices = (count: number): Device[] => {
-  return Array.from({ length: count }, (_, i) => ({
-    id: `00:11:22:33:44:0${i}`,
-    name: `Mock Device ${i + 1}`,
-    localName: `MOCK_${i + 1}`,
-    rssi: -50 - Math.floor(Math.random() * 40),
-    isConnected: Math.random() > 0.5,
-    lastSeen: Date.now() - Math.floor(Math.random() * 10000000),
-
-
-  })) as Device[];
-};
 
 /**
  * A mock implementation of the BLEServiceInterface, which does not
@@ -26,110 +12,141 @@ export const generateMockDevices = (count: number): Device[] => {
  * used in development environments where Bluetooth is not available.
  * @returns {BLEServiceInterface} A mock BLE service interface.
  */
-export function BLEServiceMock (): BLEServiceInterface {
+export function BLEServiceMock(): BLEServiceInterface {
 
-    log.info("BLEServiceMock: ");
+  log.info("BLEServiceMock: ");
 
-    let devices: Device[] = [];
-    let isScanning = false;
+  let scanner: Subscription | null = null;
+  const numDevices = 10;
+  const devicePool = generateMockDeviceIds(numDevices).map((id) => generateMockDevice(id));
 
+  const devices: { device: Device; subscription: Subscription | null }[] = devicePool.map((device) => ({ device, subscription: null }));
 
-    function scanForDevices(onDeviceFound: (device: Device) => void, onError: (error: BleError) => void): void {
-        log.info("BLEServiceMock: scanForDevices called");
-        isScanning = true;
-        devices = generateMockDevices(10);
-        for (const device of devices) {
-          onDeviceFound(device as Device);
-        };
-        
-      
-    }
-    
-    function stopScanning(): void {
-      log.info("BLEServiceMock: stopScanning called");
-      isScanning = false;
-      devices.length = 0;
-      return;
-    }
+  let eventBus: EventBus | null = null;
 
-    function getDevices(): Device[] {
-      log.info("BLEServiceMock: getDevices called");
-      return devices;
-    }
+  function setEventBus(bus: EventBus) {
+    log.info("BLEServiceMock: setEventBus called");
+    eventBus = bus;
+  }
 
-    function monitorCharacteristic(deviceId: string, serviceUUID: string, characteristicUUID: string, onUpdate: (error: Error | null , characteristic: Characteristic | null) => void): () => void {
-      log.info("BLEServiceMock: monitorCharacteristic called for deviceId:", deviceId, "serviceUUID:", serviceUUID, "characteristicUUID:", characteristicUUID);
-      const interval = setInterval(() => {
-        onUpdate(null, null); // Mock data update
-      }, 3000);
+  function isScanning(): boolean {
+    return scanner !== null;
+  }
 
-      return () => {
-        log.info("BLEServiceMock: Unmonitoring characteristic for deviceId:", deviceId);
-        clearInterval(interval);
-      };    
-    }
-          
+  function scanForDevices(): void {
+    log.info("BLEServiceMock: scanForDevices called");
+    if (scanner) {
+      log.debug("BLEServiceMock: scanForDevices called while already scanning");
 
+    } else if (!eventBus) {
+      log.warn("BLEServiceMock: scanForDevices called before eventBus is set. Unable to emit device scan events."); 
 
+    } else {
 
-    function connectToBattery(id: DeviceId, onBatteryUpdate: (device: Device) => void): void {  
-      log.info("BLEServiceMock: connectToBattery called");    
-      const interval = setInterval(() => {
-        const mockBatteryData: BatteryInfo = {  
-          soc: Math.floor(Math.random() * 100),
-          voltage: Math.floor(Math.random() * 100),
-          current: Math.floor(Math.random() * 100),
-          temperature: Math.floor(Math.random() * 100),
-          capacity: Math.floor(Math.random() * 100),
-          cycles: Math.floor(Math.random() * 1000),
-          status: Math.random() > 0.5 ? 'Healthy' : 'Warning'
-          // batteryLevel: Math.floor(Math.random() * 100),
-          // stateOfHealth: Math.floor(Math.random() * 100),
-          // stateOfFunction: Math.random() > 0.5 ? 'Charging' : 'Discharging',
-          // cycleCount: Math.floor(Math.random() * 1000)
+      scanner = interval(1000).pipe(
+        // take(10), // Scan for 5 seconds
+        map(() => Math.random()),
+        map((random) => Math.floor(random * devices.length)),
+        map((index) => devices[index]),
+        map(entry => entry.device),
+                map((device) => {
+          device.rssi = Math.floor(Math.random() * -100 + -50);
+          return device;
+        }),
+        map((device) => new EventDefault(EventType.DeviceScanned, device)),
 
-        };
-
-        const device = new BlankDevice(id);
-        device.batteryInfo = mockBatteryData;
-        onBatteryUpdate(device);
-      }, 3000);
-    } 
-
-    function disconnectFromBattery(): void {
-      log.info("BLEServiceMock: disconnectFromBattery called");    
-      return; 
+        // map((id) => new Device({ id, name: "Mock Device" + id })),
+        // tap((device) => devices.push({ device, subscription: null })),
+        // tap((device) => log.debug("BLEServiceMock: device found: ", device, devices)),
+      ).subscribe(eventBus);
     }
 
-  //     useEffect(() => {
-  //   if (Device.isDevice && connectedDevice) {
-  //     setBatteryData(prev => ({
-  //       ...prev,
-  //       soc: batteryMetrics.soc > 0 ? batteryMetrics.soc : prev.soc,
-  //     }));
-  //     return;
-  //   }
 
-  //   const interval = setInterval(() => {
-  //     setBatteryData(prev => ({
-  //       ...prev,
-  //       voltage: +(prev.voltage + (Math.random() * 0.1 - 0.05)).toFixed(2),
-  //       current: +(prev.current + (Math.random() * 0.5 - 0.25)).toFixed(2),
-  //       soc: Math.max(0, Math.min(100, +(prev.soc + (Math.random() * 0.1 - 0.05)).toFixed(1))),
-  //     }));
-  //   }, 3000);
 
-  //   return () => clearInterval(interval);
-  // }, [connectedDevice, batteryMetrics]);
+  }
+
+  function stopScanning(): void {
+    log.info("BLEServiceMock: stopScanning called");
+    if (scanner) {
+      scanner.unsubscribe();
+      scanner = null;
+    }
+  }
+
+  function generateMockDeviceIds(count: number): DeviceId[] {
+
+    const format = [0, 1, 2, 3, 4, 5];
+
+    return Array.from({ length: count }, () => {
+      const id =  Math.round(Math.random() * numDevices); // Generate a random number between 0 and numDevices
+      return [...format, id].join(':'); // Format the string as a device ID (e.g., "12:34:56:78:9A:BC")
+    });
+
+  }
+
+  function generateMockDevice(id: DeviceId): Device {
+    return new Device({ id, name: "Mock Device " + id, 
+      rssi: Math.floor(Math.random() * -200),
+    });
+  }
+
+
+  function generateMockBatteryData(id: DeviceId): BatteryData {
+    return {
+      deviceId: id,
+      voltage: +(3.7 + Math.random() * 0.1).toFixed(2),
+      current: +(3.7 + Math.random() * 0.1).toFixed(2),
+      soc: Math.floor(Math.random() * 100),
+      cycles: Math.floor(Math.random() * 1000),
+      temperature: Math.floor(Math.random() * 100),
+      status: Math.floor(Math.random() * 5),
+      batteryType: 1,
+      capacity: Math.floor(Math.random() * 1000),
+    };
+  };
+
+
+  function connectToBattery(id: DeviceId): void {
+    log.info("BLEServiceMock: connectToBattery called", devices);
+    const deviceEntry = devices.find((d) => d.device.id === id);
+    if (!deviceEntry) {
+      log.warn(`BLEServiceMock: connectToBattery called with unknown device ID: ${id}`);
+    } else if (deviceEntry.subscription) {
+      log.warn("BLEServiceMock: connectToBattery called while already connected to device ID: ", id);
+    } else if (!eventBus) {
+      log.warn("BLEServiceMock: connectToBattery called before eventBus is set. Unable to emit battery update events.");
+    } else {
+      log.info("BLEServiceMock: connectToBattery called for device ID: ", id);
+      const device = deviceEntry.device;
+      device.isConnected = true;
+      // eventBus.next(device);
+      deviceEntry.subscription = interval(2000).pipe(
+        map(() => generateMockBatteryData(id)),
+        map((batteryData) => new EventDefault(EventType.BatteryUpdate, batteryData))
+      ).subscribe(eventBus);
+    }
+  }
+
+  function disconnectFromBattery(id: DeviceId): void {
+    log.info("BLEServiceMock: disconnectFromBattery called");
+    const deviceEntry = devices.find((d) => d.device.id === id);
+    if (deviceEntry && deviceEntry.subscription) {
+      deviceEntry.device.isConnected = false;
+      deviceEntry.subscription.unsubscribe();
+      deviceEntry.subscription = null;
+    }
+  }
 
 
   return {
     isScanning,
     scanForDevices,
     stopScanning,
-    getDevices,
-    // monitorCharacteristic,
     connectToBattery,
-    // disconnectFromBattery
-  }; 
+    disconnectFromBattery,
+    setEventBus
+  };
+
 }
+
+
