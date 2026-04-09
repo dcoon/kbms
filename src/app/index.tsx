@@ -94,11 +94,11 @@ function HelpOnBluetoothUnsupportedDevices() {
   }
 
   return (
-    <List.Accordion title="Bluetooth Unsupported" id="help" description="Bluetooth is not supported on this device" >
+    <List.Accordion title="Bluetooth Unavailable" id="help" description="Bluetooth is not supported on this device. Showing mock data instead." >
       <List.Item title="Using Mock Data" description="Using mock data for testing purposes only" icon="help-circle-outline" />
       <List.Item title="Battery" description="Devices named Battery can return battery data" icon="battery" />
-      <List.Item title="Devices" description="Devices named Device are not batteries" icon="devices" />
-      <List.Item title="Connection Errors" description="Clicking on devices with (will cause connection errors) in their name will intentionally cause connection errors" icon="alert-circle" />
+      <List.Item title="Devices" description="Devices named Device are not batteries and will cause connection errors for testing" icon="devices" />
+      <List.Item title="Connection Errors" description="Clicking on devices with (will cause connection errors) in their name will intentionally cause connection errors for testing" icon="alert-circle" />
 
     </List.Accordion>
   );
