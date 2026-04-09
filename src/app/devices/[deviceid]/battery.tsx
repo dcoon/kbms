@@ -240,9 +240,9 @@ function Guage({ value, maxValue, radius, title, subtitle, valueSuffix }: { valu
     {
       value: value,
       color: theme.colors.primary,
-      gradientCenterColor: theme.colors.tertiary,
+      gradientCenterColor: theme.colors.surface,
     },
-    { value: maxValue - value, color: theme.colors.secondary, gradientCenterColor: theme.colors.tertiary },
+    { value: maxValue - value, color: theme.colors.outline },
   ];
 
   return (

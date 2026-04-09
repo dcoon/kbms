@@ -4,18 +4,26 @@
     "slug": "kbms",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/kbms-adaptive-icon.png",
     "scheme": "kbms",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "io.github.dcoon.kbms"
+      "bundleIdentifier": "io.github.dcoon.kbms",
+      "icon": {
+        "light": "./assets/images/ios-light.png",
+        "dark": "./assets/images/ios-dark.png",
+        "tinted": "./assets/images/ios-tinted.png"
+      },
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.io.github.dcoon.kbms"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/icon.png",
-        "backgroundImage": "./assets/images/icon.png",
-        "monochromeImage": "./assets/images/icon.png"
+        "backgroundColor": "#5FBC85",
+        "foregroundImage": "./assets/images/kbms-adaptive-icon.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "io.github.dcoon.kbms",
@@ -27,12 +35,29 @@
         "android.permission.BLUETOOTH_CONNECT",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.INTERNET"
       ]
     },
+    "splash": {
+      "image": "./assets/images/splash-icon-light.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#5FBC85"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/2072ccb2-ece5-42c9-bcac-5fb39dc3f13b"
+    },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/icon.png"
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
@@ -50,11 +75,11 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/icon.png",
+          "backgroundColor": "#5B635F",
+          "image": "./assets/images/splash-icon-light.png",
           "dark": {
-            "backgroundColor": "#208AEF",
-            "image": "./assets/images/icon.png"
+            "backgroundColor": "#5B635F",
+            "image": "./assets/images/splash-icon-dark.png"
           },
           "imageWidth": 200
         }
@@ -109,6 +134,9 @@
         },
         "projectId": "2072ccb2-ece5-42c9-bcac-5fb39dc3f13b"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }

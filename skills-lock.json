@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "expo-app-store-guideline-check": {
+      "source": "nandofalcao/expo-app-store-guideline-check",
+      "sourceType": "github",
+      "computedHash": "6968c52d0d12cb13cb3b2bc209bd124b0d126c010235cdc9d7b66214a4cc77ee"
+    }
+  }
+}

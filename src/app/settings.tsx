@@ -2,11 +2,14 @@ import { List } from '@/components/list/list-item';
 import { shareLogFile } from '@/components/ui/file-share';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { LogLevel, LogLevelOptions, Settings } from '@/services/settings/settings-service';
+import * as Updates from 'expo-updates';
 import { useAtom } from 'jotai';
 import React, { useCallback } from 'react';
 import { ScrollView } from 'react-native';
 import { IconButton, Switch } from 'react-native-paper';
 import { Dropdown } from 'react-native-paper-dropdown';
+
+import * as Application from 'expo-application';
 
 
 
@@ -128,6 +131,21 @@ export default function SettingsScreen() {
           value={developerMode}
           onChange={(value) => setDeveloperMode(value)}
           />
+      </List.Accordion>
+    );
+  }
+
+  function AboutAccordion() {
+
+    return (
+      <List.Accordion id="about" title="About" description="Learn more about the app and its developers">
+
+        <List.Item title="Version" value={Application.nativeApplicationVersion} icon="information" />
+        <List.Item title="Build" value={Application.nativeBuildVersion} icon="information" />
+        <List.Item title="Channel" value={Updates.channel} />
+        <List.Item title="Runtime" value={Updates.runtimeVersion} />
+        <List.Item title="License" description="MIT License" icon="file-document" />
+        <List.Item title="Contact Support" description="Get help and support for the app" icon="lifebuoy" />
       </List.Accordion>
     );
   }

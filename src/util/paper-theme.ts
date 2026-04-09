@@ -5,7 +5,7 @@ import { MD3LightTheme } from 'react-native-paper';
 
 const guageCenterLabelTextStyle = {
 
-  color: '#3D7375', // Dark text for title
+  color: '#5FBC85', // Dark text for title
   fontSize: 10,
   lineHeight: 16,
 };
@@ -36,33 +36,17 @@ export const PaperTheme = {
   ...MD3LightTheme,
   colors: {
     ...MD3LightTheme.colors,
-    // primary: '#2e7d32', // Important (Green)
-    primary: '#3D7375',
-    onPrimary: '#ffffff',
-    primaryContainer: '#e8f5e9',
-    onPrimaryContainer: '#1b5e20',
-
-    secondary: '#757575', // Unimportant (Gray)
-    onSecondary: '#ffffff',
-    secondaryContainer: '#f5f5f5',
-    onSecondaryContainer: '#212121',
-
-    tertiary: '#757575',
-    onTertiary: '#ffffff',
-
-    outline: '#bdbdbd',
-    surfaceVariant: '#f5f5f5',
-    onSurfaceVariant: '#616161',
-
-    error: '#b00020',
-    background: '#ffffff',
-    surface: '#ffffff',
-
-    // Adjusted Snackbar for readability in light theme:
-    // Using a light surface with dark text to ensure children <Text> components remain readable.
-    inverseSurface: '#f5f5f5',    // Light gray background
-    inverseOnSurface: '#212121',  // Dark text
-    inversePrimary: '#2e7d32',    // Green for actions
+    primary: '#003921',        // Mint Green from the ring
+    onPrimary: '#003921',      // Deep Green for text on buttons
+    primaryContainer: '#C6EAD7', // A darker, muted mint for headers
+    onPrimaryContainer: '#003921', // Deep green text for the header    secondary: '#4A7C66',
+    surface: '#F9FBF9',        // Off-white surface
+    onSurface: '#1A211E',      // Dark text for List titles
+    onSurfaceVariant: '#5B635F', // Muted text for List descriptions
+    outline: '#C4CDC9',        // Borders for list dividers
+    elevation: {
+      level1: '#FFFFFF',       // Card background
+    },
   },
   components: {
     Snackbar: {
@@ -74,7 +58,7 @@ export const PaperTheme = {
       },
     },
     Guage: {
-      centerLabel: { ...guageCenterLabelStyle } ,
+      centerLabel: { ...guageCenterLabelStyle },
     },
   },
 };
