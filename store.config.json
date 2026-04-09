@@ -1,0 +1,48 @@
+    {
+      "configVersion": 0,
+      "apple": {
+        "info": {
+          "en-US": {
+            "title": "KBMS",
+            "subtitle": "KiloVault HLX+ Battery Monitor",
+            "description": "KBMS is a free, open-source utility designed for owners of KiloVault® HLX+ LiFePO4 batteries. Developed as a modern replacement for the original KiloVault app, KBMS provides a reliable, real-time interface to monitor and configure your energy storage system via Bluetooth.\n\nKey Features:\n• Real-Time Monitoring: Track Voltage, Amps, SoC, and Temp.\n• Cell Health: Monitor individual cell voltages and balance status.\n• Cycle Tracking: View total cycle counts and historical usage.\n• Privacy Focused: No ads, no tracking, and no data collection.\n\nKBMS is licensed under the MIT License. View our source code or contribute at: https://github.com/dcoon/kbms",
+            "promoText": "Reliably monitor your KiloVault HLX+ LiFePO4 batteries. Real-time voltage, cell balancing, and cycle data in a clean, open-source interface.",
+            "keywords": [ "KiloVault", "HLX+", "HLXPlus", "LiFePO4", "BMS", "Battery", "Monitor", "Solar", "Off-grid", "Lithium", "SoC", "Boating", "Bluetooth" ],
+            "marketingUrl": "https://github.com/dcoon/kbms",
+            "privacyPolicyUrl": "https://raw.githubusercontent.com/dcoon/kbms/refs/heads/main/PRIVACY.md",
+            "supportUrl": "https://github.com/dcoon/kbms"
+          }
+        },
+        "advisory": {
+          "alcoholTobaccoOrDrugUseOrReferences": "NONE",
+          "contests": "NONE",
+          "gamblingSimulated": "NONE",
+          "horrorOrFearThemes": "NONE",
+          "matureOrSuggestiveThemes": "NONE",
+          "medicalOrTreatmentInformation": "NONE",
+          "profanityOrCrudeHumor": "NONE",
+          "sexualContentGraphicAndNudity": "NONE",
+          "sexualContentOrNudity": "NONE",
+          "violenceCartoonOrFantasy": "NONE",
+          "violenceRealistic": "NONE",
+          "violenceRealisticProlongedGraphicOrSadistic": "NONE",
+          "gambling": false,
+          "unrestrictedWebAccess": false,
+          "kidsAgeBand": null,
+          "ageRatingOverride": "NONE",
+          "koreaAgeRatingOverride": "NONE"
+        },
+        "categories": [
+          "UTILITIES",
+          "PRODUCTIVITY"
+        ],
+        "review": {
+          "firstName": "David",
+          "lastName": "Coon",
+          "email": "david@davidcoon.org",
+          "phone": "+1 415 290 2053",
+          "demoRequired": false,
+          "notes": "This app is a specialized utility designed to monitor and configure KiloVault HLX+ LiFePO4 batteries via Bluetooth Low Energy (BLE). Because the app requires physical hardware to function, we have implemented a Demo/Mock Data Mode to allow for a full evaluation of the user interface and data visualization features. In Demo Mode, users can interact with the app as if it were connected to a real battery, with simulated data that mimics the behavior of an actual KiloVault HLX+ battery. The App will automatically enter Demo Mode if it detects that Bluetooth is not available (ie. in a simulator). On a physical device, manually activate demo mode in Settings."
+        }
+      }
+    }

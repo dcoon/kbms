@@ -7,8 +7,11 @@
     "icon": "./assets/images/kbms-adaptive-icon.png",
     "scheme": "kbms",
     "userInterfaceStyle": "automatic",
+    
     "ios": {
       "bundleIdentifier": "io.github.dcoon.kbms",
+      "buildNumber": "1",
+      "supportsTablet": true,
       "icon": {
         "light": "./assets/images/ios-light.png",
         "dark": "./assets/images/ios-dark.png",
@@ -56,9 +59,15 @@
             ]
           },
         ]
-      }
+      },
+      "infoPlist": {
+        "NSBluetoothAlwaysUsageDescription": "KBMS uses Bluetooth to discover, connect to, and monitor real-time data from your KiloVault HLX+ batteries."
+      },
     },
     "android": {
+      "versionCode": 1,
+      
+      "privacyPolicyUrl": "https://raw.githubusercontent.com/dcoon/kbms/refs/heads/main/PRIVACY.md",
       "adaptiveIcon": {
         "backgroundColor": "#5FBC85",
         "foregroundImage": "./assets/images/kbms-adaptive-icon.png"
