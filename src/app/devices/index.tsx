@@ -210,16 +210,16 @@ function DeviceList() {
 
 }
 
-
-const StopScanningOnLeave = () => {
-  const [isScanningLoadable, setIsScanning] = useAtom(Bluetooth.scanning);
+function StartStopScanningOnFocus({deviceId}: {deviceId?: string}) {
+  const [, setIsScanning] = useAtom(Bluetooth.scanning);
 
   useFocusEffect( 
     useCallback(() => {
-      const LOG_PREFIX = LOG_SRC + ": StopScanningOnLeave";
-      log.debug(LOG_PREFIX, ": called");
+      const LOG_PREFIX = LOG_SRC + ": StartStopScanningOnFocus";
+      log.info(LOG_PREFIX, "focus effect called, starting scan");
+      setIsScanning(true);
       return () => {
-        log.debug(LOG_PREFIX, ": cleanup called");
+        log.info(LOG_PREFIX, "cleanup function called, stopping scan");
         setIsScanning(false);
       };
     }, [])
@@ -234,7 +234,7 @@ export default function DevicesScreen() {
     <ScreenLayout title="Devices"
       actions={<AppBarActions />}
     >
-      <StopScanningOnLeave />
+      <StartStopScanningOnFocus />
       <DeviceList />
     </ScreenLayout>
 

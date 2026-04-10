@@ -1,8 +1,8 @@
 import { getDeviceName, LoadableState } from '@/services/ble/ble-types';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Device, Service } from 'react-native-ble-plx';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { Device } from 'react-native-ble-plx';
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { ScrollView, useWindowDimensions, View } from 'react-native';
 
 import { LastSeenListItem, List } from '@/components/list/list-item';
@@ -15,16 +15,57 @@ import { formatDistanceToNow } from 'date-fns';
 
 import { DeviceAction, FavoriteAction, IsNotifyingAction } from '@/components/ui/app-topbar';
 import { uilog as log } from '@/services/log/log-service';
-import { PieChart } from "react-native-gifted-charts";
-import { Chip, Icon, Text, useTheme } from 'react-native-paper';
+// import { PieChart } from "react-native-gifted-charts";
+import { Card, Chip, Icon, Text } from 'react-native-paper';
 
-import { PaperTheme } from '@/util/paper-theme';
-
-
-
+import { Gauge } from '@/components/ui/gauge';
 
 const LOG_SRC = "BatteryScreen";
 
+
+function BatteryGraph({ device }: { device: Device }) {
+  const [battery] = useAtom(Bluetooth.battery(device ? device.id : ""));
+
+  const soc = battery ? battery.soc : 0;
+  const voltage = battery ? battery.voltage / 1000 : 0;
+  const current = battery ? battery.current : 0;
+  const temperature = battery ? battery.temperature / 100 : 0;
+  const status = battery ? battery.rawStatus : "";
+  const cycles = battery ? battery.cycles : 0;
+  const lastSeen = battery?.lastUpdated ? formatDistanceToNow(battery.lastUpdated, { addSuffix: true }) : "Unknown";
+
+
+  const subtitle = `${voltage}V / ${current}A`;
+
+
+  const MAX_VOLTAGE = 15;
+  const MAX_CURRENT = 100;
+  const { width, height } = useWindowDimensions();
+  const radius = width * 0.3;
+  const thickness = radius * 0.08;
+
+
+  return (
+    <Card>
+      <Card.Title title="State of Charge" left={(props) => <Icon {...props} source="battery-high" />} />
+      <Card.Content>
+    <View style={{ flexDirection: 'column', }}>
+      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 }} >
+        <Gauge value={soc} maxValue={100} valueSuffix='%' 
+        radius={radius} 
+        thickness={thickness}
+        title="SoC" />
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <BatteryStatusFlags status={battery?.status} showNoFlags={false} />
+        <Chip icon="clock-outline" mode="outlined" style={{ alignSelf: 'center', margin: 6, }}>{lastSeen}</Chip>
+      </View>
+    </View>
+      </Card.Content>
+    </Card>
+
+  );
+}
 
 function BatteryStatusFlags({ status, showNoFlags = true }: { status: BatteryStatus | undefined, showNoFlags?: boolean }) {
 
@@ -45,7 +86,7 @@ function BatteryStatusFlags({ status, showNoFlags = true }: { status: BatterySta
 
   const flags = ["HV", "LV", "OCC", "OCD", "LTD", "LTC", "HTD", "HTC"] as const;
 
-  function ActiveFlag({ flag , s = style}: { flag: string, s: typeof style }) {
+  function ActiveFlag({ flag, s = style }: { flag: string, s: typeof style }) {
     return (
       <Chip key={flag} selectedColor={s.color} icon={() => (<Icon source='alert' color={s.color} size={14} />)} mode="outlined" style={{ alignSelf: 'center', margin: 6, }}>{flag}</Chip>
     );
@@ -83,7 +124,7 @@ function BatteryDataAccordion({ device, children }: { device: Device, children?:
   return (
     <List.Accordion title="Battery Data" id="battery-data" description="Current battery status" icon="car-battery">
 
-      <List.Item title="SoC" description="State of Charge (SOC) %" icon="battery-high" value={battery?.soc} />
+      {/* <List.Item title="SoC" description="State of Charge (SOC) %" icon="battery-high" value={battery?.soc} /> */}
       <List.Item title="Voltage" description="Voltage Vdc" icon="flash-triangle-outline" value={battery ? battery?.voltage / 1000 + " V" : ""} />
 
 
@@ -129,7 +170,6 @@ function BatteryDataAccordion({ device, children }: { device: Device, children?:
   );
 }
 
-
 function ListItemNumericValue({ value }: { value: number | undefined }) {
 
   const rawValue = value;
@@ -156,7 +196,7 @@ function InformationAccordion({ device }: { device: Device }) {
   return (
     <List.Accordion
       id="battery-information"
-      title="Information"
+      title="General Information"
       description="Information about the battery"
       icon="car-battery"
     >
@@ -217,7 +257,6 @@ function CellDataAccodion({ device }: { device: Device }) {
   );
 }
 
-
 function SettingsAccordion({ device }: { device: Device }) {
   return (
     <List.Accordion title="Settings" id="settings" description="Battery settings" icon="information-outline">
@@ -229,79 +268,6 @@ function SettingsAccordion({ device }: { device: Device }) {
 }
 
 
-function Guage({ value, maxValue, radius, title, subtitle, valueSuffix }: { value: number, maxValue: number, radius: number, title: string, subtitle: string, valueSuffix?: string }) {
-  const theme = useTheme() as typeof PaperTheme;
-
-  const initialAngle = 0;
-
-  const DURATION = 2000;
-  const INITIAL_VALUE = 0;
-  const data = [
-    {
-      value: value,
-      color: theme.colors.primary,
-      gradientCenterColor: theme.colors.surface,
-    },
-    { value: maxValue - value, color: theme.colors.outline },
-  ];
-
-  return (
-    <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 12 }}>
-      <PieChart
-        data={data}
-        donut
-        showGradient={true}
-        radius={radius}
-        innerRadius={radius * 0.8}
-        initialAngle={initialAngle}
-        centerLabelComponent={() => (
-          <View style={{ alignItems: 'center' }}>
-            <Text style={theme.components.Guage.centerLabel.value}>{value}{valueSuffix}</Text>
-            <Text style={theme.components.Guage.centerLabel.title}>{title}</Text>
-            <Text style={theme.components.Guage.centerLabel.subtitle}>{subtitle}</Text>
-          </View>
-        )}
-      />
-    </View>
-  );
-}
-
-function BatteryGraph({ device }: { device: Device }) {
-  const [battery] = useAtom(Bluetooth.battery(device ? device.id : ""));
-
-  const soc = battery ? battery.soc : 0;
-  const voltage = battery ? battery.voltage / 1000 : 0;
-  const current = battery ? battery.current : 0;
-  const temperature = battery ? battery.temperature / 100 : 0;
-  const status = battery ? battery.rawStatus : "";
-  const cycles = battery ? battery.cycles : 0;
-  const lastSeen = battery?.lastUpdated ? formatDistanceToNow(battery.lastUpdated, { addSuffix: true }) : "Unknown";
-
-
-  const subtitle = `${voltage}V / ${current}A`;
-
-
-  const MAX_VOLTAGE = 15;
-  const MAX_CURRENT = 100;
-  const { width, height } = useWindowDimensions();
-  const radius = width * 0.15;
-
-
-  return (
-    <View style={{ flexDirection: 'column', }}>
-      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 }} >
-        <Guage value={voltage} maxValue={MAX_VOLTAGE} valueSuffix='V' radius={radius * 0.8} title="Voltage" subtitle={`${cycles} Cycles`} />
-        <Guage value={soc} maxValue={100} valueSuffix='%' radius={radius} title="SoC" />
-        <Guage value={current} maxValue={MAX_CURRENT} valueSuffix='A' radius={radius * 0.8} title="Current" subtitle={`${temperature}°C`} />
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <BatteryStatusFlags status={battery?.status} showNoFlags={false} />
-        <Chip icon="clock-outline" mode="outlined" style={{ alignSelf: 'center', margin: 6, }}>{lastSeen}</Chip>
-      </View>
-    </View>
-
-  );
-}
 
 
 function AppBarActions({ device }: { device?: Device }) {
@@ -321,30 +287,30 @@ function AppBarActions({ device }: { device?: Device }) {
 }
 
 
+function StartStopBatteryConnectedOnFocus({deviceId}: {deviceId: string}) {
+  
+  const [, setIsBatteryConnected] = useAtom(Bluetooth.isBatteryConnected(deviceId));
+
+  useFocusEffect( 
+    useCallback(() => {
+      const LOG_PREFIX = LOG_SRC + ": StartStopBatteryConnectedOnFocus";
+      log.info(LOG_PREFIX, "focus effect called, starting scan");
+      setIsBatteryConnected(true);
+      return () => {
+        log.info(LOG_PREFIX, "cleanup function called, stopping scan");
+        setIsBatteryConnected(false);
+      };
+    }, [])
+  );
+  return null;
+}
+
 function BatteryView({ device }: { device: Device }) {
-
-  const router = useRouter();
-
-  const serviceData = Object.entries(device?.serviceData || {}).map(([key, value]) => ({ key: key, value: value }));
-
-  const onServicePress = (service: Service) => {
-
-
-    // router.navigate(`/devices/${device?.id}/services/${service.uuid}`);
-    router.navigate(
-      {
-        pathname: "/devices/[deviceid]/services/[serviceid]",
-        params: {
-          deviceid: service.deviceID,
-          serviceid: service.uuid
-        }
-      }
-    )
-  }
 
 
   return (
     <ScrollView>
+      <StartStopBatteryConnectedOnFocus deviceId={device.id} />
       <BatteryGraph device={device} />
       <List.AccordionGroup>
         <BatteryDataAccordion device={device} />

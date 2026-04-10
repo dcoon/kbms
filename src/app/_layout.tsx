@@ -6,8 +6,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Snackbar } from '@/components/ui/snackbar';
 import { uilog as log } from '@/services/log/log-service';
 import { Settings } from '@/services/settings/settings-service';
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { PaperTheme } from '@/util/paper-theme';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
 const LOG_SRC = "AppLayout";
 
@@ -41,7 +41,7 @@ export default function TabLayout() {
   return (
     <SafeAreaProvider>
       <JotaiProvider>
-        <AppContent />
+          <AppContent />
       </JotaiProvider>
     </SafeAreaProvider>
   );

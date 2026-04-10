@@ -5,9 +5,9 @@ import { MD3LightTheme } from 'react-native-paper';
 
 const guageCenterLabelTextStyle = {
 
-  color: '#5FBC85', // Dark text for title
-  fontSize: 10,
-  lineHeight: 16,
+  color: '#5B635F', // Dark text for title
+  fontSize: 8,
+  // lineHeight: 16,
 };
 
 const guageCenterLabelStyle = {
@@ -16,7 +16,7 @@ const guageCenterLabelStyle = {
   },
   title: {
     ...guageCenterLabelTextStyle,
-    fontSize: 14,
+    fontSize: 8,
   },
   subtitle: {
     ...guageCenterLabelTextStyle,
@@ -57,7 +57,7 @@ export const PaperTheme = {
         color: '#212121', // Dark text for readability
       },
     },
-    Guage: {
+    Gauge: {
       centerLabel: { ...guageCenterLabelStyle },
     },
   },
