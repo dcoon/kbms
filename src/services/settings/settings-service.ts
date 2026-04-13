@@ -44,10 +44,10 @@ const favorite = atomFamily((value: Favorite) => atom(
 ));
 
 
-const notificationsEnabled = atomWithStorage('notificationsEnabled', true);
-const sendLogsToServer = atomWithStorage('sendLogsToServer', true);
+const notificationsEnabled = atomWithStorage('notificationsEnabled', true, undefined, { getOnInit: true });
+const sendLogsToServer = atomWithStorage('sendLogsToServer', true, undefined, { getOnInit: true });
 
-const logLevelInStorage = atomWithStorage<LogLevel>('logLevel', LogLevel.error);
+const logLevelInStorage = atomWithStorage<LogLevel>('logLevel', LogLevel.error, undefined, { getOnInit: true });
 
 const logLevel = atom(
   (get) => {
@@ -64,7 +64,7 @@ const logLevel = atom(
   }
 );
 
-const developerMode = atomWithStorage('developerMode',  false);
+const developerMode = atomWithStorage('developerMode',  false, undefined, { getOnInit: true });
 
 const _snackbarMessages = atom<string[]>([]);
 

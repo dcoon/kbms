@@ -3,7 +3,7 @@ import { ScreenLayout } from '@/components/ui/screen-layout';
 import { Favorite, Settings } from '@/services/settings/settings-service';
 import { router } from 'expo-router';
 import { useAtom } from 'jotai';
-import { FlatList, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
 import { DeviceId } from 'react-native-ble-plx';
 import { Card, List as PaperList, TouchableRipple } from 'react-native-paper';
 
@@ -58,27 +58,17 @@ function FavoritesAccordion() {
   const [favorites] = useAtom<Favorite[]>(Settings.favorites);
 
   return (
-    // <List.Accordion title="Favorites"
-    //   id="favorites"
-    //   description="Favorite devices for quick access"
-    //   icon="devices"
-    //   data={favorites}
-    //   hideIfNoData={false}
-    //   keyExtractor={(item: Favorite) => item.id}
-    //   renderItem={(info) => (<FavoriteCard device={info.item} onDevicePress={onDevicePress} />)}
-    //   listEmptyComponent={FavoriteListEmptyComponent}
-    // >
-    // </List.Accordion>
+   
 
     <PaperList.Accordion
     id="favorites" 
       title="Favorites"
       description="Favorite devices for quick access"
     >
-    <FlatList data={favorites}
+    <List.StaticList data={favorites}
       renderItem={(info) => (<FavoriteCard device={info.item} onDevicePress={onDevicePress} />)}
       keyExtractor={(item: Favorite) => item.id}
-      ListEmptyComponent={FavoriteListEmptyComponent} 
+      listEmptyComponent={FavoriteListEmptyComponent} 
       />
       </PaperList.Accordion>
   );

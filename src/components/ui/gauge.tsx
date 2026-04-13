@@ -3,10 +3,11 @@ import { StyleSheet } from "react-native";
 import { useTheme } from 'react-native-paper';
 
 import { PaperTheme } from "@/util/paper-theme";
-import CircularProgress from 'react-native-circular-progress-indicator';
+
+// import CircularProgress from "react-native-circular-progress-indicator";
 
 export interface GaugeProps {
-  value: number;
+  value?: number;
   maxValue?: number;
   valuePrefix?: string;
   valueSuffix?: string;
@@ -15,45 +16,48 @@ export interface GaugeProps {
   thickness?: number;
 }
 
-
-/**
- * A gauge chart component for displaying a value (like State of Charge).
- * Assumes Skia has already been initialized by the app-level SkiaProvider.
- */
 export const Gauge = (props: GaugeProps) => {
   const {
     value,
     maxValue = 100,
     valuePrefix = undefined,
     valueSuffix = undefined,
-    title = "SOC",
+    title,
     radius = 25,
     thickness = 4,
   } = props;
 
   const theme = useTheme() as typeof PaperTheme;
+  const formattedPrefix = valuePrefix ?? "";
+  const formattedSuffix = valueSuffix ?? "";
+
+  const progressFormatter = React.useCallback((v: number) => {
+    'worklet';
+    return `${formattedPrefix}${Math.round(v)}${formattedSuffix}`;
+  }, [formattedPrefix, formattedSuffix]);
 
   return (
-    <CircularProgress
-      value={value}
-      maxValue={maxValue}
-      title={title}
-      valuePrefix={valuePrefix}
-      valueSuffix={valueSuffix}
-      radius={radius}
-      activeStrokeWidth={thickness}
-      inActiveStrokeWidth={thickness}
-      activeStrokeColor={theme.colors.primary}
-      activeStrokeSecondaryColor={theme.colors.secondary}
-      duration={300}
-      titleStyle={theme.components?.Gauge?.centerLabel?.title}
-    // dashedStrokeConfig={{
-    //   count: 3,
-    //   width: 40,
-    // }}
-    />
+    // <CircularProgress
+    //   value={value ? Math.min(value, maxValue) : 0}
+    //   progressFormatter={progressFormatter}
+    //   maxValue={maxValue}
+    //   title={title}
+    //   radius={radius}
+    //   activeStrokeWidth={thickness}
+    //   inActiveStrokeWidth={thickness}
+    //   activeStrokeColor={theme.colors.primary}
+    //   activeStrokeSecondaryColor={theme.colors.secondary}
+    //   duration={300}
+    //   // titleStyle={theme.components?.Gauge?.title}
+    //   // subtitleStyle={theme.components.Gauge.subtitle}
+    //   // progressValueStyle={theme.components.Gauge.value}
+    //   rotation={240}
+    // />
+
+    <></>
   );
-};
+}
+
 
 const styles = StyleSheet.create({
   textContainer: {

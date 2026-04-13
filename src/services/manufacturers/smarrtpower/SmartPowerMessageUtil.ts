@@ -35,8 +35,9 @@ export const KV_BATTERY_WRITE_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
 
 export const KV_MESSAGE_LENGTH_MAXIMUM = 121;
 export const KV_MESSAGE_LENGTH_MINIMUM = 38;
-export const KV_MESSAGE_HEAD = 176;
-export const KV_MESSAGE_TAIL = 82;
+export const KV_MESSAGE_HEAD = 176; // B0
+export const KV_MESSAGE_TAIL = 82; // 52
+// TODO: decoding cell data. Current V = 12.97
 
 
 export class BatteryStatus {    

@@ -6,7 +6,7 @@ import * as Updates from 'expo-updates';
 import { useAtom } from 'jotai';
 import React, { useCallback } from 'react';
 import { ScrollView } from 'react-native';
-import { IconButton, Switch } from 'react-native-paper';
+import { IconButton, Switch, useTheme } from 'react-native-paper';
 import { Dropdown } from 'react-native-paper-dropdown';
 
 import * as Application from 'expo-application';
@@ -145,13 +145,15 @@ export default function SettingsScreen() {
 
   function AboutAccordion() {
 
+    const theme = useTheme();
+
     return (
       <List.Accordion id="about" title="About" description="Learn more about the app and its developers">
-
-        <List.Item title="Version" value={Application.nativeApplicationVersion} icon="information" />
         <List.Item title="Build" value={Application.nativeBuildVersion} icon="information" />
-        <List.Item title="Channel" value={Updates.channel} />
-        <List.Item title="Runtime" value={Updates.runtimeVersion} />
+        <List.Item title="Channel" value={Updates.channel} icon="channgel"/>
+        <List.Item title="Runtime" value={Updates.runtimeVersion} icon="runtime"/>
+        <List.Item title="SDK Version" value={Application.nativeApplicationVersion} icon="information" />
+        <List.Item title="Theme Version" icon="github" value={theme.version} />
         <List.Item title="License" description="MIT License" icon="file-document" />
         <List.Item title="Contact Support" description="Get help and support for the app" icon="lifebuoy" />
       </List.Accordion>
@@ -169,6 +171,7 @@ export default function SettingsScreen() {
           <LogAccordion />
           <DataAccordion />
           <AdvancedAccordion />
+          <AboutAccordion />
         </List.AccordionGroup>
       </ScrollView>
 

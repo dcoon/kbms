@@ -7,7 +7,6 @@
     "icon": "./assets/images/kbms-adaptive-icon.png",
     "scheme": "kbms",
     "userInterfaceStyle": "automatic",
-    
     "ios": {
       "bundleIdentifier": "io.github.dcoon.kbms",
       "buildNumber": "1",
@@ -57,19 +56,17 @@
               "B1F7.1",
               "B1F7.2"
             ]
-          },
+          }
         ]
       },
       "infoPlist": {
         "NSBluetoothAlwaysUsageDescription": "KBMS uses Bluetooth to discover, connect to, and monitor real-time data from your KiloVault HLX+ batteries."
-      },
+      }
     },
     "android": {
       "versionCode": 1,
-      
-      "privacyPolicyUrl": "https://raw.githubusercontent.com/dcoon/kbms/refs/heads/main/PRIVACY.md",
       "adaptiveIcon": {
-        "backgroundColor": "#5FBC85",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/kbms-adaptive-icon.png"
       },
       "predictiveBackGestureEnabled": false,
@@ -108,6 +105,30 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "extraGradleProps": [
+              {
+                "org.gradle.jvmargs": "-Xmx4096m -XX:MaxMetaspaceSize=1g -XX:+UseParallelGC"
+              },
+              {
+                "key": "org.gradle.java.installations.auto-download",
+                "value": "true"
+              },
+              {
+                "key": "org.gradle.java.installations.auto-detect",
+                "value": "true"
+              },
+              {
+                "name": "org.gradle.logging.level",
+                "value": "info"
+              }
+            ]
+          }
+        }
+      ],
       [
         "react-native-ble-plx",
         {
@@ -153,7 +174,9 @@
         }
       ],
       "expo-image",
-      "expo-web-browser"
+      "expo-web-browser",
+      "./plugins/withJavaToolchain",
+      "./plugins/withGradleProperties"
     ],
     "experiments": {
       "typedRoutes": true,

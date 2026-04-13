@@ -49,18 +49,21 @@ function BatteryGraph({ device }: { device: Device }) {
     <Card>
       <Card.Title title="State of Charge" left={(props) => <Icon {...props} source="battery-high" />} />
       <Card.Content>
-    <View style={{ flexDirection: 'column', }}>
-      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 }} >
-        <Gauge value={soc} maxValue={100} valueSuffix='%' 
-        radius={radius} 
-        thickness={thickness}
-        title="SoC" />
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <BatteryStatusFlags status={battery?.status} showNoFlags={false} />
-        <Chip icon="clock-outline" mode="outlined" style={{ alignSelf: 'center', margin: 6, }}>{lastSeen}</Chip>
-      </View>
-    </View>
+        <View style={{ flexDirection: 'column', }}>
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 }} >
+            <Gauge
+              value={soc}
+              maxValue={100}
+              valueSuffix='%'
+              radius={radius}
+              thickness={thickness}
+              title="SoC" />
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <BatteryStatusFlags status={battery?.status} showNoFlags={false} />
+            <Chip icon="clock-outline" mode="outlined" style={{ alignSelf: 'center', margin: 6, }}>{lastSeen}</Chip>
+          </View>
+        </View>
       </Card.Content>
     </Card>
 
@@ -287,11 +290,11 @@ function AppBarActions({ device }: { device?: Device }) {
 }
 
 
-function StartStopBatteryConnectedOnFocus({deviceId}: {deviceId: string}) {
-  
+function StartStopBatteryConnectedOnFocus({ deviceId }: { deviceId: string }) {
+
   const [, setIsBatteryConnected] = useAtom(Bluetooth.isBatteryConnected(deviceId));
 
-  useFocusEffect( 
+  useFocusEffect(
     useCallback(() => {
       const LOG_PREFIX = LOG_SRC + ": StartStopBatteryConnectedOnFocus";
       log.info(LOG_PREFIX, "focus effect called, starting scan");

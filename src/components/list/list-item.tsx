@@ -16,7 +16,7 @@ function TextValue({ value, editable, onChange, children }: { value: string, edi
     );
   } else {
     return (
-      <Text>{value}</Text>
+      <Text variant="labelMedium">{value}</Text>
     );
   }
 }
@@ -58,6 +58,8 @@ function ListItem({ title, description, icon, value, editable = false, left, rig
       return null;
     } else if (typeof value === "boolean") {
       return (<BooleanValue value={value} editable={editable} onChange={onChange} />);
+    } else if (typeof value === "number") {
+      return (<TextValue value={String(value)} editable={editable} onChange={onChange} />);
     } else if (typeof value === "string") {
       return (<TextValue value={value} editable={editable} onChange={onChange} />);
     } else {
