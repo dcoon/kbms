@@ -170,7 +170,7 @@ export default function SettingsScreen() {
           {/* <NotificationsAccordion /> */}
           <LogAccordion />
           <DataAccordion />
-          <AdvancedAccordion />
+          {/* <AdvancedAccordion /> */}
           <AboutAccordion />
         </List.AccordionGroup>
       </ScrollView>

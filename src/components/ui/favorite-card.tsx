@@ -1,13 +1,15 @@
 
 import { battery as batteryAtom, isBatteryConnected } from '@/services/ble/battery-service';
-import { Device, getDeviceName, getIconForRssi } from '@/services/ble/ble-types';
+import { Device, getDeviceName } from '@/services/ble/ble-types';
 import { Favorite } from '@/services/settings/settings-service';
 import { PaperTheme } from '@/util/paper-theme';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { View } from 'react-native';
-import { Card, Icon, IconButton, Text, useTheme } from 'react-native-paper';
+import { Card, Icon, Text, useTheme } from 'react-native-paper';
+import { IconForConnectionState, IconForRssi } from '../ble/ble';
 import { Gauge } from './gauge';
+import { DEFAULT_ICON_SIZE } from './ui-util';
 
 
 
@@ -15,7 +17,6 @@ type DeviceOrFavorite = Device | Favorite;
 
 type OnDevicePress = (device: DeviceOrFavorite) => void;
 
-const default_icon_size = 24;
 
 
 function BatteryIsConnectedIcon({ device }: { device: DeviceOrFavorite }) {
@@ -24,52 +25,18 @@ function BatteryIsConnectedIcon({ device }: { device: DeviceOrFavorite }) {
   const isConnected = isConnectedLoadable.state === 'hasData' && isConnectedLoadable.data === true;
 
   return (
-    <IconButton
-      icon={isConnected ? "stop" : "refresh"}
-      size={default_icon_size}
-      style={{ margin: 0 }}
-      onPress={() => setIsConnected(!isConnected)}
-    />
+    <IconForConnectionState isDeviceConnected={isConnected} onPress={() => setIsConnected(!isConnected)}/>
   );
 }
 
 function RssiIcon({ device }: { device: DeviceOrFavorite }) {
   const rssi = (device as Device).rssi;
-  const rssiIcon = getIconForRssi(rssi);
 
   return (
-    <Icon source={rssiIcon.name} color={rssiIcon.color} size={default_icon_size} />
+    <IconForRssi rssi={rssi} />
 
   );
 }
-
-// function BatterySocIcon({ device }: { device: DeviceOrFavorite }) {
-
-//   const [battery] = useAtom(Bluetooth.battery(device?.id));
-//   const socIcon = getIconForSoC(battery?.soc);
-
-//   const soc = battery?.soc ?? 0;
-//   return (<View>
-//     <Icon source={socIcon.name} color={socIcon.color} size={24} />
-//   </View>);
-// }
-
-// function BatteryIcons({ device }: { device: DeviceOrFavorite }) {
-
-//   const [isKnownBatteryTypeLoadable] = useAtom(Bluetooth.isKnownBatteryType(device?.id));
-//   const isKnownBatteryType = isKnownBatteryTypeLoadable.state === 'hasData' && isKnownBatteryTypeLoadable.data === true;
-
-//   if (!isKnownBatteryType) {
-//     return null;
-//   }
-
-//   return (
-//     <View style={{ flexDirection: 'row' }}>
-//       <BatteryIsConnectedIcon device={device} />
-//       <BatterySocIcon device={device} />
-//     </View>
-//   );
-// }
 
 function LeftContent({ device }: { device: DeviceOrFavorite }) {
   // return <List.Icon icon="devices" />;
@@ -88,7 +55,7 @@ function RightContent({ device }: { device: DeviceOrFavorite }) {
       {/* <BatteryIcons device={device} /> */}
       <RssiIcon device={device} />
       <BatteryIsConnectedIcon device={device} />
-      <Icon source="dots-vertical" size={default_icon_size} />
+      <Icon source="dots-vertical" size={DEFAULT_ICON_SIZE} />
 
     </View>
   );
@@ -99,7 +66,7 @@ function RightContent({ device }: { device: DeviceOrFavorite }) {
 function BatteryValueCard({ value, valueSuffix, title }: { value?: number, valueSuffix?: string, title: string }) {
   return (
     <View style={{ alignItems: 'center', flexDirection: 'column' }}>
-      <Text variant='labelLarge'>{value ? value : '?'}{valueSuffix}</Text>
+      <Text variant='labelLarge'>{value !== undefined ? value : '?'}{valueSuffix}</Text>
       <Text variant='labelMedium'>{title}</Text>
     </View>
   );
@@ -109,18 +76,19 @@ function BatteryValueCard({ value, valueSuffix, title }: { value?: number, value
 function FavoriteCardContent({ device }: { device: DeviceOrFavorite }) {
 
   const theme = useTheme() as typeof PaperTheme;
-
-
   const [battery] = useAtom(batteryAtom(device?.id));
+
   const soc = battery?.soc;
   const voltage = battery?.voltage ? Math.round(battery.voltage) / 1000 : undefined;
-  const current = battery?.current ? Math.round(battery.current) : undefined;
+  const current = battery?.current !== undefined ? Math.round(battery.current) : undefined;
   // const capacity = battery?.capacity;
-  const watts = voltage && current ? Math.round(voltage * current) : undefined;
+  const watts = voltage && current !== undefined ? Math.round(voltage * current) : undefined;
   // const runtime = battery?.capacity;
 
   return (
-    <Card.Content style={theme.components.Card.Content.style as any} >
+    <Card.Content 
+      style={theme.components.Card.Content.style as any} 
+    >
       <Gauge value={soc} title="SOC" />
       <BatteryValueCard value={voltage} valueSuffix="V" title="Voltage" />
       <BatteryValueCard value={current} valueSuffix="A" title="Current" />
@@ -144,6 +112,8 @@ export function FavoriteCard({ device, onDevicePress }: FavoriteCardProps) {
   return (
     <Card
       onPress={() => { onDevicePress?.(device as DeviceOrFavorite) }}
+      theme={theme.components.Card.theme as any}
+      style={theme.components.Card.style as any}
     >
       <Card.Title
         title={deviceName}

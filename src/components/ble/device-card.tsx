@@ -1,7 +1,8 @@
-import { Device, getIconForRssi } from '@/services/ble/ble-types';
+import { Device } from '@/services/ble/ble-types';
 import React from 'react';
 import { View } from 'react-native';
-import { Card, Icon, } from 'react-native-paper';
+import { Card } from 'react-native-paper';
+import { IconForRssi } from './ble';
 
 interface DeviceCardProps {
   device: Device | undefined;
@@ -25,11 +26,10 @@ export function DeviceCard ({ device, title = device?.name, subtitle = device?.i
   );
 
   const DeviceCardRight = () => {
-    const i = getIconForRssi(device?.rssi);
 
     return (
       <View>
-        <Icon source={i.name} size={24} color={i.color} />
+        <IconForRssi rssi={device?.rssi}/>
       </View>
     )
   };

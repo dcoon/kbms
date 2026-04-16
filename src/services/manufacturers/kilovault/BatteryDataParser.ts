@@ -1,6 +1,6 @@
+import { BatteryData, BatteryDataBase } from "@/services/ble/battery";
 import { CharacteristicValueType } from '@/services/ble/ble-types';
 import log from "@/services/log/log-service";
-import { BatteryData } from "@/util/battery";
 import base64 from "react-native-base64";
 
 export type ByteArray = Uint8Array;
@@ -102,17 +102,24 @@ export class BatteryDataParser {
 
         this.consumed = end;
 
-        return {
-            deviceId: "",
-            voltage,
-            current,
-            capacity,
-            soc,
-            cycles,
-            temperature,
-            lastUpdated: new Date(),
-            cells: [{ voltage: cell1 }, { voltage: cell2 }, { voltage: cell3 }, { voltage: cell4 }]
-        };
+
+        const battery = new BatteryDataBase();
+        battery.deviceId = "";
+        battery.voltage = voltage;
+        battery.current = current;
+        battery.capacity = capacity;
+        battery.soc = soc;
+        battery.cycles = cycles;
+        battery.temperature = temperature;
+        battery.lastUpdated = new Date();
+        battery.cells = [
+            { voltage: cell1 },
+            { voltage: cell2 },
+            { voltage: cell3 },
+            { voltage: cell4 },
+        ];
+
+        return battery;
 
 
     }

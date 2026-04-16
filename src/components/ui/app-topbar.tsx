@@ -1,4 +1,5 @@
 
+import * as Battery from '@/services/ble/battery-service';
 import { Bluetooth } from '@/services/ble/ble-service';
 import { LoadableState } from '@/services/ble/ble-types';
 import log from '@/services/log/log-service';
@@ -89,7 +90,7 @@ export function IsNotifyingAction({ deviceId, serviceUUID, characteristicUUID }:
   return (
     <LoadableAction<boolean> loadable={isNotifyingLoadable as any} onPress={(data) => {
       setIsNotifying(!data)
-    }} getIconForData={(data) => data ? "stop" : "play"
+    }} getIconForData={(data) => data ? "stop" : "refresh"
 
     } />
   );
@@ -196,7 +197,7 @@ export function BatteryAction({ deviceId }: BatteryActionProps) {
 
 
 function BatteryActionDeveloperMode({ deviceId }: BatteryActionProps) {
-  const [isKnownBatteryTypeLoadable] = useAtom(Bluetooth.isKnownBatteryType(deviceId));
+  const [isKnownBatteryTypeLoadable] = useAtom(Battery.isKnownBatteryType(deviceId));
   const isKnownBatteryType = isKnownBatteryTypeLoadable.state === LoadableState.hasData ? isKnownBatteryTypeLoadable.data : false;
   const router = useRouter();
 
@@ -205,7 +206,7 @@ function BatteryActionDeveloperMode({ deviceId }: BatteryActionProps) {
   function onBatteryPress() {
     router.navigate(
       {
-        pathname: "/devices/[deviceid]/battery",
+        pathname: "/devices/[deviceid]",
         params: {
           deviceid: deviceId
         }

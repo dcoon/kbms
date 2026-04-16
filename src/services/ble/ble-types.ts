@@ -1,7 +1,6 @@
 import * as ExpoDevice from 'expo-device';
 import { Platform } from 'react-native';
 import { Base64, BleError, Characteristic, Device, DeviceId, State, UUID } from 'react-native-ble-plx';
-import { IconSource } from 'react-native-paper/lib/typescript/components/Icon';
 import { Favorite } from '../settings/settings-service';
 
 // general types
@@ -71,57 +70,5 @@ export const getDeviceName = (device: Device | Favorite | undefined): string => 
   return "Unknown Device";
 }
 
-
-export function getIconForScanningState(isScanning: boolean): IconSource {
-  return isScanning ? "stop" : "play";
-}
-
-
-export function getIconForConnectionState(isDeviceConnected: boolean): IconSource {
-
-  return isDeviceConnected ? "stop" : "play";
-
-  // switch (state) {
-  //   case DeviceConnectionState.Connected:
-  //     return "stop";
-  //   case DeviceConnectionState.Connecting:
-  //     return "sync";
-  //   case DeviceConnectionState.Disconnected:
-  //     return "play";
-  //   default:
-  //     return "unknown";
-  // }
-}
-
-export function getIconForRssi(rssi?: number | null): { name: string, color?: string } {
-  if (rssi === undefined || rssi === null) {
-    return { name: "signal-off" }; //"signal-cellular-off"; // no signal
-  } else if (rssi >= -80) {
-    return { name: "signal-cellular-3", color: "green" }; // 4 bars
-  } else if (rssi >= -90) {
-    return { name: "signal-cellular-2", color: "green" }; // 3 bars                
-  } else if (rssi >= -100) {
-    return { name: "signal-cellular-1", color: "red" }; // 2 bars           
-  } else {
-    return { name: "signal-cellular-outline" }; // no signal    
-  }
-}
-
-export function getIconForSoC(soc?: number): { name: string, color?: string } {
-
-  if (soc === undefined || soc === null) {
-    return { name: "battery-unknown" };
-  } else if (soc >= 80) {
-    return { name: "battery-high", color: "green" };
-  } else if (soc >= 60) {
-    return { name: "battery-medium", color: "orange" };
-  } else if (soc >= 40) {
-    return { name: "battery-low", color: "red" };
-  } else if (soc >= 20) {
-    return { name: "battery-outline", color: "red" };
-  } else {
-    return { name: "battery-0" }; 
-  }
-}
 
 

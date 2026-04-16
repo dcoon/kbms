@@ -56,9 +56,32 @@ export interface CellData {
     voltage: number;
 }
 
+export enum CellVoltageLevel {
+    VeryHigh = 3700,
+    High = 3400,
+    Medium = 3200,
+    Low = 2800,
+    VeryLow = 2500,
+    Unknown
+};
+
+export enum CellDeltaVLevel {
+    VeryHigh = 150,
+    High = 100,
+    Medium = 60,
+    Low = 30,
+    VeryLow = 15,
+    Unknown
+};
+
+
+
+
+
 export interface BatteryData {
     deviceId: string;
     batteryType?: number;
+    get batteryTypeName(): string;
     rawStatus?: number; // {HV, LV, OCC, OCD, LTD, LTC, HTD, HTC};   
     status?: BatteryStatus;
     infoStatus?: number;
@@ -74,9 +97,28 @@ export interface BatteryData {
     cells: CellData[];
 }
 
+
+enum BatteryCapacityLevel {
+    HLX1200 = 140000,
+    HLX2400 = 260000,
+    HLX3600 = 360000,
+    Unknown = 0
+}
+
 export class BatteryDataBase implements BatteryData {
     deviceId: string = "";
     batteryType?: number;
+    get batteryTypeName(): string {
+        if(this.capacity < BatteryCapacityLevel.HLX1200) {
+            return "HLX1200";
+        } else if (this.capacity < BatteryCapacityLevel.HLX2400) {
+            return "HLX2400";
+        } else if (this.capacity < BatteryCapacityLevel.HLX3600) {
+            return "HLX3600";
+        } else {
+            return "Unknown";
+        }        
+    }
     rawStatus?: number; // {HV, LV, OCC, OCD, LTD, LTC, HTD, HTC};   
     status?: BatteryStatus = undefined;
     infoStatus?: number;
@@ -90,4 +132,14 @@ export class BatteryDataBase implements BatteryData {
     lastUpdated: Date = new Date();
 
     cells: CellData[] = [];
+
+
 }
+export enum BatterySoCLevel {
+    VeryHigh = 80,
+    High = 60,
+    Medium = 40,
+    Low = 20,
+    VeryLow = 0
+}
+

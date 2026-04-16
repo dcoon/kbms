@@ -4,9 +4,9 @@ import { atom } from "jotai";
 import { atomFamily, loadable } from "jotai/utils";
 import { DeviceId } from "react-native-ble-plx";
 
+import { BatteryData, BatteryIdentifier } from "@/services/ble/battery";
 import { characteristicIsNotifyingAsync, characteristicValueHistory, deviceHasServiceAndCharacteristicAsync } from "@/services/ble/ble-service";
 import { KV_BATTERY_NOTIFY_UUID, KV_BATTERY_SERVICE_UUID } from "@/services/manufacturers/kilovault/battery-data-types";
-import { BatteryData, BatteryIdentifier } from "@/util/battery";
 import { RESET } from "jotai-history";
 import log from "../log/log-service";
 import { BatteryDataParser } from "../manufacturers/kilovault/BatteryDataParser";

@@ -1,59 +1,57 @@
 
 import { List } from '@/components/list/list-item';
-import { Device, getDeviceName, getIconForRssi, getIconForSoC } from '@/services/ble/ble-types';
+import { Device, getDeviceName } from '@/services/ble/ble-types';
 import { Favorite } from '@/services/settings/settings-service';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { View } from 'react-native';
-import { IconButton, Text } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import { FavoriteIcon } from '../ui/favorite-icon';
 
 import * as Battery from '@/services/ble/battery-service';
+import { IconForSoC } from './battery';
+import { IconForConnectionState, IconForRssi } from './ble';
 
 
-type DeviceOrFavorite = Device | Favorite;
 
-type OnDevicePress = (device: DeviceOrFavorite) => void;
+type OnDevicePress = (device: Device) => void;
 
 
-function LeftContent({ device }: { device: DeviceOrFavorite }) {
+function LeftContent({ device }: { device: Device }) {
   // return <List.Icon icon="devices" />;
   return (<FavoriteIcon favorite={device as Favorite} />);
 }
 
 
-function DeviceIcons({ device }: { device: DeviceOrFavorite }) {
+function DeviceIcons({ device }: { device: Device }) {
 
-  const rssi = (device as Device).rssi;
-  const rssiIcon = getIconForRssi(rssi);
-
+  const rssi = device.rssi;
 
   return (
-    <List.Icon icon={rssiIcon.name} color={rssiIcon.color} />
+    <IconForRssi rssi={rssi} />
   );}
 
 
-  function BatteryIsConnectedIcon({ device }: { device: DeviceOrFavorite }) {
+  function BatteryIsConnectedIcon({ device }: { device: Device }) {
 
     const [isConnectedLoadable, setIsConnected] = useAtom(Battery.isBatteryConnected(device?.id));
     const isConnected = isConnectedLoadable.state === 'hasData' && isConnectedLoadable.data === true;
 
     return (
-      <IconButton icon={isConnected ? "stop" : "play"} onPress={() => setIsConnected(!isConnected)} />
+      <IconForConnectionState isDeviceConnected={isConnected} onPress={() => setIsConnected(!isConnected)} />
     );
   }
 
-  function BatterySocIcon({ device }: { device: DeviceOrFavorite }) {
+  function BatterySocIcon({ device }: { device: Device }) {
 
     const [battery] = useAtom(Battery.battery(device?.id));
-    const socIcon = getIconForSoC(battery?.soc);
 
     return (
-      <List.Icon icon={socIcon.name} color={socIcon.color} />
+      <IconForSoC soc={battery?.soc} />
     );
   }
 
-  function BatteryIcons({ device }: { device: DeviceOrFavorite }) {
+  function BatteryIcons({ device }: { device: Device }) {
 
     const [isKnownBatteryTypeLoadable] = useAtom(Battery.isKnownBatteryType(device?.id));
     const isKnownBatteryType = isKnownBatteryTypeLoadable.state === 'hasData' && isKnownBatteryTypeLoadable.data === true;
@@ -70,7 +68,7 @@ function DeviceIcons({ device }: { device: DeviceOrFavorite }) {
     );
   }
 
-function RightContent({ device }: { device: DeviceOrFavorite }) {
+function RightContent({ device }: { device: Device }) {
 
   return (
     <View style={{ alignContent: 'flex-end' }}>
@@ -86,7 +84,7 @@ function RightContent({ device }: { device: DeviceOrFavorite }) {
 
 
 interface DeviceListItemProps {
-  device: DeviceOrFavorite;
+  device: Device;
   onDevicePress?: OnDevicePress;
 }
 
@@ -105,7 +103,7 @@ export function DeviceListItem({ device, onDevicePress }: DeviceListItemProps) {
       left={<LeftContent device={device} />}
       right={<RightContent device={device} />}
       value={undefined}
-      onPress={() => { onDevicePress?.(device as DeviceOrFavorite) }}
+      onPress={() => { onDevicePress?.(device as Device) }}
     >
       <Text>foobar money</Text>
     </List.Item>

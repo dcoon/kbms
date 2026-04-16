@@ -96,6 +96,11 @@ export const PaperTheme = {
       theme: {
         roundness: 0, // Square corners for Card
       },
+      style: {
+        backgroundColor: 'rgb(253, 253, 245)', // White background for Card
+        borderColor: 'rgb(253, 253, 245)', // Green border for Card
+        borderWidth: 0,
+      },
       Title: {
         style: {
           marginHorizontal: 16,
