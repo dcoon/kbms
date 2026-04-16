@@ -8,6 +8,7 @@ import { DeviceId } from 'react-native-ble-plx';
 import { Card, List as PaperList, TouchableRipple } from 'react-native-paper';
 
 import { FavoriteCard } from '@/components/ui/favorite-card';
+import { Gauge } from '@/components/ui/gauge';
 import { isBluetoothAvailable } from '@/services/ble/ble-types';
 import log from '@/services/log/log-service';
 
@@ -79,11 +80,12 @@ function HomeSummaryAccordion() {
   return (
 
     <List.Section title="System Overview">
-      <PaperList.Item
+      {/* <PaperList.Item
         title="All Batteries Status"
         description="Placeholder for fancy graphs and stuff"
         left={() => <List.Icon icon="battery" />}
-      />
+      /> */}
+      <Gauge value={75} maxvalue={100} valuesuffix="%" title="SoC" radius={40} thickness={8} />
     </List.Section>
   );
 }

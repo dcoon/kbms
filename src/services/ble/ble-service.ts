@@ -1,35 +1,20 @@
 import { blelog as log } from '@/services/log/log-service';
 import { Settings } from '@/services/settings/settings-service';
-import { atom, Getter, Setter, WritableAtom } from 'jotai';
+import { atom, Getter, Setter } from 'jotai';
 import { atomFamily, atomWithLazy, atomWithRefresh, loadable } from 'jotai/utils';
 
 
-import { Base64, BleManager, Characteristic, Device, DeviceId, State, Subscription, UUID } from 'react-native-ble-plx';
-import { Subject } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { BatteryData, KV_BATTERY_NOTIFY_UUID, KV_BATTERY_SERVICE_UUID, transformCharValueStreamToBatteryDataPipeline } from '../manufacturers/smarrtpower/SmartPowerMessageUtil';
+import { withHistory } from 'jotai-history';
+import { BleManager, Characteristic, Device, DeviceId, State, Subscription, UUID } from 'react-native-ble-plx';
+import { batteryParser, isKnownBatteryCharacteristic } from './battery-service';
 import { BleManagerMock } from './ble-manager-mock';
 import { requestPermission } from './ble-permissions';
-import { CharacteristicIdentifier, DeviceIdentifier, isBluetoothAvailable as isBluetoothAvailableFn, ServiceIdentifier } from './ble-types';
+import { CharacteristicIdentifier, CharacteristicValueType, DeviceIdentifier, isBluetoothAvailable as isBluetoothAvailableFn, ServiceIdentifier } from './ble-types';
+import { loadableWithSetter } from './jotai-util';
 
 
 const LOG_SRC = "BLEService";
 
-
-/**
- * Creates a writable atom that wraps a loadable version of the provided async atom.
- * This allows components to use the loadable state (loading, hasData, hasError)
- * while still being able to trigger updates via the setter.
- */
-function loadableWithSetter<Value, Args extends any[], Result>(
-  anAtom: WritableAtom<Value, Args, Result>
-) {
-  const lAtom = loadable(anAtom);
-  return atom(
-    (get) => get(lAtom),
-    (_get, set, ...args: Args) => set(anAtom, ...args)
-  );
-}
 
 // subscriptions
 
@@ -402,7 +387,7 @@ function characteristicIdentifierEquals(a: CharacteristicIdentifier, b: Characte
 }
 
 
-const deviceHasServiceAndCharacteristicAsync = atomFamily(
+export const deviceHasServiceAndCharacteristicAsync = atomFamily(
   ({ deviceId, serviceUUID, characteristicUUID }: CharacteristicIdentifier) => atom(
     async (get) => {
       const characteristics = await get(characteristicsAsync({ deviceId, serviceUUID }));
@@ -460,37 +445,41 @@ const descriptors = atomFamily(
 
 // characteristic value
 
+const CHARACTERISTIC_VALUE_HISTORY_LIMIT = 50;
 
-const characteristicValueAsync = atomFamily((params: CharacteristicIdentifier) => atomWithRefresh(
-  async (get) => {
-    // await get(connectedDeviceAsync(deviceId));
-    await get(characteristicAsync(params));
-    const manager = get(ble);
-    const characteristic = await manager?.readCharacteristicForDevice(params.deviceId, params.serviceUUID, params.characteristicUUID);
-    return characteristic ? characteristic.value : undefined;
-  },
-  async (get, set, value: Base64) => {
-    const LOG_PREFIX = LOG_SRC + ": characteristicValueAsync setter";
-    await get(connectedDeviceAsync(params.deviceId));
-    log.info(LOG_PREFIX, ": Writing value to characteristic: ", params);
-    get(ble)?.writeCharacteristicWithoutResponseForDevice(params.deviceId, params.serviceUUID, params.characteristicUUID, value);
-
-    set(characteristicAsync(params));
-  }
-), characteristicIdentifierEquals);
-
-const characteristicValue = atomFamily(
-  (params: CharacteristicIdentifier) => loadableWithSetter(characteristicValueAsync(params)),
+/**
+ * One primitive value atom per characteristic identifier.
+ * (Name kept as characteristicValueBase to match your existing API surface.)
+ */
+const characteristicValueBase = atomFamily(
+  (cid: CharacteristicIdentifier) => atom<CharacteristicValueType>(null),
   characteristicIdentifierEquals
-)
+);
 
-function isBatteryUpdate(characteristic: Characteristic | null) {
-  return characteristic && characteristic.uuid === KV_BATTERY_NOTIFY_UUID && characteristic.serviceUUID === KV_BATTERY_SERVICE_UUID;
-}
+/**
+ * One history atom per characteristic identifier.
+ * This is the key fix: wrap characteristicValueBase(cid), not a global map atom.
+ */
+export const characteristicValueHistory = atomFamily(
+  (cid: CharacteristicIdentifier) =>
+    withHistory(characteristicValueBase(cid), CHARACTERISTIC_VALUE_HISTORY_LIMIT),
+  characteristicIdentifierEquals
+);
 
-function isCharactertisticValueUpdateOnly(oldC?: Characteristic, newC?: Characteristic) {
-  return oldC?.isNotifying === newC?.isNotifying;
-}
+/**
+ * Convenience atom for reading/writing current value.
+ * Writing through the history atom preserves undo/redo stack.
+ */
+export const characteristicValue = atomFamily(
+  (cid: CharacteristicIdentifier) =>
+    atom(
+      (get) => get(characteristicValueBase(cid)),
+      (get, set, value: CharacteristicValueType) => {
+        set(characteristicValueHistory(cid), value);
+      }
+    ),
+  characteristicIdentifierEquals
+);
 
 async function onCharacteristicUpdate(error: Error | null, characteristic: Characteristic | null, get: Getter, set: Setter) {
 
@@ -512,27 +501,22 @@ async function onCharacteristicUpdate(error: Error | null, characteristic: Chara
 
     log.debug(LOG_PREFIX, "uuid, value, isNotifying", characteristic.deviceID, characteristic.serviceUUID, characteristic.uuid, characteristic.value, characteristic.isNotifying ? "notifying" : "not notifying");
 
-    if (isBatteryUpdate(characteristic)) {
-      onCharacteristicUpdateForBattery(error, characteristic, get, set);
+    set(characteristicValue(cid), characteristic.value);
+    set(characteristicAsync(cid));
+
+    if(isKnownBatteryCharacteristic(cid)) {
+      log.debug(LOG_PREFIX, ": Received update for known battery characteristic, pumping battery parser");
+      set(batteryParser(characteristic.deviceID));
     }
 
-    const oldC = await get(characteristicAsync(cid));
-    if (isCharactertisticValueUpdateOnly(oldC, characteristic)) {
-      log.debug(LOG_PREFIX, ": characteristic value update only");
-      set(characteristicValueAsync(cid));
-    } else {
-      log.debug(LOG_PREFIX, ": characteristic notifying state changed or first update, refreshing characteristic");
-      // refresh the characteristic to update the value in the UI
-      set(characteristicAsync(cid));
-    }
+
   } else {
-    log.debug(LOG_PREFIX, ": onCharacteristicUpdate called without error or characteristic");
+    log.warn(LOG_PREFIX, ": onCharacteristicUpdate called without error or characteristic");
   }
 
 }
 
-
-const characteristicIsNotifyingAsync = atomFamily(
+export const characteristicIsNotifyingAsync = atomFamily(
   (cid: CharacteristicIdentifier) => atomWithRefresh(
     async (get) => {
       // await get(connectedDeviceAsync(deviceId));
@@ -564,110 +548,10 @@ const characteristicIsNotifyingAsync = atomFamily(
   characteristicIdentifierEquals
 );
 
-
-
-
 const characteristicIsNotifying = atomFamily(
   (params: CharacteristicIdentifier) => loadableWithSetter(characteristicIsNotifyingAsync(params)),
   characteristicIdentifierEquals
 )
-
-// battery
-
-
-
-type BatteryIdentifier = DeviceId;
-
-const batteries = atom(new Map<BatteryIdentifier, BatteryData>());
-
-const battery = atomFamily((id: BatteryIdentifier) => atom(
-  (get) => {
-    const b = get(batteries).get(id);
-    return b;
-  },
-  (get, set, value: BatteryData) => {
-    const next = new Map(get(batteries));
-    next.set(id, value);
-    set(batteries, next);
-  }
-), (a, b) => a === b);
-
-
-const isKnownBatteryType = atomFamily((id: DeviceId) => loadable(deviceHasServiceAndCharacteristicAsync({ deviceId: id, serviceUUID: KV_BATTERY_SERVICE_UUID, characteristicUUID: KV_BATTERY_NOTIFY_UUID })), (a, b) => a === b);
-
-const isBatteryConnectedAsync = atomFamily((id: DeviceId) => atom(
-  async (get) => {
-
-    return await get(characteristicIsNotifyingAsync({ deviceId: id, serviceUUID: KV_BATTERY_SERVICE_UUID, characteristicUUID: KV_BATTERY_NOTIFY_UUID }));
-  },
-  async (get, set, value: boolean) => {
-    set(characteristicIsNotifyingAsync({ deviceId: id, serviceUUID: KV_BATTERY_SERVICE_UUID, characteristicUUID: KV_BATTERY_NOTIFY_UUID }), value);
-  }
-), (a, b) => a === b);
-
-// const isBatteryConnected = atomFamily((id: DeviceId) => loadable(isBatteryConnectedAsync(id)), (a, b) => a === b);
-
-const isBatteryConnected = atomFamily(
-  (id: DeviceId) => loadableWithSetter(isBatteryConnectedAsync(id)),
-  (a, b) => a === b
-);
-
-const charactericValueUpdateSubjects = atom(new Map<BatteryIdentifier, Subject<Base64>>());
-
-const charactericValueUpdateSubject = atomFamily((id: BatteryIdentifier) => atom(
-  (get) => {
-    const b = get(charactericValueUpdateSubjects).get(id);
-    return b;
-  },
-  (get, set, value: Subject<Base64>) => {
-    const next = new Map(get(charactericValueUpdateSubjects));
-    next.set(id, value);
-    set(charactericValueUpdateSubjects, next);
-  }
-), (a, b) => a === b);
-
-
-
-function onCharacteristicUpdateForBattery(error: Error | null, characteristic: Characteristic | null, get: Getter, set: Setter) {
-
-  const LOG_PREFIX = LOG_SRC + ": onCharacteristicUpdateForBattery";
-
-  if (error) {
-    log.error(LOG_PREFIX, ": onCharacteristicUpdateForBattery called with error: ", error.message);
-  } else if (characteristic) {
-    log.debug(LOG_PREFIX, ": onCharacteristicUpdateForBattery called with characteristic: ", characteristic.deviceID, characteristic.serviceUUID, characteristic.uuid, characteristic.value);
-  }
-
-  let subject = get(charactericValueUpdateSubject(characteristic!.deviceID));
-  if (!subject) {
-    subject = new Subject<Base64>();
-    subject.pipe(
-      transformCharValueStreamToBatteryDataPipeline,
-      map(batteryData => {
-        if (batteryData) {
-          batteryData.deviceId = characteristic!.deviceID;
-
-        }
-        return batteryData;
-      })
-    ).subscribe(
-      (batteryData) => {
-        batteryData && onBatteryDataUpdate(batteryData, get, set);
-      }
-    )
-    set(charactericValueUpdateSubject(characteristic!.deviceID), subject);
-  }
-
-  subject.next(characteristic && characteristic.value ? characteristic.value : "");
-}
-
-function onBatteryDataUpdate(batteryData: BatteryData, get: Getter, set: Setter) {
-
-  const LOG_PREFIX = LOG_SRC + ": onBatteryDataUpdate";
-  log.info(LOG_PREFIX, ": onBatteryDataUpdate called with batteryData: ", batteryData);
-
-  set(battery(batteryData.deviceId), batteryData);
-}
 
 
 
@@ -687,9 +571,5 @@ export const Bluetooth = {
   descriptors,
   subscription,
   characteristicIsNotifying,
-  devicesWithServiceAndCharacteristic,
-  batteries,
-  battery,
-  isKnownBatteryType,
-  isBatteryConnected
+  devicesWithServiceAndCharacteristic
 }

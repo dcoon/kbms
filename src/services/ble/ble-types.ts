@@ -39,6 +39,9 @@ export type CharacteristicId = UUID;
 export type DescriptorId = UUID;
 
 export type DataValue = Base64;
+
+export type CharacteristicValueType = Base64 | null;
+
 export type ServiceDataMap = { [uuid: string]: DataValue; };
 
 export type DeviceUpdateListener = (error: BleError | null, device: Device | null) => void;

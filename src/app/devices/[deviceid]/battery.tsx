@@ -18,13 +18,15 @@ import { uilog as log } from '@/services/log/log-service';
 // import { PieChart } from "react-native-gifted-charts";
 import { Card, Chip, Icon, Text } from 'react-native-paper';
 
+import { battery as batteryAtom, isBatteryConnected } from '@/services/ble/battery-service';
+
 import { Gauge } from '@/components/ui/gauge';
 
 const LOG_SRC = "BatteryScreen";
 
 
 function BatteryGraph({ device }: { device: Device }) {
-  const [battery] = useAtom(Bluetooth.battery(device ? device.id : ""));
+  const [battery] = useAtom(batteryAtom(device ? device.id : ""));
 
   const soc = battery ? battery.soc : 0;
   const voltage = battery ? battery.voltage / 1000 : 0;
@@ -53,8 +55,8 @@ function BatteryGraph({ device }: { device: Device }) {
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 }} >
             <Gauge
               value={soc}
-              maxValue={100}
-              valueSuffix='%'
+              maxvalue={100}
+              valuesuffix='%'
               radius={radius}
               thickness={thickness}
               title="SoC" />
@@ -122,7 +124,7 @@ function BatteryStatusFlags({ status, showNoFlags = true }: { status: BatterySta
 }
 function BatteryDataAccordion({ device, children }: { device: Device, children?: React.ReactNode }) {
 
-  const [battery] = useAtom(Bluetooth.battery(device.id));
+  const [battery] = useAtom(batteryAtom(device.id));
 
   return (
     <List.Accordion title="Battery Data" id="battery-data" description="Current battery status" icon="car-battery">
@@ -194,7 +196,7 @@ function ListItemNumericValue({ value }: { value: number | undefined }) {
 }
 function InformationAccordion({ device }: { device: Device }) {
 
-  const [battery] = useAtom(Bluetooth.battery(device ? device.id : ""));
+  const [battery] = useAtom(batteryAtom(device ? device.id : ""));
 
   return (
     <List.Accordion
@@ -249,12 +251,107 @@ function InformationAccordion({ device }: { device: Device }) {
 
 }
 
-function CellDataAccodion({ device }: { device: Device }) {
-  return (
-    <List.Accordion title="Cell Data" id="cell-data" description="Cell Data" icon="information-outline">
-      <List.Item title="Not Implemented" description="Cell data isn't implemented yet" icon="battery-high" value={13.6} />
+const DEFAULT_ICON_SIZE = 24;
 
-      <List.Item title="Cell 1 Data" description="Cell Data V" icon="battery-high" value={13.6} />
+function IconForCellDeltaV({ deltav, size = DEFAULT_ICON_SIZE }: { deltav?: number, size?: number }) {
+
+  enum CellDeltaVLevel  {
+    VeryHigh = 150,
+    High = 100,
+    Medium = 60,
+    Low = 30,
+    VeryLow = 15,
+    Unknown
+  };
+
+  if (deltav === undefined) {
+    return <Icon source="delta" size={size} />;
+  } else if (deltav >= CellDeltaVLevel.VeryHigh) {
+    return <Icon source="delta" color="red" size={size} />;
+  } else if (deltav >= CellDeltaVLevel.High) {
+    return <Icon source="delta" color="orange" size={size} />;
+  } else if (deltav >= CellDeltaVLevel.Medium) {
+    return <Icon source="delta" color="orange" size={size} />;
+  } else if (deltav >= CellDeltaVLevel.Low) {
+    return <Icon source="delta" color="green" size={size} />;
+  } else {
+    return <Icon source="delta" color="green" size={size} />;
+  }
+}
+
+function CellDataAccordionRight({ deltav }: { deltav?: number }) {
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+      <IconForCellDeltaV deltav={deltav} size={16} />
+      <Text variant="bodySmall">{deltav ? deltav + "mV" : "Unknown"}</Text>
+    </View>
+  );
+
+}
+
+
+
+function IconForCellVoltage({cellv, iconSize = DEFAULT_ICON_SIZE}: {cellv?: number, iconSize?: number}) {
+
+  enum CellVoltageLevel {
+    VeryHigh = 3700,
+    High = 3400,
+    Medium = 3200,
+    Low = 2800,
+    VeryLow = 2500,
+    Unknown
+  };
+
+
+  if (cellv === undefined) {
+    return <Icon source="battery-unknown" size={iconSize} />;
+  } else if (cellv >= CellVoltageLevel.VeryHigh) {
+    return <Icon source="battery-alert" color="red" size={iconSize} />;
+  } else if (cellv >= CellVoltageLevel.High) {
+    return <Icon source="battery-high" color="green" size={iconSize} />;
+  } else if (cellv >= CellVoltageLevel.Medium) {
+    return <Icon source="battery-medium" color="orange" size={iconSize} />;
+  } else if (cellv >= CellVoltageLevel.Low) {
+    return <Icon source="battery-low" color="red" size={iconSize} />;
+  } else if (cellv >= CellVoltageLevel.VeryLow) {
+    return <Icon source="battery-outline" color="red" size={iconSize} />;
+  } else {
+    return <Icon source="battery-0" size={iconSize} />;
+  }
+}
+
+function CellDataAccodion({ device }: { device: Device }) {
+
+  const [battery] = useAtom(batteryAtom(device.id));
+  const cells = battery?.cells ? battery.cells : [];
+
+  const cellMax = cells.reduce((max, cell) => {
+    return cell.voltage > max ? cell.voltage : max;
+  }, 0);
+
+  const cellMin = cells.reduce((min, cell) => {
+    return cell.voltage < min ? cell.voltage : min;
+  }, cells[0] ? cells[0].voltage : 0);
+
+  const deltav = cellMax - cellMin;
+
+  return (
+    <List.Accordion 
+    title="Cell Data" id="cell-data" description="Cell Data" icon="information-outline"
+    right={<CellDataAccordionRight deltav={deltav} />}
+    >
+      <List.StaticList 
+        data={cells}
+        keyExtractor={(item) => String(item) + Math.random()} // Use a unique key extractor for each item 
+        renderItem={({ item, index }) => (
+          <List.Item
+            title={`Cell ${index + 1}`}
+            value={item.voltage ? (item.voltage / 1000).toFixed(3) + "V" : "Unknown"}
+            left={IconForCellVoltage({ cellv: item.voltage  })}
+          />
+        )}
+      />
 
     </List.Accordion>
   );
@@ -269,9 +366,6 @@ function SettingsAccordion({ device }: { device: Device }) {
     </List.Accordion>
   );
 }
-
-
-
 
 function AppBarActions({ device }: { device?: Device }) {
 
@@ -292,7 +386,7 @@ function AppBarActions({ device }: { device?: Device }) {
 
 function StartStopBatteryConnectedOnFocus({ deviceId }: { deviceId: string }) {
 
-  const [, setIsBatteryConnected] = useAtom(Bluetooth.isBatteryConnected(deviceId));
+  const [, setIsBatteryConnected] = useAtom(isBatteryConnected(deviceId));
 
   useFocusEffect(
     useCallback(() => {

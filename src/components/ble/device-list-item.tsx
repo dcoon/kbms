@@ -1,6 +1,5 @@
 
 import { List } from '@/components/list/list-item';
-import { Bluetooth } from '@/services/ble/ble-service';
 import { Device, getDeviceName, getIconForRssi, getIconForSoC } from '@/services/ble/ble-types';
 import { Favorite } from '@/services/settings/settings-service';
 import { useAtom } from 'jotai';
@@ -9,6 +8,7 @@ import { View } from 'react-native';
 import { IconButton, Text } from 'react-native-paper';
 import { FavoriteIcon } from '../ui/favorite-icon';
 
+import * as Battery from '@/services/ble/battery-service';
 
 
 type DeviceOrFavorite = Device | Favorite;
@@ -35,7 +35,7 @@ function DeviceIcons({ device }: { device: DeviceOrFavorite }) {
 
   function BatteryIsConnectedIcon({ device }: { device: DeviceOrFavorite }) {
 
-    const [isConnectedLoadable, setIsConnected] = useAtom(Bluetooth.isBatteryConnected(device?.id));
+    const [isConnectedLoadable, setIsConnected] = useAtom(Battery.isBatteryConnected(device?.id));
     const isConnected = isConnectedLoadable.state === 'hasData' && isConnectedLoadable.data === true;
 
     return (
@@ -45,7 +45,7 @@ function DeviceIcons({ device }: { device: DeviceOrFavorite }) {
 
   function BatterySocIcon({ device }: { device: DeviceOrFavorite }) {
 
-    const [battery] = useAtom(Bluetooth.battery(device?.id));
+    const [battery] = useAtom(Battery.battery(device?.id));
     const socIcon = getIconForSoC(battery?.soc);
 
     return (
@@ -55,7 +55,7 @@ function DeviceIcons({ device }: { device: DeviceOrFavorite }) {
 
   function BatteryIcons({ device }: { device: DeviceOrFavorite }) {
 
-    const [isKnownBatteryTypeLoadable] = useAtom(Bluetooth.isKnownBatteryType(device?.id));
+    const [isKnownBatteryTypeLoadable] = useAtom(Battery.isKnownBatteryType(device?.id));
     const isKnownBatteryType = isKnownBatteryTypeLoadable.state === 'hasData' && isKnownBatteryTypeLoadable.data === true;
 
     if (!isKnownBatteryType) {

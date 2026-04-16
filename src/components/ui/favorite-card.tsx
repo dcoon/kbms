@@ -1,5 +1,5 @@
 
-import { Bluetooth } from '@/services/ble/ble-service';
+import { battery as batteryAtom, isBatteryConnected } from '@/services/ble/battery-service';
 import { Device, getDeviceName, getIconForRssi } from '@/services/ble/ble-types';
 import { Favorite } from '@/services/settings/settings-service';
 import { PaperTheme } from '@/util/paper-theme';
@@ -20,7 +20,7 @@ const default_icon_size = 24;
 
 function BatteryIsConnectedIcon({ device }: { device: DeviceOrFavorite }) {
 
-  const [isConnectedLoadable, setIsConnected] = useAtom(Bluetooth.isBatteryConnected(device?.id));
+  const [isConnectedLoadable, setIsConnected] = useAtom(isBatteryConnected(device?.id));
   const isConnected = isConnectedLoadable.state === 'hasData' && isConnectedLoadable.data === true;
 
   return (
@@ -111,7 +111,7 @@ function FavoriteCardContent({ device }: { device: DeviceOrFavorite }) {
   const theme = useTheme() as typeof PaperTheme;
 
 
-  const [battery] = useAtom(Bluetooth.battery(device?.id));
+  const [battery] = useAtom(batteryAtom(device?.id));
   const soc = battery?.soc;
   const voltage = battery?.voltage ? Math.round(battery.voltage) / 1000 : undefined;
   const current = battery?.current ? Math.round(battery.current) : undefined;

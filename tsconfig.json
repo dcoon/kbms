@@ -9,6 +9,9 @@
       ],
       "@/assets/*": [
         "./assets/*"
+      ],
+      "binary-parser": [
+        "./node_modules/binary-parser/dist/binary_parser"
       ]
     }
   },
