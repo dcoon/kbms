@@ -1,4 +1,4 @@
-import { MD3LightTheme } from 'react-native-paper';
+import { MD3LightTheme, type MD3Theme } from 'react-native-paper';
 
 
 
@@ -8,6 +8,67 @@ import { MD3LightTheme } from 'react-native-paper';
  * Important elements use 'green' (#2e7d32).
  * Unimportant elements use 'gray' (#757575).
  */
+export type AppTheme = MD3Theme & {
+  components: {
+    Snackbar: {
+      style: {
+        backgroundColor: string;
+      };
+      contentStyle: {
+        color: string;
+      };
+    };
+    Gauge: {
+      title: {
+        color: string;
+        fontSize: number;
+      };
+      subtitle: {
+        color: string;
+        fontSize: number;
+      };
+      value: {
+        color: string;
+        fontSize: number;
+      };
+    };
+    Card: {
+      theme: {
+        roundness: number;
+      };
+      style: {
+        backgroundColor: string;
+        borderColor: string;
+        borderWidth: number;
+      };
+      Title: {
+        style: {
+          marginHorizontal: number;
+        };
+        leftStyle: {
+          marginRight: number;
+          justifyContent: 'center';
+          alignItems: 'center';
+        };
+        titleStyle: {
+          fontSize: number;
+          fontWeight: 'bold';
+          marginLeft: number;
+        };
+      };
+      Content: {
+        style: {
+          flexDirection: 'row';
+          justifyContent: 'space-between';
+          alignItems: 'center';
+          marginHorizontal: number;
+          marginBottom: number;
+        };
+      };
+    };
+  };
+};
+
 export const PaperTheme = {
   ...MD3LightTheme,
 
@@ -57,14 +118,14 @@ export const PaperTheme = {
   fonts: {
     ...MD3LightTheme.fonts,
     labelLarge: {
+      ...MD3LightTheme.fonts.labelLarge,
       fontSize: 18,
-      fontWeight: 'bold',
-      color: '#757575', // Gray for less important text
+      fontWeight: '700',
     },
     labelMedium: {
+      ...MD3LightTheme.fonts.labelMedium,
       fontSize: 14,
-      fontWeight: 'bold',
-      color: '#5B635F', // Darker gray for more important text
+      fontWeight: '700',
     },
   },
   components: {
@@ -108,7 +169,7 @@ export const PaperTheme = {
         leftStyle: {
           marginRight: 0,
           justifyContent: 'center',
-          alignitems: 'center',
+          alignItems: 'center',
         },
         titleStyle: {
           fontSize: 18,
@@ -128,4 +189,4 @@ export const PaperTheme = {
       },
     },
   },
-};
+} satisfies AppTheme;

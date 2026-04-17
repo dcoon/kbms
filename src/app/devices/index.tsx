@@ -5,6 +5,7 @@ import { ScreenLayout } from '@/components/ui/screen-layout';
 import { Bluetooth } from '@/services/ble/ble-service';
 import { Device } from '@/services/ble/ble-types';
 import { uilog as log } from '@/services/log/log-service';
+import { Settings } from '@/services/settings/settings-service';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useAtom } from 'jotai';
 import { useCallback, useMemo, useState } from 'react';
@@ -227,6 +228,25 @@ function StartStopScanningOnFocus({deviceId}: {deviceId?: string}) {
   return null;
 }
 
+function NavigateToPendingDevice() {
+  const router = useRouter();
+  const [pendingDevice, setPendingDevice] = useAtom(Settings.pendingNavigateDevice);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (pendingDevice) {
+        const id = pendingDevice;
+        setPendingDevice(null);
+        router.navigate({
+          pathname: '/devices/[deviceid]',
+          params: { deviceid: id },
+        });
+      }
+    }, [pendingDevice])
+  );
+  return null;
+}
+
 export default function DevicesScreen() {
 
   return (
@@ -235,6 +255,7 @@ export default function DevicesScreen() {
       actions={<AppBarActions />}
     >
       <StartStopScanningOnFocus />
+      <NavigateToPendingDevice />
       <DeviceList />
     </ScreenLayout>
 

@@ -7,8 +7,9 @@ import { ScrollView, useWindowDimensions, View } from 'react-native';
 
 import { LastSeenListItem, List } from '@/components/list/list-item';
 import { ScreenLayout } from '@/components/ui/screen-layout';
+import { BatteryStatus } from '@/services/ble/battery';
 import { Bluetooth } from '@/services/ble/ble-service';
-import { BatteryStatus, KV_BATTERY_NOTIFY_UUID, KV_BATTERY_SERVICE_UUID } from '@/services/manufacturers/smarrtpower/SmartPowerMessageUtil';
+import { KV_BATTERY_NOTIFY_UUID, KV_BATTERY_SERVICE_UUID } from '@/services/manufacturers/kilovault/battery-data-types';
 import { useAtom } from 'jotai';
 
 import { formatDistanceToNow } from 'date-fns';

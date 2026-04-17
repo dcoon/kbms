@@ -83,7 +83,7 @@ export class BatteryDataParser {
         // le u32 cell4[[format("format_u32")]];
 
 
-        log.info(`${LOG_PREFIX} Parsing packet of size ${size} bytes`);
+        log.debug(`${LOG_PREFIX} Parsing packet of size ${size} bytes`);
 
         const magic = this.uint8();
         const voltage = this.uint64();

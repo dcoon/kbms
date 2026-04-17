@@ -1,6 +1,7 @@
 import log from '@/services/log/log-service';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { atom } from 'jotai';
-import { atomFamily, atomWithStorage } from 'jotai/utils';
+import { atomFamily, atomWithStorage, createJSONStorage, unwrap } from 'jotai/utils';
 import { DeviceId } from 'react-native-ble-plx';
 
 const LOG_SRC = "SettingsService";
@@ -26,8 +27,10 @@ export type Favorite = {
   name: string;
 }
 
+const settingsStorage = createJSONStorage<any>(() => AsyncStorage);
 
-const favorites = atomWithStorage('favorites', [] as Favorite[], undefined, { getOnInit: true });
+const favoritesInStorage = atomWithStorage<Favorite[]>('favorites', [], settingsStorage, { getOnInit: true });
+const favorites = unwrap(favoritesInStorage, (prev) => prev ?? []);
 
 const favorite = atomFamily((value: Favorite) => atom(
   (get) => get(favorites).some(fav => fav.id === value?.id) ? true : false,
@@ -44,10 +47,14 @@ const favorite = atomFamily((value: Favorite) => atom(
 ));
 
 
-const notificationsEnabled = atomWithStorage('notificationsEnabled', true, undefined, { getOnInit: true });
-const sendLogsToServer = atomWithStorage('sendLogsToServer', true, undefined, { getOnInit: true });
+const notificationsEnabledInStorage = atomWithStorage<boolean>('notificationsEnabled', true, settingsStorage, { getOnInit: true });
+const notificationsEnabled = unwrap(notificationsEnabledInStorage, (prev) => prev ?? true);
 
-const logLevelInStorage = atomWithStorage<LogLevel>('logLevel', LogLevel.error, undefined, { getOnInit: true });
+const sendLogsToServerInStorage = atomWithStorage<boolean>('sendLogsToServer', true, settingsStorage, { getOnInit: true });
+const sendLogsToServer = unwrap(sendLogsToServerInStorage, (prev) => prev ?? true);
+
+const logLevelInStorageBase = atomWithStorage<LogLevel>('logLevel', LogLevel.error, settingsStorage, { getOnInit: true });
+const logLevelInStorage = unwrap(logLevelInStorageBase, (prev) => prev ?? LogLevel.error);
 
 const logLevel = atom(
   (get) => {
@@ -64,7 +71,8 @@ const logLevel = atom(
   }
 );
 
-const developerMode = atomWithStorage('developerMode',  false, undefined, { getOnInit: true });
+const developerModeInStorage = atomWithStorage<boolean>('developerMode', false, settingsStorage, { getOnInit: true });
+const developerMode = unwrap(developerModeInStorage, (prev) => prev ?? false);
 
 const _snackbarMessages = atom<string[]>([]);
 
@@ -94,6 +102,9 @@ const shiftSnackbar = atom(
 
 
 
+// Pending cross-tab device navigation (workaround for NativeTabs Android stack reset)
+const pendingNavigateDevice = atom<DeviceId | null>(null);
+
 export const Settings = {
   favorites,
   favorite,
@@ -102,5 +113,6 @@ export const Settings = {
   logLevel,
   snackbar,
   shiftSnackbar,
-  developerMode
+  developerMode,
+  pendingNavigateDevice,
 };

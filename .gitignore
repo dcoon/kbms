@@ -52,3 +52,4 @@ app-example
 /.idea
 
 /logs
+*.apk

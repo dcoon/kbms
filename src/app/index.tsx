@@ -16,19 +16,20 @@ import log from '@/services/log/log-service';
 
 const LOG_SRC = "HomeScreen";
 
-function onDevicePress(device: DeviceId | any) {
-  // Extract ID if a device object is passed (as per DeviceListItem)
-  const id = typeof device === 'string' ? device : device?.id;
-  const LOG_PREFIX = LOG_SRC + ": onDevicePress";
-  if (id) {
-
-    log.debug(LOG_PREFIX, "called with device: ", id);
-
-    router.navigate({
-      pathname: '/devices/[deviceid]',
-      params: { deviceid: id }
-    });
-  }
+function useOnDevicePress() {
+  const [, setPendingDevice] = useAtom(Settings.pendingNavigateDevice);
+  return function onDevicePress(device: DeviceId | any) {
+    // Extract ID if a device object is passed (as per DeviceListItem)
+    const id = typeof device === 'string' ? device : device?.id;
+    const LOG_PREFIX = LOG_SRC + ": onDevicePress";
+    if (id) {
+      log.debug(LOG_PREFIX, "called with device: ", id);
+      // Two-step cross-tab navigation: store target, then switch to devices tab.
+      // Direct cross-tab deep navigation resets the Android native tab stack to root.
+      setPendingDevice(id);
+      router.navigate('/devices');
+    }
+  };
 }
 
 
@@ -56,6 +57,7 @@ function FavoriteListEmptyComponent() {
 function FavoritesAccordion() {
 
   const [favorites] = useAtom<Favorite[]>(Settings.favorites);
+  const onDevicePress = useOnDevicePress();
 
   return (
    

@@ -499,7 +499,7 @@ async function onCharacteristicUpdate(error: Error | null, characteristic: Chara
 
     const cid = { deviceId: characteristic.deviceID, serviceUUID: characteristic.serviceUUID, characteristicUUID: characteristic.uuid };
 
-    log.debug(LOG_PREFIX, "uuid, value, isNotifying", characteristic.deviceID, characteristic.serviceUUID, characteristic.uuid, characteristic.value, characteristic.isNotifying ? "notifying" : "not notifying");
+    log.info(LOG_PREFIX, "Received update for characteristic: ", cid.deviceId, " value: ", characteristic.value);
 
     set(characteristicValue(cid), characteristic.value);
     set(characteristicAsync(cid));

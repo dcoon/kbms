@@ -1,5 +1,5 @@
 import { Base64, BleError, Characteristic, CharacteristicSubscriptionType, ConnectionOptions, Descriptor, Device, Service, Subscription, TransactionId, UUID } from 'react-native-ble-plx';
-import { KV_BATTERY_NOTIFY_UUID, KV_BATTERY_SERVICE_UUID } from '../manufacturers/smarrtpower/SmartPowerMessageUtil';
+import { KV_BATTERY_NOTIFY_UUID, KV_BATTERY_SERVICE_UUID } from '../manufacturers/kilovault/battery-data-types';
 
 const LOG_SRC = "MockBleManager";
 
@@ -278,7 +278,7 @@ export class MockDataGenerator {
   public static isTestDeviceThatShouldFailConnection(id: UUID): boolean {
     const lastDigit = id.split(':').slice(-1)[0];
     const lastDigitNum = parseInt(lastDigit, 16);
-    return lastDigitNum >= 6;
+    return lastDigitNum >= 8;
   }
 
 

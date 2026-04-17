@@ -1,6 +1,6 @@
 import React from "react";
 import { useTheme } from "react-native-paper";
-import { Svg, Text } from 'react-native-svg';
+import { Path, Svg, Text } from 'react-native-svg';
 
 
 // import CircularProgress from "react-native-circular-progress-indicator";
@@ -82,7 +82,7 @@ export const Gauge = (props: GaugeProps) => {
         textAnchor="middle"
         alignmentBaseline="middle"
       >
-        {valueprefix}{value ?? "?"}{valuesuffix}
+        {valueprefix}{value ?? ""}{valuesuffix}
       </Text>
 
       {title && (
@@ -134,7 +134,7 @@ const Arc = (props: ArcProps) => {
   const sweepFlag = 1; // Clockwise
 
   return (
-    <path d={`M${sx},${sy} A${r},${r} 0 ${largeArcFlag},${sweepFlag} ${ex},${ey}`}
+    <Path d={`M${sx},${sy} A${r},${r} 0 ${largeArcFlag},${sweepFlag} ${ex},${ey}`}
       fill="none" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeOpacity={strokeOpacity} />
   );
 }

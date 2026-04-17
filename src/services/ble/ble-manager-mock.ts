@@ -4,7 +4,7 @@ import { blelog as log } from '@/services/log/log-service';
 // import { BleError, BleManager, Characteristic, Descriptor, Device, DeviceId, Service, State, Subscription, TransactionId, UUID } from 'react-native-ble-plx';
 import { Base64, BleError, BleManager, Characteristic, CharacteristicSubscriptionType, ConnectionPriority, Descriptor, Device, DeviceId, LogLevel, ScanOptions, Service, State, Subscription, TransactionId, UUID } from 'react-native-ble-plx';
 // import { interval } from 'rxjs';
-import { KV_BATTERY_NOTIFY_UUID, TEST_CHARACTERISTIC_VALUES } from '../manufacturers/smarrtpower/SmartPowerMessageUtil';
+import { KV_BATTERY_NOTIFY_UUID, TEST_CHARACTERISTIC_VALUES } from '../manufacturers/kilovault/battery-data-types';
 import { MockCharacteristic, MockDataGenerator, MockDevice, MockService } from './ble-manager-mock-types';
 import { CharacteristicUpdateListener, DeviceUpdateListener } from './ble-types';
 
@@ -27,29 +27,29 @@ export class BleManagerMock implements BleManager {
   // BleManager Implementation
 
   destroy(): Promise<void> {
-    return Promise.reject(new Error("destroy is not implemented in MockBleService"));
+    return Promise.reject(Error("destroy is not implemented in MockBleService"));
   }
 
   setLogLevel(logLevel: LogLevel): Promise<LogLevel> {
-    return Promise.reject(new Error("setLogLevel is not implemented in MockBleService"));
+    return Promise.reject(Error("setLogLevel is not implemented in MockBleService"));
   }
 
 
   logLevel(): Promise<LogLevel> {
-    return Promise.reject(new Error("logLevel is not implemented in MockBleService"));
+    return Promise.reject(Error("logLevel is not implemented in MockBleService"));
   }
 
   cancelTransaction(transactionId: TransactionId): Promise<void> {
-    return Promise.reject(new Error("cancelTransaction is not implemented in MockBleService"));
+    return Promise.reject(Error("cancelTransaction is not implemented in MockBleService"));
   }
 
 
   enable(transactionId?: TransactionId): Promise<BleManager> {
-    return Promise.reject(new Error("enable is not implemented in MockBleService"));
+    return Promise.reject(Error("enable is not implemented in MockBleService"));
   }
 
   disable(transactionId?: TransactionId): Promise<BleManager> {
-    return Promise.reject(new Error("disable is not implemented in MockBleService"));
+    return Promise.reject(Error("disable is not implemented in MockBleService"));
   }
 
   // onStateChange(listener: (newState: State) => void, emitCurrentState?: boolean): Subscription
@@ -133,7 +133,7 @@ export class BleManagerMock implements BleManager {
     if (device) {
       if (device._isTestDeviceThatShouldFailConnection) {
         log.warn(LOG_SRC, ": connectToDevice called with deviceId: ", deviceId, " which is a mock device that simulates connection failure.");
-        return Promise.reject(new Error("Failed to connect to device " + deviceId));
+        return Promise.reject(Error("Failed to connect to device " + deviceId));
       }
       device._isConnected = true;
       // log.debug(LOG_SRC, ": connectToDevice called with deviceId: ", device);
@@ -169,32 +169,32 @@ export class BleManagerMock implements BleManager {
 
     const device = this._devices.find(d => d.id === deviceIdentifier) as MockDevice;
     if(device && !device._isConnected) {
-      return Promise.reject(new Error("Device not connected: " + deviceIdentifier));
+      return Promise.reject(Error("Device not connected: " + deviceIdentifier));
     } else if (device) {
       return Promise.resolve(device);
     } else {
-      return Promise.reject(new Error("Device not found: " + deviceIdentifier));
+      return Promise.reject(Error("Device not found: " + deviceIdentifier));
     }
   }
 
   servicesForDevice(deviceIdentifier: DeviceId): Promise<Service[]> {
     // log.debug(LOG_SRC, ": servicesForDevice called with deviceIdentifier: ", deviceIdentifier);
     const device = this._devices.find(d => d.id === deviceIdentifier) as MockDevice;
-    return device ? Promise.resolve(device._services) : Promise.reject(new Error("Device not found: " + deviceIdentifier));
+    return device ? Promise.resolve(device._services) : Promise.reject(Error("Device not found: " + deviceIdentifier));
   }
 
   characteristicsForDevice(deviceIdentifier: DeviceId, serviceUUID: UUID): Promise<Characteristic[]> {
     const LOG_PREFIX = LOG_SRC + ": characteristicsForDevice";
     const characteristics = this._characteristicssForDevice(deviceIdentifier, serviceUUID);
     // log.debug(LOG_PREFIX, "returning characteristics: ", deviceIdentifier, serviceUUID, characteristics?.length);
-    return characteristics ? Promise.resolve(characteristics) : Promise.reject(new Error("Device or service not found: " + deviceIdentifier + ", service " + serviceUUID));
+    return characteristics ? Promise.resolve(characteristics) : Promise.reject(Error("Device or service not found: " + deviceIdentifier + ", service " + serviceUUID));
 
   }
 
   descriptorsForDevice(deviceId: DeviceId, serviceUUID: UUID, characteristicUUID: UUID): Promise<Descriptor[]> {
     log.debug(LOG_SRC, ": descriptorForDevice called with deviceId: ", deviceId, "serviceUUID: ", serviceUUID, "characteristicUUID: ", characteristicUUID);
     const characteristic = this._characteristicForDevice(deviceId, serviceUUID, characteristicUUID) as MockCharacteristic;
-    return characteristic ? Promise.resolve(characteristic._descriptors) : Promise.reject(new Error("Device, service or characteristic not found: " + deviceId + ", service " + serviceUUID + ", characteristic " + characteristicUUID));
+    return characteristic ? Promise.resolve(characteristic._descriptors) : Promise.reject(Error("Device, service or characteristic not found: " + deviceId + ", service " + serviceUUID + ", characteristic " + characteristicUUID));
 
   }
 
@@ -209,15 +209,15 @@ export class BleManagerMock implements BleManager {
     }
     log.debug(LOG_PREFIX, "[Device, Service, Characteristic] Value, isNotifying: ", deviceId, serviceUUID, characteristicUUID, characteristic?.value, characteristic?.isNotifying, characteristic?.value);
 
-    return characteristic ? Promise.resolve(characteristic) : Promise.reject(new Error("Device, service or characteristic not found: " + deviceId + ", service " + serviceUUID + ", characteristic " + characteristicUUID));
+    return characteristic ? Promise.resolve(characteristic) : Promise.reject(Error("Device, service or characteristic not found: " + deviceId + ", service " + serviceUUID + ", characteristic " + characteristicUUID));
   }
 
   writeCharacteristicWithResponseForDevice(deviceIdentifier: DeviceId, serviceUUID: UUID, characteristicUUID: UUID, base64Value: Base64, transactionId?: TransactionId): Promise<Characteristic> {
-    return Promise.reject(new Error("writeCharacteristicWithResponseForDevice is not implemented in MockBleService"));
+    return Promise.reject(Error("writeCharacteristicWithResponseForDevice is not implemented in MockBleService"));
   }
 
   writeCharacteristicWithoutResponseForDevice(deviceIdentifier: DeviceId, serviceUUID: UUID, characteristicUUID: UUID, base64Value: Base64, transactionId?: TransactionId): Promise<Characteristic> {
-    // return Promise.reject(new Error("writeCharacteristicWithoutResponseForDevice is not implemented in MockBleService"));
+    // return Promise.reject(Error("writeCharacteristicWithoutResponseForDevice is not implemented in MockBleService"));
 
     const characteristic = this._characteristicForDevice(deviceIdentifier, serviceUUID, characteristicUUID) as MockCharacteristic;
     characteristic.value = base64Value;
@@ -251,7 +251,7 @@ export class BleManagerMock implements BleManager {
 
     if (!characteristic) {
       log.warn(LOG_PREFIX, "Characteristic not found: ", deviceIdentifier, serviceUUID, characteristicUUID);
-      throw new Error("Characteristic not found: " + deviceIdentifier + ", service " + serviceUUID + ", characteristic " + characteristicUUID);
+      throw Error("Characteristic not found: " + deviceIdentifier + ", service " + serviceUUID + ", characteristic " + characteristicUUID);
     }
 
     characteristic.isNotifying = true;
@@ -284,11 +284,11 @@ export class BleManagerMock implements BleManager {
 
 
   readDescriptorForDevice(deviceIdentifier: DeviceId, serviceUUID: UUID, characteristicUUID: UUID, descriptorUUID: UUID, transactionId?: string): Promise<Descriptor> {
-    return Promise.reject(new Error("readDescriptorForDevice is not implemented in MockBleService"));
+    return Promise.reject(Error("readDescriptorForDevice is not implemented in MockBleService"));
   }
 
   writeDescriptorForDevice(deviceIdentifier: DeviceId, serviceUUID: UUID, characteristicUUID: UUID, descriptorUUID: UUID, valueBase64: Base64, transactionId?: string): Promise<Descriptor> {
-    return Promise.reject(new Error("writeDescriptorForDevice is not implemented in MockBleService"));
+    return Promise.reject(Error("writeDescriptorForDevice is not implemented in MockBleService"));
   }
 
 

@@ -147,15 +147,43 @@ export default function SettingsScreen() {
 
     const theme = useTheme();
 
+
+    function appReleaseTypeToDescription(releaseType: Application.ApplicationReleaseType | undefined): string {
+      switch (releaseType) {
+        case Application.ApplicationReleaseType.DEVELOPMENT:
+          return "Development";
+        case Application.ApplicationReleaseType.APP_STORE:
+          return "Store";
+        case Application.ApplicationReleaseType.SIMULATOR:
+          return "Test Flight";
+        case Application.ApplicationReleaseType.AD_HOC:
+          return "Ad Hoc";
+        case Application.ApplicationReleaseType.ENTERPRISE:
+          return "Enterprise";
+        default:
+          return "Unknown";
+      }
+    }
+
     return (
       <List.Accordion id="about" title="About" description="Learn more about the app and its developers">
+
+        <List.Section title="App Information" >        
+        <List.Item title="Version" value={Application.nativeApplicationVersion} icon="information" />
         <List.Item title="Build" value={Application.nativeBuildVersion} icon="information" />
-        <List.Item title="Channel" value={Updates.channel} icon="channgel"/>
-        <List.Item title="Runtime" value={Updates.runtimeVersion} icon="runtime"/>
-        <List.Item title="SDK Version" value={Application.nativeApplicationVersion} icon="information" />
+        {/* <List.Item title="Release Type" value={appReleaseTypeToDescription(Application.)} icon="information" /> */}
+        <List.Item title="Application ID" value={Application.applicationId} icon="information" />
+        <List.Item title="Application Name" value={Application.applicationName} icon="information" />
+        <List.Item title="Android ID" value={Application.getAndroidId} icon="information" />
+        </List.Section>
+
+        <List.Section title="Runtime Information">
+        <List.Item title="Channel" value={Updates.channel} icon="information"/>
+        <List.Item title="Runtime" value={Updates.runtimeVersion} icon="information"/>
         <List.Item title="Theme Version" icon="github" value={theme.version} />
         <List.Item title="License" description="MIT License" icon="file-document" />
         <List.Item title="Contact Support" description="Get help and support for the app" icon="lifebuoy" />
+        </List.Section>
       </List.Accordion>
     );
   }
