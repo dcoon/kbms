@@ -9,8 +9,8 @@ KBMS is still in its early stages and hasn't been submitted to app stores yet. B
 
 1. Install the Android test build
 
-![Text Build QR Code](assets/images/test-build-qr-code.png)
-https://expo.dev/accounts/davidcoon/projects/kbms/builds/db17118e-b45d-47b0-86ef-d49a5e648566
+![Text Build QR Code](assets/images/test-build-qr-code-b1.png)
+https://expo.dev/accounts/davidcoon/projects/kbms/builds/5f55b7f9-63d9-475f-8f14-18316e3afdcd
 
 Click Install on the build page to download; open with apk installer;  then say Yes or Allow to all the prompts. Be aware, you'll be side loading an app on your device without review by Google. Make sure you trust this project first.
 
