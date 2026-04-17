@@ -481,6 +481,15 @@ export const characteristicValue = atomFamily(
   characteristicIdentifierEquals
 );
 
+
+function isCharacteristicChangedOtherThanValue(oldChar: Characteristic | null, newChar: Characteristic | null): boolean {
+  if (!oldChar || !newChar) {
+    return true;
+  }
+  return oldChar.isNotifying !== newChar.isNotifying;
+}
+
+
 async function onCharacteristicUpdate(error: Error | null, characteristic: Characteristic | null, get: Getter, set: Setter) {
 
   const LOG_PREFIX = LOG_SRC + ": onCharacteristicUpdate";
@@ -502,9 +511,15 @@ async function onCharacteristicUpdate(error: Error | null, characteristic: Chara
     log.info(LOG_PREFIX, "Received update for characteristic: ", cid.deviceId, " value: ", characteristic.value);
 
     set(characteristicValue(cid), characteristic.value);
-    set(characteristicAsync(cid));
 
-    if(isKnownBatteryCharacteristic(cid)) {
+    const oldCharacteristic = await get(characteristicAsync(cid));
+
+    // Only update the characteristic atom if something other than the value has changed, to avoid triggering unnecessary re-renders of the value display component
+    if (isCharacteristicChangedOtherThanValue(oldCharacteristic ? oldCharacteristic : null, characteristic)) {
+      set(characteristicAsync(cid));
+    }
+
+    if (isKnownBatteryCharacteristic(cid)) {
       log.debug(LOG_PREFIX, ": Received update for known battery characteristic, pumping battery parser");
       set(batteryParser(characteristic.deviceID));
     }
