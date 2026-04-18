@@ -7,6 +7,12 @@ KBMS is still in its early stages and hasn't been submitted to app stores yet. B
  
 ## Get the app
 
+### iOS
+
+KBMS is in TestFlight Internal.  If you want to help test, DM me with your contact info. Hopefully, we'll get to TF External within the next week or so.
+
+### Android
+
 1. Install the Android test build
 
 ![Text Build QR Code](assets/images/test-build-qr-code-b1.png)
@@ -23,6 +29,7 @@ On the Devices tab,  press the play icon in the upper right corner to start scan
 Information and error messages will popup at the bottom of the screen.  The two most common are Bluetooth isn't on and Can't connect to device.  If you can't connect to a nearby battery or it doesn't show up when scanning on the Devices tab, try turning Bluetooth off and on again. 
 
 If all else fails, go to Settings, change the Log Level to Info or Debug, reproduce the error, and Share the logs on the [discussion group](https://github.com/dcoon/kbms/discussions).
+
 ## Contribute
 
 1. Artwork
