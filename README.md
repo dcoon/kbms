@@ -2,6 +2,13 @@
 
 KBMS is a mobile app to monitor and configure KiloVault HLX+ LiFePO4 batteries. It is a replacement for the now defunct KiloVault app. It is free and open source. 
 
+
+<div align="center">
+  <img src="assets/images/screenshot-battery-ipad.png" alt="screenshot" width="200">
+</div>
+
+
+
 KBMS is still in its early stages and hasn't been submitted to app stores yet. But there is an early preview build available for testing (Android only).
  Expect bugs! Check the discussion group for known issues and workarounds. 
  
@@ -29,6 +36,13 @@ On the Devices tab,  press the play icon in the upper right corner to start scan
 Information and error messages will popup at the bottom of the screen.  The two most common are Bluetooth isn't on and Can't connect to device.  If you can't connect to a nearby battery or it doesn't show up when scanning on the Devices tab, try turning Bluetooth off and on again. 
 
 If all else fails, go to Settings, change the Log Level to Info or Debug, reproduce the error, and Share the logs on the [discussion group](https://github.com/dcoon/kbms/discussions).
+
+
+## Support & Feature Requests
+
+Feel free to ask questions in the discussion group. Screenshots and logs (LogLevel=INFO) are very helpful. Feature requests are welcome. The development roadmap is viewable in the Project Plan. 
+
+[Project Plan](https://github.com/users/dcoon/projects/2)
 
 ## Contribute
 
