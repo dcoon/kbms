@@ -8,6 +8,9 @@ export const KV_MESSAGE_LENGTH_MAXIMUM = 121;
 export const KV_MESSAGE_LENGTH_MINIMUM = 38;
 export const KV_MESSAGE_HEAD = 176; // B0
 export const KV_MESSAGE_TAIL = 82; // 52
+
+
+
 export const TEST_CHARACTERISTIC_VALUES = [
     "sEFBMzIwMDAwMDAwMDAwMDA=",
     "MDg5MjAxMDAwODAwM0UwMDY5MEI=",
