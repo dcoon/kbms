@@ -2,6 +2,7 @@ import log from '@/services/log/log-service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { atom } from 'jotai';
 import { atomFamily, atomWithStorage, createJSONStorage, unwrap } from 'jotai/utils';
+import { Platform } from 'react-native';
 import { DeviceId } from 'react-native-ble-plx';
 
 const LOG_SRC = "SettingsService";
@@ -27,7 +28,20 @@ export type Favorite = {
   name: string;
 }
 
-const settingsStorage = createJSONStorage<any>(() => AsyncStorage);
+const memoryStorage = {
+  getItem: (_key: string) => null,
+  setItem: (_key: string, _value: string) => {},
+  removeItem: (_key: string) => {},
+};
+
+const settingsStorage = createJSONStorage<any>(() => {
+  if (Platform.OS === 'web') {
+    const localStorage = (globalThis as any).localStorage;
+    return localStorage ?? memoryStorage;
+  }
+
+  return AsyncStorage;
+});
 
 const favoritesInStorage = atomWithStorage<Favorite[]>('favorites', [], settingsStorage, { getOnInit: true });
 const favorites = unwrap(favoritesInStorage, (prev) => prev ?? []);

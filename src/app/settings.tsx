@@ -180,6 +180,8 @@ export default function SettingsScreen() {
         <List.Section title="Runtime Information">
         <List.Item title="Channel" value={Updates.channel} icon="information"/>
         <List.Item title="Runtime" value={Updates.runtimeVersion} icon="information"/>
+        <List.Item title="Updated" value={Updates.createdAt} icon="information"/>
+        <List.Item title="Check Updates" value={Updates.checkAutomatically} icon="information"/>
         <List.Item title="Theme Version" icon="github" value={theme.version} />
         <List.Item title="License" description="MIT License" icon="file-document" />
         <List.Item title="Contact Support" description="https://github.com/dcoon/kbms" icon="lifebuoy" />

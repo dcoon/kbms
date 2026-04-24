@@ -275,9 +275,19 @@ export class MockDescriptor implements Descriptor {
 // Generate mock data
 export class MockDataGenerator {
 
-  public static isTestDeviceThatShouldFailConnection(id: UUID): boolean {
-    const lastDigit = id.split(':').slice(-1)[0];
+  public static getLastDigitOfUUID(uuid: UUID): number {
+    const lastDigit = uuid.split(':').slice(-1)[0];
     const lastDigitNum = parseInt(lastDigit, 16);
+    return lastDigitNum;
+  }
+
+  public static shouldBeBattery(uuid: UUID): boolean {
+    const lastDigit = this.getLastDigitOfUUID(uuid);
+    return lastDigit <= 9; // 80% of devices will be batteries, 20% will be non-batteries that should fail connection
+  }
+
+  public static shouldFail(id: UUID): boolean {
+    const lastDigitNum = this.getLastDigitOfUUID(id);
     return lastDigitNum >= 8;
   }
 
@@ -327,14 +337,15 @@ export class MockDataGenerator {
   }
   private generateMockDevice(id: UUID): Device {
 
-
+    const shouldFail = MockDataGenerator.shouldFail(id);
+    const shouldBeBattery = MockDataGenerator.shouldBeBattery(id);
 
     const serviceUUIDs = this.generateMockUUIDs(3);
-    serviceUUIDs.push(KV_BATTERY_SERVICE_UUID);
-
+    if (shouldBeBattery) {
+      serviceUUIDs.push(KV_BATTERY_SERVICE_UUID);
+    }
     const services = this.generateMockServices(id, serviceUUIDs);
-    const shouldFail = MockDataGenerator.isTestDeviceThatShouldFailConnection(id);
-    
+
     const device = new MockDevice({
       id: id,
       name: null,
@@ -353,8 +364,7 @@ export class MockDataGenerator {
 
     });
 
-    const isBattery = device.isBattery();
-    device.name = `${isBattery ? "Battery" : "Device"} ${device.id} ${shouldFail ? "(will cause connection error)" : ""}`;
+    device.name = `${shouldBeBattery ? "Battery" : "Device"} ${device.id} ${shouldFail ? "(will cause connection error)" : ""}`;
     device.localName = device.name + " (local name)";
 
 
@@ -378,10 +388,7 @@ export class MockDataGenerator {
 
     const characteristicUUIDs = [...this.generateMockUUIDs(3)];
     if (serviceUUID === KV_BATTERY_SERVICE_UUID) {
-      const shouldMakeABattery = this.randomTrueFalse();
-      if (shouldMakeABattery) {
-        characteristicUUIDs.push(KV_BATTERY_NOTIFY_UUID);
-      }
+      characteristicUUIDs.push(KV_BATTERY_NOTIFY_UUID);
     }
     const characteristics = this.generateMockCharacteristics(deviceId, serviceUUID, characteristicUUIDs);
     service._characteristics = characteristics;

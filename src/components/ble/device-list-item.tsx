@@ -10,7 +10,7 @@ import { FavoriteIcon } from '../ui/favorite-icon';
 
 import * as Battery from '@/services/ble/battery-service';
 import { IconForSoC } from './battery';
-import { IconForConnectionState, IconForRssi } from './ble';
+import { ButtonForConnectionState, ConnectionStateFromLoadable, IconForRssi } from './ble';
 
 
 
@@ -35,10 +35,11 @@ function DeviceIcons({ device }: { device: Device }) {
   function BatteryIsConnectedIcon({ device }: { device: Device }) {
 
     const [isConnectedLoadable, setIsConnected] = useAtom(Battery.isBatteryConnected(device?.id));
-    const isConnected = isConnectedLoadable.state === 'hasData' && isConnectedLoadable.data === true;
+      const isConnected = ConnectionStateFromLoadable({ loader: isConnectedLoadable });
+    
 
     return (
-      <IconForConnectionState isDeviceConnected={isConnected} onPress={() => setIsConnected(!isConnected)} />
+      <ButtonForConnectionState isDeviceConnected={isConnected} onPress={() => setIsConnected(!isConnected)} />
     );
   }
 
@@ -73,7 +74,7 @@ function RightContent({ device }: { device: Device }) {
   return (
     <View style={{ alignContent: 'flex-end' }}>
       <View style={{ flexDirection: 'row' }}>
-        <BatteryIcons device={device} />
+        {/* <BatteryIcons device={device} /> */}
         <DeviceIcons device={device} />
       <List.Icon icon="chevron-right" />
 

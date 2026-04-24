@@ -1,15 +1,17 @@
 import { List } from '@/components/list/list-item';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { Favorite, Settings } from '@/services/settings/settings-service';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useAtom } from 'jotai';
 import { ScrollView } from 'react-native';
 import { DeviceId } from 'react-native-ble-plx';
 import { Card, List as PaperList, TouchableRipple } from 'react-native-paper';
 
 import { FavoriteCard } from '@/components/ui/favorite-card';
+import { isBatteryConnected } from '@/services/ble/battery-service';
 import { isBluetoothAvailable } from '@/services/ble/ble-types';
 import log from '@/services/log/log-service';
+import { useCallback } from 'react';
 
 
 
@@ -60,19 +62,19 @@ function FavoritesAccordion() {
   const onDevicePress = useOnDevicePress();
 
   return (
-   
+
 
     <PaperList.Accordion
-    id="favorites" 
+      id="favorites"
       title="Favorites"
       description="Favorite devices for quick access"
     >
-    <List.StaticList data={favorites}
-      renderItem={(info) => (<FavoriteCard device={info.item} onDevicePress={onDevicePress} />)}
-      keyExtractor={(item: Favorite) => item.id}
-      listEmptyComponent={FavoriteListEmptyComponent} 
+      <List.StaticList data={favorites}
+        renderItem={(info) => (<FavoriteCard favorite={info.item} onDevicePress={onDevicePress} />)}
+        keyExtractor={(item: Favorite) => item.id}
+        listEmptyComponent={FavoriteListEmptyComponent}
       />
-      </PaperList.Accordion>
+    </PaperList.Accordion>
   );
 }
 
@@ -109,14 +111,43 @@ function HelpOnBluetoothUnsupportedDevices() {
 }
 
 
+function StartStopBatteryConnectedOnFocus({ deviceId }: { deviceId: string }) {
+
+  const [, setIsBatteryConnected] = useAtom(isBatteryConnected(deviceId));
+
+  useFocusEffect(
+    useCallback(() => {
+      const LOG_PREFIX = LOG_SRC + ": StartStopBatteryConnectedOnFocus";
+      log.info(LOG_PREFIX, "focus effect called, connecting to battery", deviceId);
+      setIsBatteryConnected(true);
+      return () => {
+        log.info(LOG_PREFIX, "cleanup function called, disconnecting from battery", deviceId);
+        setIsBatteryConnected(false);
+      };
+    }, [])
+  );
+  return null;
+}
+
+
+function StartStopFavoritesConnectedOnFocus() {
+
+  const [favorites] = useAtom(Settings.favorites);
+
+  return (
+    favorites.map(fav => <StartStopBatteryConnectedOnFocus key={fav.id} deviceId={fav.id} />)
+  );
+}
+
 export function HomeView() {
-  return (    <ScrollView>
-          <List.AccordionGroup>
-            <HomeSummaryAccordion />
-            <FavoritesAccordion />
-            <HelpOnBluetoothUnsupportedDevices />
-          </List.AccordionGroup>
-        </ScrollView>
+  return (<ScrollView>
+    <List.AccordionGroup>
+      <HomeSummaryAccordion />
+      <FavoritesAccordion />
+      <HelpOnBluetoothUnsupportedDevices />
+      <StartStopFavoritesConnectedOnFocus />
+    </List.AccordionGroup>
+  </ScrollView>
   );
 }
 
@@ -124,7 +155,7 @@ export default function HomeScreen() {
 
   return (
     <ScreenLayout title="Home">
-        <HomeView />
+      <HomeView />
     </ScreenLayout>
   );
 }

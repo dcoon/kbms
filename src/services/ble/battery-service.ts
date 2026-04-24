@@ -1,15 +1,15 @@
 
 import { loadableWithSetter } from "@/services/ble/jotai-util";
+import { appStore } from "@/services/state/jotai-store";
 import { atom } from "jotai";
 import { atomFamily, loadable } from "jotai/utils";
 import { DeviceId } from "react-native-ble-plx";
 
 import { BatteryData, BatteryIdentifier } from "@/services/ble/battery";
-import { characteristicIsNotifyingAsync, characteristicValueHistory, deviceHasServiceAndCharacteristicAsync } from "@/services/ble/ble-service";
+import { characteristicIsNotifyingAsync, characteristicValueHistory, characteristicValueLastUpdate, deviceHasServiceAndCharacteristicAsync } from "@/services/ble/ble-service";
 import { KV_BATTERY_NOTIFY_UUID, KV_BATTERY_SERVICE_UUID } from "@/services/manufacturers/kilovault/battery-data-types";
-import { RESET } from "jotai-history";
 import log from "../log/log-service";
-import { BatteryDataParser } from "../manufacturers/kilovault/BatteryDataParser";
+import { base64ArrayToByteArray, BatteryDataParser } from "../manufacturers/kilovault/BatteryDataParser";
 import { CharacteristicIdentifier } from "./ble-types";
 
 // battery
@@ -45,21 +45,22 @@ export const batteryParser = atomFamily((id: BatteryIdentifier) => atom(
         
         const cid = { deviceId: id as DeviceId, serviceUUID: KV_BATTERY_SERVICE_UUID, characteristicUUID: KV_BATTERY_NOTIFY_UUID };
         const [current, ...history] = get(characteristicValueHistory(cid));
-        const chunks = [current, ...history].reverse();
-
-        log.debug(LOG_PREFIX, "Found chunks: ", cid.deviceId, chunks.length);
-
+        const chunks = history.reverse();
         const parser = new BatteryDataParser();
-        const data = parser.parseBase64Array(chunks);
-        if (data) {
+        const buffer = base64ArrayToByteArray(chunks);
+
+        log.debug(LOG_PREFIX, "Parsing buffer: ", cid.deviceId, chunks[0]);
+
+        const batteryData = parser.parse(buffer);
+        if (batteryData) {
             log.info(`${LOG_PREFIX} Parsed battery data for device ${id}}`);
-            set(battery(id), data);
+            set(battery(id), batteryData);
         }
 
         const consumed = parser.consumed;
         if (consumed > 0) {
             log.debug(`${LOG_PREFIX} Consumed ${consumed} battery data chunks for device ${id}`);
-            set(characteristicValueHistory(cid), RESET);
+            // set(characteristicValueHistory(cid), RESET);
         }
 
 
@@ -71,6 +72,23 @@ export const isKnownBatteryType = atomFamily((id: DeviceId) => loadable(deviceHa
 
 export function isKnownBatteryCharacteristic(cid: CharacteristicIdentifier): boolean {
     return cid.serviceUUID === KV_BATTERY_SERVICE_UUID && cid.characteristicUUID === KV_BATTERY_NOTIFY_UUID;
+}
+
+const globalBatterySubscriptionKey = "__kbmsBatteryCharacteristicSubscription__";
+
+if (!(globalThis as Record<string, unknown>)[globalBatterySubscriptionKey]) {
+    const unsubscribe = appStore.sub(characteristicValueLastUpdate, () => {
+        const update = appStore.get(characteristicValueLastUpdate);
+        if (!update || update.value === null) {
+            return;
+        }
+
+        if (isKnownBatteryCharacteristic(update.cid)) {
+            appStore.set(batteryParser(update.cid.deviceId));
+        }
+    });
+
+    (globalThis as Record<string, unknown>)[globalBatterySubscriptionKey] = unsubscribe;
 }
 
 const isBatteryConnectedAsync = atomFamily((id: DeviceId) => atom(

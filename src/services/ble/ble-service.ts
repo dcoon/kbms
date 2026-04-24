@@ -6,7 +6,6 @@ import { atomFamily, atomWithLazy, atomWithRefresh, loadable } from 'jotai/utils
 
 import { withHistory } from 'jotai-history';
 import { BleManager, Characteristic, Device, DeviceId, State, Subscription, UUID } from 'react-native-ble-plx';
-import { batteryParser, isKnownBatteryCharacteristic } from './battery-service';
 import { BleManagerMock } from './ble-manager-mock';
 import { requestPermission } from './ble-permissions';
 import { CharacteristicIdentifier, CharacteristicValueType, DeviceIdentifier, isBluetoothAvailable as isBluetoothAvailableFn, ServiceIdentifier } from './ble-types';
@@ -233,7 +232,7 @@ const mergedDevices = atom(
     const merged = mergeArray(oldDevices, newDevices, d => d.id);
 
 
-    log.debug(LOG_PREFIX, ": mergedDevices called with: ", oldDevices.length, newDevices.length, merged.length);
+    log.debug(LOG_PREFIX, ": mergedDevices called with: ", merged.length);
 
     set(devices, merged);
   }
@@ -445,14 +444,24 @@ const descriptors = atomFamily(
 
 // characteristic value
 
-const CHARACTERISTIC_VALUE_HISTORY_LIMIT = 50;
+const CHARACTERISTIC_VALUE_HISTORY_LIMIT = 20;
+
+type CharacteristicValueStamped = {
+  value: CharacteristicValueType;
+  seq: number;
+};
+
+const characteristicValueSeq = atomFamily(
+  (cid: CharacteristicIdentifier) => atom(0),
+  characteristicIdentifierEquals
+);
 
 /**
  * One primitive value atom per characteristic identifier.
  * (Name kept as characteristicValueBase to match your existing API surface.)
  */
 const characteristicValueBase = atomFamily(
-  (cid: CharacteristicIdentifier) => atom<CharacteristicValueType>(null),
+  (cid: CharacteristicIdentifier) => atom<CharacteristicValueStamped>({ value: null, seq: 0 }),
   characteristicIdentifierEquals
 );
 
@@ -460,11 +469,30 @@ const characteristicValueBase = atomFamily(
  * One history atom per characteristic identifier.
  * This is the key fix: wrap characteristicValueBase(cid), not a global map atom.
  */
-export const characteristicValueHistory = atomFamily(
+const characteristicValueHistoryStamped = atomFamily(
   (cid: CharacteristicIdentifier) =>
     withHistory(characteristicValueBase(cid), CHARACTERISTIC_VALUE_HISTORY_LIMIT),
   characteristicIdentifierEquals
 );
+
+export const characteristicValueHistory = atomFamily(
+  (cid: CharacteristicIdentifier) => atom(
+    (get) => get(characteristicValueHistoryStamped(cid)).map((entry) => entry.value),
+    (get, set, value: CharacteristicValueType) => {
+      const nextSeq = get(characteristicValueSeq(cid)) + 1;
+      set(characteristicValueSeq(cid), nextSeq);
+      set(characteristicValueHistoryStamped(cid), { value, seq: nextSeq });
+    }
+  ),
+  characteristicIdentifierEquals
+);
+
+export type CharacteristicValueUpdate = {
+  cid: CharacteristicIdentifier;
+  value: CharacteristicValueType;
+};
+
+export const characteristicValueLastUpdate = atom<CharacteristicValueUpdate | null>(null);
 
 /**
  * Convenience atom for reading/writing current value.
@@ -473,9 +501,10 @@ export const characteristicValueHistory = atomFamily(
 export const characteristicValue = atomFamily(
   (cid: CharacteristicIdentifier) =>
     atom(
-      (get) => get(characteristicValueBase(cid)),
+      (get) => get(characteristicValueBase(cid)).value,
       (get, set, value: CharacteristicValueType) => {
         set(characteristicValueHistory(cid), value);
+        set(characteristicValueLastUpdate, { cid, value });
       }
     ),
   characteristicIdentifierEquals
@@ -507,8 +536,10 @@ async function onCharacteristicUpdate(error: Error | null, characteristic: Chara
 
 
     const cid = { deviceId: characteristic.deviceID, serviceUUID: characteristic.serviceUUID, characteristicUUID: characteristic.uuid };
+    // const listeners = get(characteristicUpdateListeners(cid));
+    // listeners.forEach(listener => listener(error, characteristic));
 
-    log.info(LOG_PREFIX, "Received update for characteristic: ", cid.deviceId, " value: ", characteristic.value);
+    log.info(LOG_PREFIX, "Received update for characteristic [deviceId, serviceUUID, characteristicUUID, value]: ", cid.deviceId, cid.serviceUUID, cid.characteristicUUID, characteristic.value);
 
     set(characteristicValue(cid), characteristic.value);
 
@@ -518,12 +549,6 @@ async function onCharacteristicUpdate(error: Error | null, characteristic: Chara
     if (isCharacteristicChangedOtherThanValue(oldCharacteristic ? oldCharacteristic : null, characteristic)) {
       set(characteristicAsync(cid));
     }
-
-    if (isKnownBatteryCharacteristic(cid)) {
-      log.debug(LOG_PREFIX, ": Received update for known battery characteristic, pumping battery parser");
-      set(batteryParser(characteristic.deviceID));
-    }
-
 
   } else {
     log.warn(LOG_PREFIX, ": onCharacteristicUpdate called without error or characteristic");

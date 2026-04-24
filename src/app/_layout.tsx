@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Snackbar } from '@/components/ui/snackbar';
 import { uilog as log } from '@/services/log/log-service';
 import { Settings } from '@/services/settings/settings-service';
+import { appStore } from '@/services/state/jotai-store';
 import { PaperTheme } from '@/util/paper-theme';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
@@ -40,7 +41,7 @@ function AppContent() {
 export default function TabLayout() {
   return (
     <SafeAreaProvider>
-      <JotaiProvider>
+      <JotaiProvider store={appStore}>
           <AppContent />
       </JotaiProvider>
     </SafeAreaProvider>

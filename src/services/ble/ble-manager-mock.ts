@@ -4,7 +4,7 @@ import { blelog as log } from '@/services/log/log-service';
 // import { BleError, BleManager, Characteristic, Descriptor, Device, DeviceId, Service, State, Subscription, TransactionId, UUID } from 'react-native-ble-plx';
 import { Base64, BleError, BleManager, Characteristic, CharacteristicSubscriptionType, ConnectionPriority, Descriptor, Device, DeviceId, LogLevel, ScanOptions, Service, State, Subscription, TransactionId, UUID } from 'react-native-ble-plx';
 // import { interval } from 'rxjs';
-import { KV_BATTERY_NOTIFY_UUID, TEST_CHARACTERISTIC_VALUES } from '../manufacturers/kilovault/battery-data-types';
+import { TEST_DATA_TRAVIS_2026_4_18 } from "../manufacturers/kilovault/battery-data-test-data";
 import { MockCharacteristic, MockDataGenerator, MockDevice, MockService } from './ble-manager-mock-types';
 import { CharacteristicUpdateListener, DeviceUpdateListener } from './ble-types';
 
@@ -228,10 +228,10 @@ export class BleManagerMock implements BleManager {
   monitorCharacteristicValue(deviceId: DeviceId, serviceUUID: UUID, characteristicUUID: UUID, onValueChange: CharacteristicUpdateListener): void {
   }
 
-  publlishCharacteristicValue(characteristic: Characteristic, i: number, listener: (error: BleError | null, characteristic: Characteristic | null) => void) {
+  publlishCharacteristicValue(characteristic: Characteristic, listener: (error: BleError | null, characteristic: Characteristic | null) => void, value?: Base64) {
 
-    if (characteristic.uuid === KV_BATTERY_NOTIFY_UUID) {
-      characteristic.value = TEST_CHARACTERISTIC_VALUES[i];
+    if (value) {
+      characteristic.value = value;
     } else {
       characteristic.value = this._mockDataGenerator.randomValue();
 
@@ -256,16 +256,16 @@ export class BleManagerMock implements BleManager {
 
     characteristic.isNotifying = true;
 
+    const data = TEST_DATA_TRAVIS_2026_4_18.map(record => record.value);
 
     const subscription = {
 
       i: 0,
 
       interval: setInterval(() => {
-        subscription.i = subscription.i < TEST_CHARACTERISTIC_VALUES.length - 1 ? subscription.i + 1 : 0;
-
-        this.publlishCharacteristicValue(characteristic, subscription.i, listener);
-      }, 1000),
+        this.publlishCharacteristicValue(characteristic, listener, data[subscription.i]);
+        subscription.i = subscription.i < data.length - 1 ? subscription.i + 1 : 0;
+      }, 100),
 
       remove: () => {
         clearInterval(subscription.interval);

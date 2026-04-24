@@ -1,13 +1,14 @@
 /**
  * @jest-environment jsdom
  */
+import { BatteryData } from '@/services/ble/battery';
+import { log } from '@/services/log/log-service';
 import { describe, expect, it } from '@jest/globals';
 import { act, renderHook } from '@testing-library/react';
 import { atom, useAtom } from 'jotai';
 import { RESET, UNDO, withHistory } from 'jotai-history';
-import base64 from 'react-native-base64';
-import { BatteryDataChunk, BatteryDataParser } from './BatteryDataParser';
-import { TEST_CHARACTERISTIC_VALUES } from './battery-data-types';
+import { base64ArrayToByteArray, BatteryDataChunk, BatteryDataParser } from './BatteryDataParser';
+import { TEST_CHARACTERISTIC_VALUES, TEST_DATA_TRAVIS_2026_4_18 } from "./battery-data-test-data";
 
 describe('BatteryDataParser', () => {
     it('should instantiate correctly', () => {
@@ -21,28 +22,32 @@ describe('BatteryDataParser', () => {
     });
 
     it('should parse valid battery data', () => {
-        const data = TEST_CHARACTERISTIC_VALUES; // test_data.slice(0, 8);
-        const chunks = data.map(d => base64.decode(d).split('').map(c => c.charCodeAt(0)));
-        const buffer = new Uint8Array(chunks.flat());
+        log.setSeverity('info');
 
-
+        const data = TEST_CHARACTERISTIC_VALUES.slice(0, 12); // test_data.slice(0, 8);
         const parser = new BatteryDataParser();
+        const buffer = base64ArrayToByteArray(data);
+
+
+        const batteryData: (BatteryData | null)[] = [];
+
         let consumed = 0;
         while (consumed < buffer.length) {
             const arr = buffer.subarray(consumed);
-            console.log('Buffer Slice:', arr);
+
             const result = parser.parse(arr);
             if (result) {
-                console.log('Parsed Result:', result, 'Head Position:', parser.consumed, buffer[consumed + parser.consumed]);
+                // console.log('Parsed Result:', result, 'Head Position:', parser.consumed, buffer[consumed + parser.consumed]);
                 consumed += parser.consumed;
                 expect(result?.voltage).toEqual(12970);
-
+                batteryData.push(result);
             } else {
                 consumed += 1; // Move forward if no valid packet is found
             }
         }
 
         expect(parser).toBeDefined();
+        expect(batteryData.length).toEqual(2);
     });
 
     it('learning how to use jotai-history', () => {
@@ -88,7 +93,7 @@ describe('BatteryDataParser', () => {
 
     it('withHistory read history and reset', () => {
 
-        
+
         const chunk = atom<BatteryDataChunk>();
         const chunkHistory = withHistory(chunk, 50);
 
@@ -137,6 +142,88 @@ describe('BatteryDataParser', () => {
 
     });
 
+
+    it('should parse travis 2026-4-18 data correctly', () => {
+
+        log.setSeverity('debug');
+
+        const data = TEST_DATA_TRAVIS_2026_4_18.map(record => record.value);
+        const parser = new BatteryDataParser();
+        const buffer = base64ArrayToByteArray(data);
+
+
+        const batteryData: (BatteryData | null)[] = [];
+
+        let consumed = 0;
+        while (consumed < buffer.length) {
+
+            const arr = buffer.subarray(consumed);
+
+            const result = parser.parse(arr);
+            log.debug("Loop consumed:", parser.consumed);
+
+
+            if (result) {
+                // console.log('Parsed Result:', result, 'Head Position:', parser.consumed, buffer[consumed + parser.consumed]);
+                consumed += parser.consumed;
+                expect(result?.voltage).toEqual(13100);
+                expect(result?.soc).toBeLessThanOrEqual(100);
+                expect(result?.soc).toBeGreaterThanOrEqual(0);
+                // expect(result?.current).toEqual(0);
+                expect(result?.temperature).toBeCloseTo(3041, -20);
+                batteryData.push(result);
+            } else {
+                consumed += 1; // Move forward if no valid packet is found
+            }
+        }
+
+        expect(parser).toBeDefined();
+        expect(batteryData.length).toBeGreaterThan(300);
+
+    });
+
+    it('should parse with sliding window (atomHistory)', () => {
+
+
+        log.setSeverity('debug');
+
+        const data = TEST_DATA_TRAVIS_2026_4_18.map(record => record.value);
+        const window = [];
+
+        const parser = new BatteryDataParser();
+
+
+        const batteryData: (BatteryData | null)[] = [];
+
+        for (const chunk of data) {
+
+            window.push(chunk);
+            if (window.length > 20) {
+                window.shift();
+            }
+
+            const buffer = base64ArrayToByteArray(window);
+
+
+            const result = parser.parse(buffer);
+            // log.debug("Loop consumed:", parser.consumed);
+
+
+            if (result) {
+                expect(result?.voltage).toEqual(13100);
+                expect(result?.soc).toBeLessThanOrEqual(100);
+                expect(result?.soc).toBeGreaterThanOrEqual(0);
+                // expect(result?.current).toEqual(0);
+                expect(result?.temperature).toBeCloseTo(3041, -20);
+                batteryData.push(result);
+            } else {
+            }
+        }
+
+        expect(parser).toBeDefined();
+        expect(batteryData.length).toBeGreaterThanOrEqual(339);
+
+    });
 
 });
 

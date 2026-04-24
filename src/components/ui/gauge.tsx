@@ -1,10 +1,10 @@
+import { uilog as log } from "@/services/log/log-service";
 import React from "react";
 import { useTheme } from "react-native-paper";
 import { Path, Svg, Text } from 'react-native-svg';
 
 
-// import CircularProgress from "react-native-circular-progress-indicator";
-
+const LOG_SRC = "Gauge";
 
 function normalizeDegrees(angle: number) {
   return ((angle % 360) + 360) % 360;
@@ -29,11 +29,13 @@ export interface GaugeProps {
   startAngle?: number;
   endAngle?: number;
   strokeColor?: string;
+  backgroundStrokeColor?: string;
   textColor?: string;
   fontFamily?: string;
 }
 
 export const Gauge = (props: GaugeProps) => {
+  const LOG_PREFIX = LOG_SRC + ": Gauge";
   const theme = useTheme();
 
   const {
@@ -47,6 +49,7 @@ export const Gauge = (props: GaugeProps) => {
     startAngle = 160,
     endAngle = 20,
     strokeColor = theme.colors.primary,
+    backgroundStrokeColor = theme.colors.primary,
     textColor = theme.colors.onSurface,
     fontFamily = theme.fonts.bodyMedium.fontFamily,
   } = props;
@@ -67,10 +70,13 @@ export const Gauge = (props: GaugeProps) => {
   const valueFontSize = radius * 0.4;
   const titleFontSize = radius * 0.25;
 
+  log.debug(LOG_PREFIX, "Rendering Gauge with props: startAngle, endAngle, valueEndAngle, value, maxvalue, valueAsPercentage", startAngle, endAngle, valueEndAngle, value, maxvalue, valueAsPercentage);
+
+
   return (
     <Svg height={size} width={size} viewBox={`0 0 ${size} ${size}`} {...props}>
 
-      <Arc cx={cx} cy={cy} r={radius} startAngle={startAngle} endAngle={endAngle} stroke={strokeColor} strokeWidth={thickness} strokeOpacity={0.2} />
+      <Arc cx={cx} cy={cy} r={radius} startAngle={startAngle} endAngle={endAngle} stroke={backgroundStrokeColor} strokeWidth={thickness} strokeOpacity={0.2} />
       <Arc cx={cx} cy={cy} r={radius} startAngle={startAngle} endAngle={valueEndAngle} stroke={strokeColor} strokeWidth={thickness} />
 
       <Text

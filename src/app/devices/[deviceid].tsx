@@ -20,7 +20,7 @@ import { Card, Chip, Icon, Text } from 'react-native-paper';
 
 import { battery as batteryAtom, isBatteryConnected } from '@/services/ble/battery-service';
 
-import { IconForCellDeltaV, IconForCellVoltage, IconForSoC } from '@/components/ble/battery';
+import { colorForSoc, IconForCellDeltaV, IconForCellVoltage, IconForSoC } from '@/components/ble/battery';
 import { Gauge } from '@/components/ui/gauge';
 
 const LOG_SRC = "BatteryScreen";
@@ -30,8 +30,9 @@ function BatteryGraph({ device }: { device: Device }) {
   const [battery] = useAtom(batteryAtom(device ? device.id : ""));
 
   const soc = battery ? battery.soc : undefined;
+  const socColor = colorForSoc(soc);
   const voltage = battery ? battery.voltage / 1000 : 0;
-  const current = battery ? battery.current : 0;
+  const current = battery ? battery.current / 1000 : 0;
   const temperature = battery ? battery.temperature / 100 : 0;
   const status = battery ? battery.rawStatus : "";
   const cycles = battery ? battery.cycles : 0;
@@ -48,6 +49,11 @@ function BatteryGraph({ device }: { device: Device }) {
   const thickness = radius * 0.08;
 
 
+  const LOG_PREFIX = LOG_SRC + ": BatteryGraph";
+
+  // log.debug(LOG_PREFIX, "Rendering BatteryGraph with data: ", { voltage, current, soc, temperature, status, cycles, lastSeen });
+
+
   return (
     <Card>
       <Card.Title title="State of Charge" left={(props) => <IconForSoC soc={soc} current={current} size={props.size} />} />
@@ -60,6 +66,7 @@ function BatteryGraph({ device }: { device: Device }) {
               valuesuffix='%'
               radius={radius}
               thickness={thickness}
+              strokeColor={socColor}
               title="SoC" />
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
