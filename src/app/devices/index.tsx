@@ -6,12 +6,12 @@ import { Bluetooth } from '@/services/ble/ble-service';
 import { Device } from '@/services/ble/ble-types';
 import { uilog as log } from '@/services/log/log-service';
 import { Settings } from '@/services/settings/settings-service';
+import { PaperTheme } from '@/util/paper-theme';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useAtom } from 'jotai';
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, View } from 'react-native';
-import { Button, SegmentedButtons, Text } from 'react-native-paper';
-
+import { Button, IconButton, SegmentedButtons, Text, useTheme } from 'react-native-paper';
 
 const LOG_SRC = "DevicesScreen";
 
@@ -27,51 +27,53 @@ const sortButtons = [
   { value: 'id', label: 'ID' },
 ];
 
-class FilterBy {
-  knownBatteryTypesOnly: boolean = false;
+class FilterOption {
+  showKnownBatteryTypesOnly: boolean = true;
 }
 
 
 function SortButtons({ sortBy, onSortChange }: { sortBy: SortOption, onSortChange: (value: string) => void }) {
 
+  const theme = useTheme() as typeof PaperTheme;
+
   return (
     <SegmentedButtons
       value={sortBy.value}
       onValueChange={value => { }}
-      density="regular"
+      density={theme.components.SegmentedButtons.density as any}
+      style={theme.components.SegmentedButtons.style}
+      theme={theme}
       buttons={
         sortButtons.map(button => ({
           label: button.label,
           value: button.value,
           icon: sortBy.value === button.value ? (sortBy.ascending ? 'arrow-up' : 'arrow-down') : undefined,
-          onPress: () => onSortChange(button.value)
+          onPress: () => onSortChange(button.value),
+          labelStyle: theme.components.SegmentedButtons.buttonStyle,
         }))
       }
     />
   );
 }
 
-// function FilterButtons({ filterBy, onFilterChange }: { filterBy: FilterBy, onFilterChange: (value: FilterBy) => void }) {
+function FilterButtons({ filterBy, onFilterChange }: { filterBy: FilterOption, onFilterChange: () => void }) {
+  const theme = useTheme() as typeof PaperTheme;
 
-//   const filterIcon = filterBy.knownBatteryTypesOnly ? 'filter-off' : 'filter';
+  const filterIcon = filterBy.showKnownBatteryTypesOnly ? 'filter' : 'filter-off';
 
-//   return (
-//     // TODO: fix filter logic
-//     <Button mode="outlined" disabled={true}
-//       icon={filterIcon}
-//     >
-//       Filter
-//     </Button>
-//   );
+  return (
+    // TODO: fix filter logic
+    <IconButton icon={filterIcon} onPress={() => onFilterChange()}  />
+  );
 
-// }
+}
 
-function ListHeaderComponent({ sortBy, onSortChange, filterBy, onFilterChange }: { sortBy: SortOption, onSortChange: (value: string) => void, filterBy?: FilterBy, onFilterChange?: (value: FilterBy) => void }) {
+function ListHeaderComponent({ sortBy, onSortChange, filterBy, onFilterChange }: { sortBy: SortOption, onSortChange: (value: string) => void, filterBy: FilterOption, onFilterChange: () => void }) {
   return (
 
 
-    <View style={{ flex: 1, flexDirection: 'row', padding: 8}}>
-      {/* <FilterButtons filterBy={filterBy} onFilterChange={onFilterChange} /> */}
+    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', padding: 8}}>
+      <FilterButtons filterBy={filterBy} onFilterChange={onFilterChange} />
       <SortButtons sortBy={sortBy} onSortChange={onSortChange} />
     </View>
   );
@@ -125,13 +127,10 @@ function AppBarActions({ children }: { children?: React.ReactNode }) {
 function DeviceList() {
   const router = useRouter();
   const [devices] = useAtom(Bluetooth.devices);
-  // const [developerMode] = useAtom(Settings.developerMode);
   
   const [sortBy, setSortBy] = useState<SortOption>(new SortOption());
 
-
-  // TODO: implement filter logic
-  // const [filterBy, setFilterBy] = useState<FilterBy>(new FilterBy());
+  const [filterBy, setFilterBy] = useState<FilterOption>(new FilterOption());
 
 
   const sortedDevices = useMemo(() => {
@@ -161,6 +160,9 @@ function DeviceList() {
   }, [devices, sortBy]);
 
 
+  function onFilterChange() {
+    setFilterBy((prev) => ({ ...prev, showKnownBatteryTypesOnly: !prev.showKnownBatteryTypesOnly }));
+  }
 
   function onSortChange(value: string) {
     if (value === sortBy.value) {
@@ -184,7 +186,7 @@ function DeviceList() {
 
     if (device.id) {
 
-      router.navigate({
+      router.push({
         pathname: "/devices/[deviceid]",
         params: { deviceid: device.id }
       });
@@ -197,10 +199,10 @@ function DeviceList() {
       data={sortedDevices}
       keyExtractor={(item) => item.id !== undefined ? item.id : ''}
       renderItem={({ item }) => (
-        <DeviceListItem device={item} onDevicePress={() => onDevicePress(item)} />
+        <DeviceListItem device={item} onDevicePress={() => onDevicePress(item)} hideIfUnknownBatteryType={filterBy.showKnownBatteryTypesOnly} />
       )}
       ListHeaderComponent={() => (
-        <ListHeaderComponent sortBy={sortBy} onSortChange={onSortChange} />
+        <ListHeaderComponent sortBy={sortBy} onSortChange={onSortChange} filterBy={filterBy} onFilterChange={onFilterChange} />
       )}
       ListEmptyComponent={() => (
         <ListEmptyComponent />
@@ -237,7 +239,7 @@ function NavigateToPendingDevice() {
       if (pendingDevice) {
         const id = pendingDevice;
         setPendingDevice(null);
-        router.navigate({
+        router.push({
           pathname: '/devices/[deviceid]',
           params: { deviceid: id },
         });

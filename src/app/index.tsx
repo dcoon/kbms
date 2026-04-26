@@ -3,17 +3,22 @@ import { ScreenLayout } from '@/components/ui/screen-layout';
 import { Favorite, Settings } from '@/services/settings/settings-service';
 import { router, useFocusEffect } from 'expo-router';
 import { useAtom } from 'jotai';
-import { ScrollView } from 'react-native';
+import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { DeviceId } from 'react-native-ble-plx';
-import { Card, List as PaperList, TouchableRipple } from 'react-native-paper';
+import { Card, Chip, Icon, List as PaperList, Text, useTheme } from 'react-native-paper';
 
+import { colorForSoc } from '@/components/ble/battery';
+import { AddDeviceAction, SettingsAction } from '@/components/ui/app-topbar';
 import { FavoriteCard } from '@/components/ui/favorite-card';
-import { isBatteryConnected } from '@/services/ble/battery-service';
+import { Gauge } from '@/components/ui/gauge';
+import { DEFAULT_ICON_SIZE, ValueChip } from '@/components/ui/ui-util';
+import { BatteryStatus } from '@/services/ble/battery';
+import { batteries, isBatteryConnected } from '@/services/ble/battery-service';
 import { isBluetoothAvailable } from '@/services/ble/ble-types';
 import log from '@/services/log/log-service';
+import { PaperTheme } from '@/util/paper-theme';
+import { formatDistanceToNow } from 'date-fns';
 import { useCallback } from 'react';
-
-
 
 
 const LOG_SRC = "HomeScreen";
@@ -29,7 +34,7 @@ function useOnDevicePress() {
       // Two-step cross-tab navigation: store target, then switch to devices tab.
       // Direct cross-tab deep navigation resets the Android native tab stack to root.
       setPendingDevice(id);
-      router.navigate('/devices');
+      router.push('/devices');
     }
   };
 }
@@ -37,21 +42,29 @@ function useOnDevicePress() {
 
 function FavoriteListEmptyComponent() {
   return (
-    <TouchableRipple onPress={() => router.push('/devices')}>
-      <Card>
-        <Card.Title title="No favorite devices yet" />
-        <Card.Content>
-          <PaperList.Item
-            title="Add a device"
-            description="Go to the devices tab to add your favorite devices here."
-            left={() => <PaperList.Icon icon="heart-outline" />}
-            right={() => (
-              <List.Icon icon="arrow-right" />
-            )}
-          />
-        </Card.Content>
-      </Card>
-    </TouchableRipple>
+    // <TouchableRipple onPress={() => router.push('/devices')}>
+    //   <Card>
+    //     <Card.Title title="No batteries yet" />
+    //     <Card.Content>
+    //       <PaperList.Item
+    //         title="Add a battery"
+    //         description="Tap here to browse devices and add your first battery"
+    //         left={() => <PaperList.Icon icon="heart-outline" />}
+    //         right={() => (
+    //           <List.Icon icon="arrow-right" />
+    //         )}
+    //       />
+    //     </Card.Content>
+    //   </Card>
+    // </TouchableRipple>
+
+    <List.Item
+      title="No batteries yet"
+      description="Tap here to browse devices and add your first battery"
+      left={<List.Icon icon="plus" />}
+      onPress={() => router.push('/devices')}
+      right={(<List.Icon icon="arrow-right" />)}
+    />
   );
 }
 
@@ -66,8 +79,8 @@ function FavoritesAccordion() {
 
     <PaperList.Accordion
       id="favorites"
-      title="Favorites"
-      description="Favorite devices for quick access"
+      title="Batteries"
+      description="Your favorite batteries for quick access"
     >
       <List.StaticList data={favorites}
         renderItem={(info) => (<FavoriteCard favorite={info.item} onDevicePress={onDevicePress} />)}
@@ -80,15 +93,65 @@ function FavoritesAccordion() {
 
 
 function HomeSummaryAccordion() {
-  return (
 
-    <List.Section title="System Overview">
-      <PaperList.Item
-        title="All Batteries Status"
-        description="Placeholder for fancy graphs and stuff"
-        left={() => <List.Icon icon="battery" />}
+  const [favorites] = useAtom<Favorite[]>(Settings.favorites);
+  const [bats] = useAtom(batteries(favorites.map(fav => fav.id)));
+
+  const theme = useTheme() as typeof PaperTheme;
+
+  const summary = bats.reduce((acc, batteryData) => {
+    if (batteryData) {
+      acc.soc = (acc.soc * acc.total + batteryData.soc) / (acc.total + 1);
+      acc.voltage = (acc.voltage * acc.total + batteryData.voltage) / (acc.total + 1);
+      acc.current += batteryData.current;
+      acc.watts += batteryData.voltage / 1000 * batteryData.current / 1000;
+      acc.status = batteryData.status ?? acc.status;
+      acc.lastUpdated = batteryData.lastUpdated && (!acc.lastUpdated || batteryData.lastUpdated < acc.lastUpdated) ? batteryData.lastUpdated : acc.lastUpdated;
+      acc.total += 1;
+
+    }
+    return acc;
+  }, { total: 0, soc: 0, voltage: 0, current: 0, watts: 0, status: new BatteryStatus(), lastUpdated: undefined as Date | undefined });
+
+  const lastSeen = summary.lastUpdated ? formatDistanceToNow(summary.lastUpdated, { addSuffix: true }) : "Connecting...";
+
+  const strokeColor = colorForSoc(summary.soc);
+  const { width, height } = useWindowDimensions();
+  const radius = width * 0.11;
+
+  return (
+    <Card style={theme.components.Card.style}>
+      <Card.Title title="System Summary"
+        // left={(props) => <SoCIcon soc={summary.soc} current={summary.current} size={props.size} />}
+        left={(props) => <Icon source="home-battery-outline" size={DEFAULT_ICON_SIZE} />}
+        right={(props) => <Text>{summary.total} of {favorites.length} Batteries</Text>}
+        style={theme.components.Card.Title.style}
       />
-    </List.Section>
+      <Card.Content
+        style={{ flexDirection: 'column' }}
+      >
+        <View style={theme.components.Card.Content.style as any}>
+          <Gauge value={summary.soc}
+            maxvalue={100}
+            title="SOC"
+            valuesuffix='%'
+            strokecolor={strokeColor}
+            radius={radius}
+          />
+
+          <ValueChip title="Voltage" value={Math.round(summary.voltage) / 1000} valueSuffix="V" />
+          <ValueChip title="Current" value={Math.round(summary.current) / 1000} valueSuffix="A" />
+          <ValueChip title="Watts" value={Math.round(summary.watts)} valueSuffix="W" />
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, gap: 8 }} >
+
+          <Chip icon="clock-outline" style={theme.components.Chip.style} textStyle={theme.components.Chip.textStyle} compact={true}>{lastSeen}</Chip>
+          {/* <BatteryStatusFlags status={summary.status} showNoFlags={false} /> */}
+        </View>
+
+      </Card.Content>
+    </Card>
+
   );
 }
 
@@ -140,21 +203,35 @@ function StartStopFavoritesConnectedOnFocus() {
 }
 
 export function HomeView() {
-  return (<ScrollView>
-    <List.AccordionGroup>
+  return (
+    <ScrollView>
       <HomeSummaryAccordion />
-      <FavoritesAccordion />
-      <HelpOnBluetoothUnsupportedDevices />
-      <StartStopFavoritesConnectedOnFocus />
-    </List.AccordionGroup>
-  </ScrollView>
+
+      <List.AccordionGroup>
+        <FavoritesAccordion />
+        <HelpOnBluetoothUnsupportedDevices />
+        <StartStopFavoritesConnectedOnFocus />
+      </List.AccordionGroup>
+    </ScrollView>
   );
 }
+
+
+function AppBarActions({ children }: { children?: React.ReactNode }) {
+
+  return (
+    <>
+      <SettingsAction />
+      <AddDeviceAction />
+    </>
+  );
+}
+
 
 export default function HomeScreen() {
 
   return (
-    <ScreenLayout title="Home">
+    <ScreenLayout title="Home" showBackAction={false} actions={<AppBarActions />}>
       <HomeView />
     </ScreenLayout>
   );

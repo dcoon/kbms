@@ -1,8 +1,20 @@
+import { battery as batteryAtom, isBatteryConnected } from "@/services/ble/battery-service";
+import { Favorite } from "@/services/settings/settings-service";
+import { useAtom } from "jotai";
+import { default as React, useEffect, useState } from "react";
 import { Pressable } from "react-native";
+import { Device } from "react-native-ble-plx";
 import { Icon } from "react-native-paper";
-import { DeviceOrFavorite } from "../ui/favorite-card";
+import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
 import { DEFAULT_ICON_SIZE } from "../ui/ui-util";
 
+
+
+// Strings
+// Components:
+//   Pressable Icon
+//   Icon
+//   Menu.Item
 
 export enum ConnectionState {
     Connected = "connected",
@@ -10,6 +22,7 @@ export enum ConnectionState {
     Disconnected = "disconnected",
     Error = "error"
 }
+
 
 
 
@@ -23,32 +36,54 @@ export function IconForScanningState({ isScanning, size = DEFAULT_ICON_SIZE }: {
 }
 
 
+export function ConnectionStateMenuText(state: ConnectionState): string {
 
-export function ButtonForConnectionState({ isDeviceConnected, onPress, size = DEFAULT_ICON_SIZE }: { isDeviceConnected: ConnectionState, onPress: () => void, size?: number }) {
+    switch (state) {
+        case ConnectionState.Connected:
+            return "Disconnect";
+        case ConnectionState.Connecting:
+            return "Connecting...";
+        case ConnectionState.Disconnected:
+            return "Connect";
+        case ConnectionState.Error:
+            return "Retry";
+        default:
+            return "Unknown State";
+    }   
+}
+
+export function ConnectionStateIconSource(isDeviceConnected: ConnectionState): IconSource {
+    switch (isDeviceConnected) {
+        case ConnectionState.Connected:
+            return { source: "stop" } as IconSource;
+        case ConnectionState.Connecting:
+            return { source: "progress-clock" } as IconSource;
+        case ConnectionState.Disconnected:
+            return { source: "refresh" } as IconSource;
+        case ConnectionState.Error:
+            return { source: "progress-circle", color: "red" } as IconSource;
+        default:
+            return { source: "progress-question" } as IconSource; // unknown state
+    }
+
+}
+
+export function ConnectionStateIcon({ isDeviceConnected, size = DEFAULT_ICON_SIZE, onPress }: { isDeviceConnected: ConnectionState, onPress?: () => void, size?: number }) {
+
+    return IconFromIconSource({ source: ConnectionStateIconSource(isDeviceConnected), size });
+
+}
+
+
+export function ConnectionStateButton({ isDeviceConnected, onPress, size = DEFAULT_ICON_SIZE }: { isDeviceConnected: ConnectionState, onPress: () => void, size?: number }) {
 
     return (
         <Pressable onPress={onPress}>
-            <IconForConnectionState isDeviceConnected={isDeviceConnected} size={size} />
+            <ConnectionStateIcon isDeviceConnected={isDeviceConnected} size={size} />
         </Pressable>
     );
 }
 
-export function IconForConnectionState({ isDeviceConnected, size = DEFAULT_ICON_SIZE, onPress }: { isDeviceConnected: ConnectionState, onPress?: () => void, size?: number }) {
-
-    switch (isDeviceConnected) {
-        case ConnectionState.Connected:
-            return (<Icon source="stop" size={size} />);
-        case ConnectionState.Connecting:
-            return (<Icon source="progress-clock" size={size} />);
-        case ConnectionState.Disconnected:
-            return (<Icon source="refresh" size={size} />);
-        case ConnectionState.Error:
-            return (<Icon source="progress-circle" color="red" size={size} />);
-        default:
-            return (<Icon source="progress-question" size={size} />); // unknown state
-    }
-
-}
 
 
 export enum RssiLevel {
@@ -58,21 +93,38 @@ export enum RssiLevel {
     Strong = -60
 }
 
-
-export function IconForRssi({ rssi, size = DEFAULT_ICON_SIZE }: { rssi?: number | null, size?: number }) {
+export function RssiIconSource(rssi?: number): IconSource {
 
 
     if (rssi === undefined || rssi === null) {
-        return (<Icon source="signal-off" size={size} />); //"signal-cellular-off"; // no signal
+        return {source: "signal-off", color: "black"} as IconSource; //"signal-cellular-off"; // no signal
     } else if (rssi >= RssiLevel.Strong) {
-        return (<Icon source="signal-cellular-3" color="green" size={size} />); // 4 bars
+        return {source: "signal-cellular-3", color: "green"} as IconSource; // 4 bars
     } else if (rssi >= RssiLevel.Moderate) {
-        return (<Icon source="signal-cellular-2" color="orange" size={size} />); // 3 bars                
+        return {source: "signal-cellular-2", color: "orange"} as IconSource; // 3 bars                
     } else if (rssi >= RssiLevel.Weak) {
-        return (<Icon source="signal-cellular-1" color="red" size={size} />); // 2 bars           
+        return {source: "signal-cellular-1", color: "red"} as IconSource; // 2 bars           
     } else {
-        return (<Icon source="signal-cellular-outline" color="red" size={size} />); // no signal    
+        return {source: "signal-cellular-outline", color: "red"} as IconSource; // no signal    
     }
+
+}
+
+export function IconFromIconSource({ source, size = DEFAULT_ICON_SIZE }: { source: IconSource, size?: number }) {
+
+    if (typeof source === 'string') {
+        return <Icon source={source} size={size} />;
+    } else if (typeof source === 'object' && 'source' in source) {
+        return <Icon source={(source as any).source} color={(source as any).color} size={size} />;
+    } else {
+        return null; // invalid source
+    }
+}
+
+export function RssiIcon({ rssi, size = DEFAULT_ICON_SIZE }: { rssi?: number | null, size?: number }) {
+
+    return IconFromIconSource({ source: RssiIconSource(rssi ? rssi : undefined), size });
+
 }
 export type OnDevicePress = (device: DeviceOrFavorite) => void;
 
@@ -90,4 +142,81 @@ export function ConnectionStateFromLoadable({ loader }: { loader: any; }): Conne
     }
 
 }
+
+export function BatteryLastSeenIconSource(lastUpdated?: Date): IconSource {
+
+    if (lastUpdated === undefined || lastUpdated === null) {
+        return { source: "clock-alert-outline", color: "gray" } as IconSource; // never seen
+    } else {
+        const secondsSinceLastUpdate = (Date.now() - lastUpdated.getTime()) / 1000;
+
+        if (secondsSinceLastUpdate < 2) {
+            return { source: "clock-check-outline", color: "green" } as IconSource;
+        } else if (secondsSinceLastUpdate < 4) {
+            return { source: "clock-time-seven-outline", color: "orange" } as IconSource;
+        } else if (secondsSinceLastUpdate < 6) {
+            return { source: "clock-time-ten-outline", color: "orange" } as IconSource;
+        } else if (secondsSinceLastUpdate < 10) {
+            return { source: "update", color: "red" } as IconSource;
+        } else {
+            return { source: "clock-alert-outline", color: "red" } as IconSource;
+        }
+
+    }
+
+}
+
+export function BatteryLastSeenIcon({ lastUpdated }: { lastUpdated?: Date }) {
+    return IconFromIconSource({ source: BatteryLastSeenIconSource(lastUpdated) });
+}
+
+export function BatteryLastSeenListIconButton({ device, onPress }: { device: DeviceOrFavorite, onPress?: () => void }) {
+
+    const [lastRefreshed, setLastRefreshed] = useState(Date.now());
+    const [, setIsBatteryConnected] = useAtom(isBatteryConnected(device.id));
+    const [battery] = useAtom(batteryAtom(device.id));
+
+    const lastUpdated = battery?.lastUpdated;
+
+
+    const INTERVAL_DURATION = 60000;
+
+    const refreshEveryMinute = useEffect(() => {
+        const interval = setInterval(() => {
+            setLastRefreshed(Date.now());
+        }, INTERVAL_DURATION);
+        return () => clearInterval(interval);
+    }, []);
+
+
+    if (onPress === undefined || onPress === null) {
+        onPress = onPressDefault;
+    }
+
+    function onPressDefault() {
+        // setIsBatteryConnected(true);
+    }
+
+
+    return (
+        <Pressable onPress={onPress}>
+            <BatteryLastSeenIcon lastUpdated={battery?.lastUpdated} />
+        </Pressable>
+
+    );
+
+}
+
+export function BatteryIsConnectedIconButton({ device }: { device: DeviceOrFavorite; }) {
+
+    const [isConnectedLoadable, setIsConnected] = useAtom(isBatteryConnected(device.id));
+    const connectedState = ConnectionStateFromLoadable({ loader: isConnectedLoadable });
+
+    return (
+        <ConnectionStateButton isDeviceConnected={connectedState} onPress={() => setIsConnected(connectedState === 'connected' ? false : true)} />
+    );
+}
+
+
+export type DeviceOrFavorite = Device | Favorite;
 

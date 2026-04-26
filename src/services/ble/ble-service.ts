@@ -122,7 +122,7 @@ const ble = atom(
         manager?.onStateChange((state) => {
           log.warn(LOG_PREFIX, ": Ble state changed: ", state);
           set(_bleStateInternal, state);
-          set(Settings.snackbar, "Ble state changed: " + state);
+          // set(Settings.snackbar, "Ble state changed: " + state);
         }, true)
 
         // 
@@ -182,7 +182,7 @@ function onDeviceFound(error: Error | null, device: Device | null, set: Setter) 
   const LOG_PREFIX = LOG_SRC + ": onDeviceFound";
 
   if (device) {
-    log.debug(LOG_PREFIX, ": onDeviceFound called with device: ", device.id, device.name);
+    log.debug(LOG_PREFIX, ": onDeviceFound called with device: [id, name, rssi]", device.id, device.name, device.rssi);
 
     // const [devices, setDevices] = useAtom(mergedDevices);
     // setDevices([device]);
@@ -389,8 +389,15 @@ function characteristicIdentifierEquals(a: CharacteristicIdentifier, b: Characte
 export const deviceHasServiceAndCharacteristicAsync = atomFamily(
   ({ deviceId, serviceUUID, characteristicUUID }: CharacteristicIdentifier) => atom(
     async (get) => {
-      const characteristics = await get(characteristicsAsync({ deviceId, serviceUUID }));
-      return characteristics.some(c => c.uuid === characteristicUUID);
+      try {
+        const characteristics = await get(characteristicsAsync({ deviceId, serviceUUID }));
+        return characteristics.some(c => c.uuid === characteristicUUID);
+      } catch (error) {
+        const LOG_PREFIX = LOG_SRC + ": deviceHasServiceAndCharacteristicAsync";
+        log.debug(LOG_PREFIX, ": Error checking for service and characteristic: ", error);
+        return false;
+
+      }
     }
   ),
   characteristicIdentifierEquals
@@ -564,14 +571,18 @@ export const characteristicIsNotifyingAsync = atomFamily(
       return c ? c.isNotifying : false;
     },
     async (get, set, value: boolean) => {
+
+      const LOG_PREFIX = LOG_SRC + ": characteristicIsNotifyingAsync setter";
+
       if (value) {
         // start notifications
         await get(characteristicAsync(cid));
         try {
           const sub = await get(ble)?.monitorCharacteristicForDevice(cid.deviceId, cid.serviceUUID, cid.characteristicUUID, (error, characteristic) => onCharacteristicUpdate(error, characteristic, get, set));
           set(subscription([cid.deviceId, cid.serviceUUID, cid.characteristicUUID]), sub as Subscription);
+          log.info(LOG_PREFIX, "Started monitoring characteristic: ", cid);
         } catch (error) {
-          log.error(LOG_SRC + ": characteristicIsNotifyingAsync setter", "Failed to start monitoring characteristic: ", error);
+          log.error(LOG_PREFIX, "Failed to start monitoring characteristic: ", error);
           set(Settings.snackbar, "Failed to start monitoring characteristic: " + error);
         }
 
@@ -580,6 +591,7 @@ export const characteristicIsNotifyingAsync = atomFamily(
         const sub = get(subscription([cid.deviceId, cid.serviceUUID, cid.characteristicUUID]));
         sub?.remove();
         set(subscription([cid.deviceId, cid.serviceUUID, cid.characteristicUUID]), undefined);
+        log.info(LOG_PREFIX, "Stopped monitoring characteristic: ", cid);
       }
 
       set(characteristicAsync(cid));

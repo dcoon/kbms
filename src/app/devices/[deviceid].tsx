@@ -1,3 +1,4 @@
+import { BatteryStatusFlags } from '@/components/ble/battery';
 import { getDeviceName, LoadableState } from '@/services/ble/ble-types';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Device } from 'react-native-ble-plx';
@@ -7,7 +8,6 @@ import { ScrollView, useWindowDimensions, View } from 'react-native';
 
 import { LastSeenListItem, List } from '@/components/list/list-item';
 import { ScreenLayout } from '@/components/ui/screen-layout';
-import { BatteryStatus } from '@/services/ble/battery';
 import { Bluetooth } from '@/services/ble/ble-service';
 import { KV_BATTERY_NOTIFY_UUID, KV_BATTERY_SERVICE_UUID } from '@/services/manufacturers/kilovault/battery-data-types';
 import { useAtom } from 'jotai';
@@ -16,11 +16,11 @@ import { formatDistanceToNow } from 'date-fns';
 
 import { FavoriteAction, IsNotifyingAction } from '@/components/ui/app-topbar';
 import { uilog as log } from '@/services/log/log-service';
-import { Card, Chip, Icon, Text } from 'react-native-paper';
+import { Card, Chip, Text } from 'react-native-paper';
 
 import { battery as batteryAtom, isBatteryConnected } from '@/services/ble/battery-service';
 
-import { colorForSoc, IconForCellDeltaV, IconForCellVoltage, IconForSoC } from '@/components/ble/battery';
+import { colorForSoc, IconForCellDeltaV, IconForCellVoltage, SoCIcon } from '@/components/ble/battery';
 import { Gauge } from '@/components/ui/gauge';
 
 const LOG_SRC = "BatteryScreen";
@@ -56,7 +56,7 @@ function BatteryGraph({ device }: { device: Device }) {
 
   return (
     <Card>
-      <Card.Title title="State of Charge" left={(props) => <IconForSoC soc={soc} current={current} size={props.size} />} />
+      <Card.Title title="State of Charge" left={(props) => <SoCIcon soc={soc} current={current} size={props.size} />} />
       <Card.Content>
         <View style={{ flexDirection: 'column', }}>
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 }} >
@@ -66,7 +66,7 @@ function BatteryGraph({ device }: { device: Device }) {
               valuesuffix='%'
               radius={radius}
               thickness={thickness}
-              strokeColor={socColor}
+              strokecolor={socColor}
               title="SoC" />
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -80,56 +80,7 @@ function BatteryGraph({ device }: { device: Device }) {
   );
 }
 
-function BatteryStatusFlags({ status, showNoFlags = true }: { status: BatteryStatus | undefined, showNoFlags?: boolean }) {
 
-  if (status === undefined) {
-    return null;
-  }
-
-  const style = {
-    color: "red",
-    fontWeight: "bold" as const,
-    marginRight: 2,
-  };
-
-  const styleOK = {
-    ...style,
-    color: "green",
-  };
-
-  const flags = ["HV", "LV", "OCC", "OCD", "LTD", "LTC", "HTD", "HTC"] as const;
-
-  function ActiveFlag({ flag, s = style }: { flag: string, s: typeof style }) {
-    return (
-      <Chip key={flag} selectedColor={s.color} icon={() => (<Icon source='alert' color={s.color} size={14} />)} mode="outlined" style={{ alignSelf: 'center', margin: 6, }}>{flag}</Chip>
-    );
-  }
-  function ActiveFlags({ status, showNoFlags }: { status: BatteryStatus, showNoFlags?: boolean }) {
-
-    const activeFlags = flags.filter(flag => status[flag]);
-
-    if (activeFlags.length === 0) {
-      return showNoFlags ? (<ActiveFlag flag="OK" s={styleOK} />) : null;
-    }
-
-    return (
-      <View style={{ flexDirection: 'row', }}>
-        {activeFlags.map(flag => (
-          <ActiveFlag key={flag} flag={flag} s={style} />
-        ))}
-      </View>
-    );
-
-
-  }
-
-  return (
-    <View style={{ flexDirection: 'row', }}>
-      <ActiveFlags status={status} showNoFlags={showNoFlags} />
-    </View>
-  );
-
-}
 function BatteryDataAccordion({ device, children }: { device: Device, children?: React.ReactNode }) {
 
   const [battery] = useAtom(batteryAtom(device.id));

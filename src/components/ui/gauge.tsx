@@ -1,8 +1,8 @@
 import { uilog as log } from "@/services/log/log-service";
+import { PaperTheme } from "@/util/paper-theme";
 import React from "react";
 import { useTheme } from "react-native-paper";
 import { Path, Svg, Text } from 'react-native-svg';
-
 
 const LOG_SRC = "Gauge";
 
@@ -28,7 +28,7 @@ export interface GaugeProps {
   thickness?: number;
   startAngle?: number;
   endAngle?: number;
-  strokeColor?: string;
+  strokecolor?: string;
   backgroundStrokeColor?: string;
   textColor?: string;
   fontFamily?: string;
@@ -36,7 +36,7 @@ export interface GaugeProps {
 
 export const Gauge = (props: GaugeProps) => {
   const LOG_PREFIX = LOG_SRC + ": Gauge";
-  const theme = useTheme();
+  const theme = useTheme() as typeof PaperTheme;
 
   const {
     value,
@@ -45,10 +45,10 @@ export const Gauge = (props: GaugeProps) => {
     valuesuffix = undefined,
     title,
     radius = 25,
-    thickness = 4,
-    startAngle = 160,
-    endAngle = 20,
-    strokeColor = theme.colors.primary,
+    thickness = radius * 0.15,
+    startAngle = 170,
+    endAngle = 10,
+    strokecolor: strokecolor = theme.colors.primary,
     backgroundStrokeColor = theme.colors.primary,
     textColor = theme.colors.onSurface,
     fontFamily = theme.fonts.bodyMedium.fontFamily,
@@ -62,29 +62,34 @@ export const Gauge = (props: GaugeProps) => {
 
   // Center coordinates based on radius to ensure no clipping
   const padding = thickness / 2 + 2; // Add a small buffer for stroke width
-  const size = (radius + padding) * 2;
+  const sizex = (radius + padding) * 2;
+  const sizey = (radius * 1.5 + padding);
   const cx = radius + padding;
   const cy = radius + padding;
 
   // Scaling factors for text based on radius
-  const valueFontSize = radius * 0.4;
+  const valueFontSize = radius * 0.55;
   const titleFontSize = radius * 0.25;
 
   log.debug(LOG_PREFIX, "Rendering Gauge with props: startAngle, endAngle, valueEndAngle, value, maxvalue, valueAsPercentage", startAngle, endAngle, valueEndAngle, value, maxvalue, valueAsPercentage);
 
 
   return (
-    <Svg height={size} width={size} viewBox={`0 0 ${size} ${size}`} {...props}>
+    <Svg height={sizey} width={sizex} viewBox={`0 0 ${sizex} ${sizey}`} {...props}>
 
-      <Arc cx={cx} cy={cy} r={radius} startAngle={startAngle} endAngle={endAngle} stroke={backgroundStrokeColor} strokeWidth={thickness} strokeOpacity={0.2} />
-      <Arc cx={cx} cy={cy} r={radius} startAngle={startAngle} endAngle={valueEndAngle} stroke={strokeColor} strokeWidth={thickness} />
+      {/* <rect x={0} y={0} width={sizex} height={sizey} stroke="red" fill="none" /> */}
+      <Arc cx={cx} cy={cy} r={radius} 
+      startAngle={startAngle} endAngle={endAngle} stroke={backgroundStrokeColor} strokeWidth={thickness} strokeOpacity={0.2} />
+      <Arc cx={cx} cy={cy} r={radius} 
+      startAngle={startAngle} endAngle={valueEndAngle} stroke={strokecolor} strokeWidth={thickness} />
 
       <Text
         x={cx}
-        y={cy - radius * 0.1}
-        fontSize={valueFontSize}
-        fill={textColor}
+        y={cy - radius * 0.3}
+        fontSize={theme.fonts.labelLarge.fontSize}
+        fill={theme.fonts.labelLarge.fontColor}
         fontFamily={fontFamily}
+        fontWeight={theme.fonts.labelLarge.fontWeight}
         textAnchor="middle"
         alignmentBaseline="middle"
       >
@@ -94,9 +99,9 @@ export const Gauge = (props: GaugeProps) => {
       {title && (
         <Text
           x={cx}
-          y={cy + radius * 0.45}
-          fontSize={titleFontSize}
-          fill={textColor}
+          y={cy + radius * 0.3}
+          fontSize={theme.fonts.labelMedium.fontSize}
+          fill={theme.fonts.labelMedium.fontColor}
           fontFamily={fontFamily}
           textAnchor="middle"
         >
@@ -128,7 +133,7 @@ const Arc = (props: ArcProps) => {
     return null; // No arc to draw
   }
 
-  console.log(`Drawing arc from ${startAngle} to ${endAngle} (${subtractDegrees(endAngle, startAngle)} degrees)`);
+  // console.log(`Drawing arc from ${startAngle} to ${endAngle} (${subtractDegrees(endAngle, startAngle)} degrees)`);
 
   const sx = cx + r * Math.cos((startAngle * Math.PI) / 180);
   const sy = cy + r * Math.sin((startAngle * Math.PI) / 180);

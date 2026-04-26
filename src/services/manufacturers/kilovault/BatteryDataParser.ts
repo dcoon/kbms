@@ -73,7 +73,7 @@ export class BatteryDataParser {
         if (size < MIN_PACKET_SIZE) {
             // this.head = end + 1;
             this.consumed = end + 1;
-            log.info(`${LOG_PREFIX} Packet too small (size: ${size}), skipping`);
+            log.debug(`${LOG_PREFIX} Packet too small (size: ${size}), skipping`);
             return undefined;
         }
 
@@ -133,7 +133,7 @@ export class BatteryDataParser {
         const calculatedChecksum = this.calculateChecksum(this.data.subarray(1, this.data.length - 5)); // calculate checksum on all bytes between start and checksum (exclusive)
 
         if (checksum !== calculatedChecksum) {
-            log.warn(`${LOG_PREFIX} Checksum mismatch: expected ${checksum}, calculated ${calculatedChecksum}, size: ${size}`);
+            log.debug(`${LOG_PREFIX} Checksum mismatch: expected ${checksum}, calculated ${calculatedChecksum}, size: ${size}`);
             return undefined;
         } 
 
@@ -157,7 +157,7 @@ export class BatteryDataParser {
         ];
 
 
-        log.info(`${LOG_PREFIX} Successfully parsed battery data: voltage=${voltage}, current=${current}, capacity=${capacity}, soc=${soc}, cycles=${cycles}, temperature=${temperature}`);
+        log.debug(`${LOG_PREFIX} Successfully parsed battery data: voltage=${voltage}, current=${current}, capacity=${capacity}, soc=${soc}, cycles=${cycles}, temperature=${temperature}`);
 
         return battery;
 

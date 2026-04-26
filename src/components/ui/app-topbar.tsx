@@ -5,7 +5,7 @@ import { LoadableState } from '@/services/ble/ble-types';
 import log from '@/services/log/log-service';
 import { Favorite, Settings } from '@/services/settings/settings-service';
 import { getIconForBleState } from '@/util/util';
-import { useRouter } from 'expo-router';
+import { router, useRouter } from 'expo-router';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { DeviceId, UUID } from 'react-native-ble-plx';
@@ -13,36 +13,39 @@ import { Appbar } from 'react-native-paper';
 import { SnackbarMessage } from './snackbar';
 
 
-
 const LOG_SRC = "AppTopBar";
 
-interface AppTopBarProps {
-  title: string;
-  subtitle?: string;
-  children?: React.ReactNode;
+
+
+export function BackAction({ visible }: { visible: boolean }) {
+
+  if (visible) {
+    return (
+      <Appbar.BackAction onPress={() => router.back()} />
+    );
+  }
+
+  return null;
 }
 
 
-
-export function AppTopBar({ title, subtitle, children }: AppTopBarProps) {
+export function AddDeviceAction() {
 
   const router = useRouter();
 
   return (
-    <Appbar.Header>
-      <Appbar.Content title={title} />
-      <Appbar.Content title={subtitle} />
-      <BleStateAction />
-      {children}
-      <Appbar.BackAction onPress={() => router.back()} />
-    </Appbar.Header>
+    <Appbar.Action icon="plus" onPress={() => router.push('/devices')} />
   );
 }
 
 
-interface ActionProps {
-  icon: string;
-  onPress: () => void;
+export function SettingsAction() {
+
+  const router = useRouter();
+
+  return (
+    <Appbar.Action icon="cog" onPress={() => router.push('/settings')} />
+  );
 }
 
 
@@ -120,7 +123,7 @@ export function DeviceAction({ deviceId }: DeviceActionProps) {
   function onPressDevice() {
 
 
-    router.navigate(
+    router.push(
       {
         pathname: "/devices/[deviceid]",
         params: {
@@ -204,7 +207,7 @@ function BatteryActionDeveloperMode({ deviceId }: BatteryActionProps) {
 
 
   function onBatteryPress() {
-    router.navigate(
+    router.push(
       {
         pathname: "/devices/[deviceid]",
         params: {
@@ -247,6 +250,6 @@ export function IsDeviceConnectedAction({ deviceId }: IsDeviceConnectedActionPro
   }
 
   return (
-    <Appbar.Action icon={icon} onPress={onPress}/>
+    <Appbar.Action icon={icon} onPress={onPress} />
   );
 }

@@ -38,9 +38,9 @@ export function getIconForBleState(state: State) {
         case State.PoweredOff:
             return 'bluetooth-off';
         case State.Resetting:
-            return 'bluetooth-settings';
+            return 'bluetooth-connect';
         case State.Unauthorized:
-            return 'bluetooth-off';
+            return 'bluetooth-settings';
         case State.Unsupported:
             return 'bluetooth-off';
         case State.Unknown:

@@ -33,7 +33,12 @@ export const battery = atomFamily((id: BatteryIdentifier) => atom(
     }
 ), batteryIdentifierEquals);
 
-// battery data raw byte streams
+
+export const batteries = atomFamily((ids: BatteryIdentifier[]) => atom(
+    (get) => {
+        return ids.map(id => get(battery(id)));
+    }
+), (a, b) => a.length === b.length && a.every((id, index) => batteryIdentifierEquals(id, b[index])));
 
 
 export const batteryParser = atomFamily((id: BatteryIdentifier) => atom(
@@ -53,7 +58,7 @@ export const batteryParser = atomFamily((id: BatteryIdentifier) => atom(
 
         const batteryData = parser.parse(buffer);
         if (batteryData) {
-            log.info(`${LOG_PREFIX} Parsed battery data for device ${id}}`);
+            log.debug(`${LOG_PREFIX} Parsed battery data for device ${id}}`);
             set(battery(id), batteryData);
         }
 
@@ -97,7 +102,10 @@ const isBatteryConnectedAsync = atomFamily((id: DeviceId) => atom(
         return await get(characteristicIsNotifyingAsync({ deviceId: id, serviceUUID: KV_BATTERY_SERVICE_UUID, characteristicUUID: KV_BATTERY_NOTIFY_UUID }));
     },
     async (get, set, value: boolean) => {
-        set(characteristicIsNotifyingAsync({ deviceId: id, serviceUUID: KV_BATTERY_SERVICE_UUID, characteristicUUID: KV_BATTERY_NOTIFY_UUID }), value);
+        const isNotifying = await get(characteristicIsNotifyingAsync({ deviceId: id, serviceUUID: KV_BATTERY_SERVICE_UUID, characteristicUUID: KV_BATTERY_NOTIFY_UUID }));
+        if(isNotifying !== value) {
+            set(characteristicIsNotifyingAsync({ deviceId: id, serviceUUID: KV_BATTERY_SERVICE_UUID, characteristicUUID: KV_BATTERY_NOTIFY_UUID }), value);
+        }
     }
 ), batteryIdentifierEquals);
 

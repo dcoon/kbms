@@ -9,6 +9,7 @@ import { Settings } from '@/services/settings/settings-service';
 import { appStore } from '@/services/state/jotai-store';
 import { PaperTheme } from '@/util/paper-theme';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { Stack } from 'expo-router';
 
 const LOG_SRC = "AppLayout";
 
@@ -20,7 +21,8 @@ function AppContent() {
   return (
     <PaperProvider theme={PaperTheme}>
       <Snackbar />
-      <NativeTabs>
+      <Stack screenOptions={{ headerShown: false }}/>;
+      {/* <NativeTabs>
         <NativeTabs.Trigger name="index">
           <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
           <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
@@ -33,7 +35,7 @@ function AppContent() {
           <NativeTabs.Trigger.Icon sf="gear" md="settings" />
           <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
-      </NativeTabs>
+      </NativeTabs> */}
     </PaperProvider>
   );
 }

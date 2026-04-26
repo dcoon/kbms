@@ -50,8 +50,6 @@ const favorite = atomFamily((value: Favorite) => atom(
   (get) => get(favorites).some(fav => fav.id === value?.id) ? true : false,
   (get, set, value: Favorite) => {
 
-  
-
     const isFavorite = get(favorites).some(fav => fav.id === value.id)
     const newFavorites = isFavorite ? get(favorites).filter(fav => fav.id !== value.id) : [...get(favorites), value];
     log.debug(LOG_SRC, ": favorite: ", value, isFavorite, newFavorites);

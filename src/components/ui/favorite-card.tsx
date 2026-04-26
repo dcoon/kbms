@@ -1,46 +1,26 @@
 
+import { ValueChip } from '@/components/ui/ui-util';
 import { battery as batteryAtom, isBatteryConnected } from '@/services/ble/battery-service';
 import { Bluetooth } from '@/services/ble/ble-service';
-import { Device, getDeviceName } from '@/services/ble/ble-types';
-import { Favorite } from '@/services/settings/settings-service';
+import { getDeviceName } from '@/services/ble/ble-types';
+import { Settings } from '@/services/settings/settings-service';
 import { PaperTheme } from '@/util/paper-theme';
 import { useAtom } from 'jotai';
 import React from 'react';
-import { View } from 'react-native';
-import { Card, Icon, Text, useTheme } from 'react-native-paper';
+import { useWindowDimensions, View } from 'react-native';
+import { Card, Icon, IconButton, Menu, useTheme } from 'react-native-paper';
 import { colorForSoc } from '../ble/battery';
-import { ButtonForConnectionState, ConnectionStateFromLoadable, IconForRssi, OnDevicePress } from '../ble/ble';
+import { BatteryLastSeenListIconButton, ConnectionStateFromLoadable, ConnectionStateIconSource, ConnectionStateMenuText, DeviceOrFavorite, OnDevicePress } from '../ble/ble';
 import { Gauge } from './gauge';
 import { DEFAULT_ICON_SIZE } from './ui-util';
 
 
-
-export type DeviceOrFavorite = Device | Favorite;
-
-function BatteryIsConnectedIcon({ device }: { device: DeviceOrFavorite }) {
-
-  const [isConnectedLoadable, setIsConnected] = useAtom(isBatteryConnected(device.id));
-  const connectedState = ConnectionStateFromLoadable({ loader: isConnectedLoadable });
-
-  return (
-    <ButtonForConnectionState isDeviceConnected={connectedState} onPress={() => setIsConnected(connectedState === 'connected' ? false : true)}/>
-  );
-}
-
-function RssiIcon({ device }: { device: DeviceOrFavorite }) {
-  const rssi = (device as Device).rssi;
-
-  return (
-    <IconForRssi rssi={rssi} />
-
-  );
-}
-
 function LeftContent({ device }: { device: DeviceOrFavorite }) {
-  // return <List.Icon icon="devices" />;
-  // return (<FavoriteIcon favorite={device as Favorite} />);
+
+  const theme = useTheme() as typeof PaperTheme;
+
   return (
-    <View style={{ paddingVertical: 0 }}>
+    <View style={theme.components.Card.Title.leftStyle as any}>
       <Icon source="car-battery" size={32} />
     </View>
   );
@@ -48,25 +28,55 @@ function LeftContent({ device }: { device: DeviceOrFavorite }) {
 
 function RightContent({ device }: { device: DeviceOrFavorite }) {
 
+  const theme = useTheme() as typeof PaperTheme;
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', columnGap: 0 }}>
+    <View style={theme.components.Card.Title.rightStyle as any}>
       {/* <BatteryIcons device={device} /> */}
-      <BatteryIsConnectedIcon device={device} />
-      <RssiIcon device={device} />
-      <Icon source="dots-vertical" size={DEFAULT_ICON_SIZE} />
+      {/* <RssiIcon device={device} /> */}
+      {/* <BatteryIsConnectedIcon device={device} /> */}
+      <BatteryLastSeenListIconButton device={device} />
+      {/* <Icon source="dots-vertical" size={DEFAULT_ICON_SIZE} /> */}
+      <FavoriteCardMenu device={device} />
 
     </View>
   );
 }
 
+function FavoriteCardMenu({ device }: { device: DeviceOrFavorite }) {
+
+  const [isBatteryConnectedLoadable, setIsBatteryConnected] = useAtom(isBatteryConnected(device.id));
+  const [favorite, toggleIsFavorite] = useAtom(Settings.favorite({ id: device.id, name: "" }));
+
+  const [visible, setVisible] = React.useState(false);
+  const theme = useTheme() as typeof PaperTheme;
 
 
-function BatteryValueCard({ value, valueSuffix, title }: { value?: number, valueSuffix?: string, title: string }) {
-  return (
-    <View style={{ alignItems: 'center', flexDirection: 'column' }}>
-      <Text variant='labelLarge'>{value !== undefined ? value : '?'}{valueSuffix}</Text>
-      <Text variant='labelMedium'>{title}</Text>
-    </View>
+  const onOpenMenu = () => setVisible(true);
+  const onCloseMenu = () => setVisible(false);
+
+
+  function onPressRemove() {
+    toggleIsFavorite({ id: device.id, name: "" });
+    onCloseMenu();
+  }
+
+  function onPressConnectionState() {
+    const isConnected = isBatteryConnectedLoadable.state === 'hasData' && isBatteryConnectedLoadable.data === true;
+    setIsBatteryConnected(!isConnected);
+    onCloseMenu();
+  }
+
+  const isBatteryConnectedState = ConnectionStateFromLoadable({ loader: isBatteryConnectedLoadable });
+  const batteryConnectedIconSource = ConnectionStateIconSource(isBatteryConnectedState);
+  const batteryConnectedMenuText = ConnectionStateMenuText(isBatteryConnectedState);
+
+  return (<Menu
+    visible={visible}
+    onDismiss={onCloseMenu}
+    anchor={<IconButton icon="dots-vertical" size={DEFAULT_ICON_SIZE} onPress={onOpenMenu} style={{ padding: 8 }} />}>
+    <Menu.Item onPress={onPressRemove} title="Remove" leadingIcon="heart-remove-outline" />
+    <Menu.Item onPress={onPressConnectionState} title={batteryConnectedMenuText} leadingIcon={(batteryConnectedIconSource as any).source} />
+  </Menu>
   );
 }
 
@@ -79,19 +89,29 @@ function FavoriteCardContent({ device }: { device: DeviceOrFavorite }) {
   const soc = battery?.soc;
   const strokeColor = colorForSoc(soc);
   const voltage = battery?.voltage ? Math.round(battery.voltage) / 1000 : undefined;
-  const current = battery?.current !== undefined ? Math.round(battery.current) / 1000  : undefined;
+  const current = battery?.current !== undefined ? Math.round(battery.current) / 1000 : undefined;
   // const capacity = battery?.capacity;
   const watts = voltage && current !== undefined ? Math.round(voltage * current) : undefined;
   // const runtime = battery?.capacity;
 
+  const { width, height } = useWindowDimensions();
+  const radius = width * 0.11;
+  const thickness = radius * 0.08;
+
   return (
-    <Card.Content 
-      style={theme.components.Card.Content.style as any} 
+    <Card.Content
+      style={theme.components.Card.Content.style as any}
     >
-      <Gauge value={soc} maxvalue={100} title="SOC" strokeColor={strokeColor} />
-      <BatteryValueCard value={voltage} valueSuffix="V" title="Voltage" />
-      <BatteryValueCard value={current} valueSuffix="A" title="Current" />
-      <BatteryValueCard value={watts} valueSuffix="W" title="Watts" />
+      <Gauge value={soc}
+        maxvalue={100}
+        title="SOC"
+        valuesuffix='%'
+        strokecolor={strokeColor}
+        radius={radius}
+      />
+      <ValueChip value={voltage} valueSuffix="V" title="Voltage" />
+      <ValueChip value={current} valueSuffix="A" title="Current" />
+      <ValueChip value={watts} valueSuffix="W" title="Watts" />
     </Card.Content>
   );
 }
@@ -124,6 +144,7 @@ export function FavoriteCard({ favorite, onDevicePress }: FavoriteCardProps) {
         right={(props) => <RightContent device={device ? device : favorite} />}
         style={theme.components.Card.Title.style}
         leftStyle={theme.components.Card.Title.leftStyle as any}
+        rightStyle={theme.components.Card.Title.rightStyle as any}
         titleStyle={theme.components.Card.Title.titleStyle as any}
 
       />

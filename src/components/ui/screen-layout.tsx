@@ -2,10 +2,9 @@
 import { StyleSheet, View } from 'react-native';
 import { Appbar } from 'react-native-paper';
 
-import { AppTopBar } from '@/components/ui/app-topbar';
+import { BackAction, BleStateAction } from '@/components/ui/app-topbar';
 import { useRouter } from 'expo-router';
 import { IconSource } from 'react-native-paper/lib/typescript/components/Icon';
-
 
 
 
@@ -13,6 +12,7 @@ interface ScreenLayoutProps {
     title: string;
     subtitle?: string;
     icon?: IconSource;
+    showBackAction?: boolean ;
     onPressIcon?: () => void;
     onPressBack?: () => void;
     actions?: React.ReactNode;
@@ -22,7 +22,7 @@ interface ScreenLayoutProps {
 
 export function ScreenLayout({ children, title, subtitle, icon, onPressIcon,
     onPressBack,
-    actions }: ScreenLayoutProps) {
+    actions, showBackAction = true }: ScreenLayoutProps) {
 
     const router = useRouter();
 
@@ -41,10 +41,15 @@ export function ScreenLayout({ children, title, subtitle, icon, onPressIcon,
     // TODO: switch back to using AppTopBar
     return (
         <View style={styles.container}>
-            
-            <AppTopBar title={title} subtitle={subtitle} >
+
+            <Appbar.Header>
+                <BackAction visible={showBackAction} />
+                <Appbar.Content title={title} />
+                <Appbar.Content title={subtitle} />
+                <BleStateAction />
                 {actions}
-            </AppTopBar>
+            </Appbar.Header>
+
 
             {children}
 
