@@ -1,15 +1,16 @@
 import { Provider as JotaiProvider, useAtom } from 'jotai';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Snackbar } from '@/components/ui/snackbar';
+import { useColorScheme } from '@/hooks/use-color-scheme.web';
 import { uilog as log } from '@/services/log/log-service';
 import { Settings } from '@/services/settings/settings-service';
 import { appStore } from '@/services/state/jotai-store';
-import { PaperTheme } from '@/util/paper-theme';
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { adjustThemeForScreenSize, LightTheme } from '@/theme/theme';
 import { Stack } from 'expo-router';
+import { useWindowDimensions } from 'react-native';
 
 const LOG_SRC = "AppLayout";
 
@@ -18,24 +19,25 @@ function AppContent() {
   const [logLevel] = useAtom(Settings.logLevel);
   log.info(LOG_PREFIX, "Initializing app with log level: ", logLevel);
 
+  const { width, height } = useWindowDimensions();
+  const colorScheme = useColorScheme();
+
+  const appTheme = useMemo(() => {
+    // log.info(LOG_PREFIX, "Creating theme with color scheme: ", colorScheme);
+    const isDarkMode = colorScheme === 'dark';
+
+    const newTheme = adjustThemeForScreenSize(LightTheme, width, height);
+
+    console.log("Adjusted theme for screen size:", newTheme);
+
+    return newTheme;
+  }, [colorScheme, width, height]);
+
+
   return (
-    <PaperProvider theme={PaperTheme}>
+    <PaperProvider theme={appTheme}>
       <Snackbar />
-      <Stack screenOptions={{ headerShown: false }}/>;
-      {/* <NativeTabs>
-        <NativeTabs.Trigger name="index">
-          <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
-          <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="devices">
-          <NativeTabs.Trigger.Label>Devices</NativeTabs.Trigger.Label>
-          <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="settings">
-          <NativeTabs.Trigger.Icon sf="gear" md="settings" />
-          <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
-      </NativeTabs> */}
+      <Stack screenOptions={{ headerShown: false }} />;
     </PaperProvider>
   );
 }
@@ -44,7 +46,7 @@ export default function TabLayout() {
   return (
     <SafeAreaProvider>
       <JotaiProvider store={appStore}>
-          <AppContent />
+        <AppContent />
       </JotaiProvider>
     </SafeAreaProvider>
   );

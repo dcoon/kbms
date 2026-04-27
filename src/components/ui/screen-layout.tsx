@@ -30,14 +30,6 @@ export function ScreenLayout({ children, title, subtitle, icon, onPressIcon,
         onPressBack = () => router.back();
     }
 
-
-    function IconMaybe() {
-        if (icon) {
-            return <Appbar.Action icon={icon} onPress={onPressIcon} />;
-        }
-        return null;
-    }
-
     // TODO: switch back to using AppTopBar
     return (
         <View style={styles.container}>

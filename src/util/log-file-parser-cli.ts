@@ -65,7 +65,6 @@ const cmd = command({
   handler: (args) => {
     // args.message; // string
     // args.number; // number
-    // console.log(args);
 
 
 

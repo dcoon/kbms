@@ -1,5 +1,4 @@
-import { uilog as log } from "@/services/log/log-service";
-import { PaperTheme } from "@/util/paper-theme";
+import { LightTheme } from "@/theme/theme";
 import React from "react";
 import { useTheme } from "react-native-paper";
 import { Path, Svg, Text } from 'react-native-svg';
@@ -24,19 +23,20 @@ export interface GaugeProps {
   valueprefix?: string;
   valuesuffix?: string;
   title?: string;
-  radius?: number;
-  thickness?: number;
-  startAngle?: number;
-  endAngle?: number;
+  variant?: typeof LightTheme.components.Gauge.large;
+  // radius?: number;
+  // thickness?: number;
+  // startAngle?: number;
+  // endAngle?: number;
   strokecolor?: string;
   backgroundStrokeColor?: string;
-  textColor?: string;
-  fontFamily?: string;
+  // textColor?: string;
+  // fontFamily?: string;
 }
 
 export const Gauge = (props: GaugeProps) => {
   const LOG_PREFIX = LOG_SRC + ": Gauge";
-  const theme = useTheme() as typeof PaperTheme;
+  const theme = useTheme() as typeof LightTheme;
 
   const {
     value,
@@ -44,52 +44,48 @@ export const Gauge = (props: GaugeProps) => {
     valueprefix = undefined,
     valuesuffix = undefined,
     title,
-    radius = 25,
-    thickness = radius * 0.15,
-    startAngle = 170,
-    endAngle = 10,
-    strokecolor: strokecolor = theme.colors.primary,
-    backgroundStrokeColor = theme.colors.primary,
-    textColor = theme.colors.onSurface,
-    fontFamily = theme.fonts.bodyMedium.fontFamily,
+    variant = theme.components.Gauge.default,
+    // radius = theme.components.Gauge.small.radius,
+    // thickness = theme.components.Gauge.small.thickness,
+    // startAngle = 170,
+    // endAngle = 10,
+    strokecolor = variant.strokecolor,
+    backgroundStrokeColor = strokecolor,
+    // textColor = theme.components.Gauge.small.title.color,
+    // fontFamily = theme.fonts.default.fontFamily,
   } = props;
 
   const valueAsPercentage = value ? value / maxvalue : 0;
 
 
-  const sweep = subtractDegrees(endAngle, startAngle);
-  const valueEndAngle = addDegrees(startAngle, sweep * valueAsPercentage);
+  const sweep = subtractDegrees(variant.endAngle, variant.startAngle);
+  const valueEndAngle = addDegrees(variant.startAngle, sweep * valueAsPercentage);
 
   // Center coordinates based on radius to ensure no clipping
-  const padding = thickness / 2 + 2; // Add a small buffer for stroke width
-  const sizex = (radius + padding) * 2;
-  const sizey = (radius * 1.5 + padding);
-  const cx = radius + padding;
-  const cy = radius + padding;
+  const padding = variant.thickness / 2 + 2; // Add a small buffer for stroke width
+  const sizex = (variant.radius + padding) * 2;
+  const sizey = (variant.radius * 1.5 + padding);
+  const cx = variant.radius + padding;
+  const cy = variant.radius + padding;
 
-  // Scaling factors for text based on radius
-  const valueFontSize = radius * 0.55;
-  const titleFontSize = radius * 0.25;
-
-  log.debug(LOG_PREFIX, "Rendering Gauge with props: startAngle, endAngle, valueEndAngle, value, maxvalue, valueAsPercentage", startAngle, endAngle, valueEndAngle, value, maxvalue, valueAsPercentage);
 
 
   return (
     <Svg height={sizey} width={sizex} viewBox={`0 0 ${sizex} ${sizey}`} {...props}>
 
       {/* <rect x={0} y={0} width={sizex} height={sizey} stroke="red" fill="none" /> */}
-      <Arc cx={cx} cy={cy} r={radius} 
-      startAngle={startAngle} endAngle={endAngle} stroke={backgroundStrokeColor} strokeWidth={thickness} strokeOpacity={0.2} />
-      <Arc cx={cx} cy={cy} r={radius} 
-      startAngle={startAngle} endAngle={valueEndAngle} stroke={strokecolor} strokeWidth={thickness} />
+      <Arc cx={cx} cy={cy} r={variant.radius} 
+      startAngle={variant.startAngle} endAngle={variant.endAngle} stroke={backgroundStrokeColor} strokeWidth={variant.thickness} strokeOpacity={0.2} />
+      <Arc cx={cx} cy={cy} r={variant.radius} 
+      startAngle={variant.startAngle} endAngle={valueEndAngle} stroke={strokecolor} strokeWidth={variant.thickness} />
 
       <Text
         x={cx}
-        y={cy - radius * 0.3}
-        fontSize={theme.fonts.labelLarge.fontSize}
-        fill={theme.fonts.labelLarge.fontColor}
-        fontFamily={fontFamily}
-        fontWeight={theme.fonts.labelLarge.fontWeight}
+        y={cy - variant.radius * 0.3}
+        fontSize={variant.title.font.fontSize}
+        fill={strokecolor}
+        fontFamily={variant.title.font.fontFamily}
+        fontWeight={variant.title.font.fontWeight}
         textAnchor="middle"
         alignmentBaseline="middle"
       >
@@ -99,10 +95,11 @@ export const Gauge = (props: GaugeProps) => {
       {title && (
         <Text
           x={cx}
-          y={cy + radius * 0.3}
-          fontSize={theme.fonts.labelMedium.fontSize}
-          fill={theme.fonts.labelMedium.fontColor}
-          fontFamily={fontFamily}
+          y={cy + variant.radius * 0.3}
+          fontSize={variant.subtitle.font.fontSize}
+          fill={strokecolor}
+          fontFamily={variant.subtitle.font.fontFamily}
+          fontWeight={variant.subtitle.font.fontWeight}
           textAnchor="middle"
         >
           {title}
@@ -132,8 +129,6 @@ const Arc = (props: ArcProps) => {
   if (startAngle === endAngle) {
     return null; // No arc to draw
   }
-
-  // console.log(`Drawing arc from ${startAngle} to ${endAngle} (${subtractDegrees(endAngle, startAngle)} degrees)`);
 
   const sx = cx + r * Math.cos((startAngle * Math.PI) / 180);
   const sy = cy + r * Math.sin((startAngle * Math.PI) / 180);

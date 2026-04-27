@@ -37,7 +37,6 @@ describe('BatteryDataParser', () => {
 
             const result = parser.parse(arr);
             if (result) {
-                // console.log('Parsed Result:', result, 'Head Position:', parser.consumed, buffer[consumed + parser.consumed]);
                 consumed += parser.consumed;
                 expect(result?.voltage).toEqual(12970);
                 batteryData.push(result);
@@ -75,7 +74,6 @@ describe('BatteryDataParser', () => {
         });
 
         const [...h2] = result.current[0];
-        console.log('Current:', result.current, 'History:', h2);
         const [[val, prev], setAtom] = result.current;
         expect(val).toEqual('v3');
         expect(prev).toEqual('v2');
@@ -137,7 +135,6 @@ describe('BatteryDataParser', () => {
 
         const parser = new BatteryDataParser();
         const battery = parser.parseBase64Array(data as BatteryDataChunk[]);
-        console.log('Parsed Battery Data:', battery);
 
 
     });
@@ -164,7 +161,6 @@ describe('BatteryDataParser', () => {
 
 
             if (result) {
-                // console.log('Parsed Result:', result, 'Head Position:', parser.consumed, buffer[consumed + parser.consumed]);
                 consumed += parser.consumed;
                 expect(result?.voltage).toEqual(13100);
                 expect(result?.soc).toBeLessThanOrEqual(100);

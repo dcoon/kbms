@@ -4,12 +4,12 @@ import { battery as batteryAtom, isBatteryConnected } from '@/services/ble/batte
 import { Bluetooth } from '@/services/ble/ble-service';
 import { getDeviceName } from '@/services/ble/ble-types';
 import { Settings } from '@/services/settings/settings-service';
-import { PaperTheme } from '@/util/paper-theme';
+import { LightTheme } from '@/theme/theme';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import { Card, Icon, IconButton, Menu, useTheme } from 'react-native-paper';
-import { colorForSoc } from '../ble/battery';
+import { socIconSource } from '../ble/battery';
 import { BatteryLastSeenListIconButton, ConnectionStateFromLoadable, ConnectionStateIconSource, ConnectionStateMenuText, DeviceOrFavorite, OnDevicePress } from '../ble/ble';
 import { Gauge } from './gauge';
 import { DEFAULT_ICON_SIZE } from './ui-util';
@@ -17,18 +17,18 @@ import { DEFAULT_ICON_SIZE } from './ui-util';
 
 function LeftContent({ device }: { device: DeviceOrFavorite }) {
 
-  const theme = useTheme() as typeof PaperTheme;
+  const theme = useTheme() as typeof LightTheme;
 
   return (
     <View style={theme.components.Card.Title.leftStyle as any}>
-      <Icon source="car-battery" size={32} />
+      <Icon source={theme.icons.battery.high.source} size={theme.icons.iconSize} />
     </View>
   );
 }
 
 function RightContent({ device }: { device: DeviceOrFavorite }) {
 
-  const theme = useTheme() as typeof PaperTheme;
+  const theme = useTheme() as typeof LightTheme;
   return (
     <View style={theme.components.Card.Title.rightStyle as any}>
       {/* <BatteryIcons device={device} /> */}
@@ -48,7 +48,7 @@ function FavoriteCardMenu({ device }: { device: DeviceOrFavorite }) {
   const [favorite, toggleIsFavorite] = useAtom(Settings.favorite({ id: device.id, name: "" }));
 
   const [visible, setVisible] = React.useState(false);
-  const theme = useTheme() as typeof PaperTheme;
+  const theme = useTheme() as typeof LightTheme;
 
 
   const onOpenMenu = () => setVisible(true);
@@ -83,11 +83,12 @@ function FavoriteCardMenu({ device }: { device: DeviceOrFavorite }) {
 
 function FavoriteCardContent({ device }: { device: DeviceOrFavorite }) {
 
-  const theme = useTheme() as typeof PaperTheme;
+  const theme = useTheme() as typeof LightTheme;
   const [battery] = useAtom(batteryAtom(device?.id));
 
   const soc = battery?.soc;
-  const strokeColor = colorForSoc(soc);
+  const socIC = socIconSource({ soc, theme });
+  const strokeColor = socIC.color;
   const voltage = battery?.voltage ? Math.round(battery.voltage) / 1000 : undefined;
   const current = battery?.current !== undefined ? Math.round(battery.current) / 1000 : undefined;
   // const capacity = battery?.capacity;
@@ -95,8 +96,7 @@ function FavoriteCardContent({ device }: { device: DeviceOrFavorite }) {
   // const runtime = battery?.capacity;
 
   const { width, height } = useWindowDimensions();
-  const radius = width * 0.11;
-  const thickness = radius * 0.08;
+  const radius = theme.components.Gauge.small.radius;
 
   return (
     <Card.Content
@@ -106,9 +106,9 @@ function FavoriteCardContent({ device }: { device: DeviceOrFavorite }) {
         maxvalue={100}
         title="SOC"
         valuesuffix='%'
+        variant={theme.components.Gauge.small}
         strokecolor={strokeColor}
-        radius={radius}
-      />
+     />
       <ValueChip value={voltage} valueSuffix="V" title="Voltage" />
       <ValueChip value={current} valueSuffix="A" title="Current" />
       <ValueChip value={watts} valueSuffix="W" title="Watts" />
@@ -123,7 +123,7 @@ interface FavoriteCardProps {
 }
 
 export function FavoriteCard({ favorite, onDevicePress }: FavoriteCardProps) {
-  const theme = useTheme() as typeof PaperTheme;
+  const theme = useTheme() as typeof LightTheme;
 
   const [deviceLoader] = useAtom(Bluetooth.device({ deviceId: favorite.id }));
   const device = deviceLoader.state === 'hasData' ? deviceLoader.data : favorite;

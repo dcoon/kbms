@@ -1,6 +1,6 @@
 import log from '@/services/log/log-service';
 import { Settings } from '@/services/settings/settings-service';
-import { PaperTheme } from '@/util/paper-theme';
+import { LightTheme } from '@/theme/theme';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { Snackbar as PaperSnackbar, Portal, Text, useTheme } from 'react-native-paper';
@@ -12,7 +12,7 @@ interface SnackbarProps {
 
 export function Snackbar() {
 
-    const theme = useTheme() as typeof PaperTheme;
+    const theme = useTheme() as typeof LightTheme;
 
     const [message, pushMessage] = useAtom(Settings.snackbar);
     const [, shift] = useAtom(Settings.shiftSnackbar);

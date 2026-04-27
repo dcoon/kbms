@@ -3,20 +3,20 @@ import { ScreenLayout } from '@/components/ui/screen-layout';
 import { Favorite, Settings } from '@/services/settings/settings-service';
 import { router, useFocusEffect } from 'expo-router';
 import { useAtom } from 'jotai';
-import { ScrollView, useWindowDimensions, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { DeviceId } from 'react-native-ble-plx';
 import { Card, Chip, Icon, List as PaperList, Text, useTheme } from 'react-native-paper';
 
-import { colorForSoc } from '@/components/ble/battery';
+import { socIconSource } from '@/components/ble/battery';
 import { AddDeviceAction, SettingsAction } from '@/components/ui/app-topbar';
 import { FavoriteCard } from '@/components/ui/favorite-card';
 import { Gauge } from '@/components/ui/gauge';
-import { DEFAULT_ICON_SIZE, ValueChip } from '@/components/ui/ui-util';
+import { ValueChip } from '@/components/ui/ui-util';
 import { BatteryStatus } from '@/services/ble/battery';
 import { batteries, isBatteryConnected } from '@/services/ble/battery-service';
 import { isBluetoothAvailable } from '@/services/ble/ble-types';
 import log from '@/services/log/log-service';
-import { PaperTheme } from '@/util/paper-theme';
+import { LightTheme } from '@/theme/theme';
 import { formatDistanceToNow } from 'date-fns';
 import { useCallback } from 'react';
 
@@ -97,47 +97,53 @@ function HomeSummaryAccordion() {
   const [favorites] = useAtom<Favorite[]>(Settings.favorites);
   const [bats] = useAtom(batteries(favorites.map(fav => fav.id)));
 
-  const theme = useTheme() as typeof PaperTheme;
+  const theme = useTheme() as typeof LightTheme;
 
-  const summary = bats.reduce((acc, batteryData) => {
+  const raw = bats.reduce((acc, batteryData) => {
     if (batteryData) {
-      acc.soc = (acc.soc * acc.total + batteryData.soc) / (acc.total + 1);
-      acc.voltage = (acc.voltage * acc.total + batteryData.voltage) / (acc.total + 1);
+      acc.soc += batteryData.soc;
+      acc.voltage += batteryData.voltage;
       acc.current += batteryData.current;
       acc.watts += batteryData.voltage / 1000 * batteryData.current / 1000;
       acc.status = batteryData.status ?? acc.status;
       acc.lastUpdated = batteryData.lastUpdated && (!acc.lastUpdated || batteryData.lastUpdated < acc.lastUpdated) ? batteryData.lastUpdated : acc.lastUpdated;
       acc.total += 1;
-
     }
     return acc;
   }, { total: 0, soc: 0, voltage: 0, current: 0, watts: 0, status: new BatteryStatus(), lastUpdated: undefined as Date | undefined });
 
+  const summary = {
+    ...raw,
+    soc: raw.total > 0 ? raw.soc / raw.total : 0,
+    voltage: raw.total > 0 ? raw.voltage / raw.total : 0,
+  };
+
   const lastSeen = summary.lastUpdated ? formatDistanceToNow(summary.lastUpdated, { addSuffix: true }) : "Connecting...";
 
-  const strokeColor = colorForSoc(summary.soc);
-  const { width, height } = useWindowDimensions();
-  const radius = width * 0.11;
+  const socIS = socIconSource({ soc: summary.soc, charging: summary.current < 0, theme });
+  const strokeColor = socIS.color;
 
   return (
-    <Card style={theme.components.Card.style}>
+    <Card theme={theme.components.PrimaryCard.theme as any} >
       <Card.Title title="System Summary"
         // left={(props) => <SoCIcon soc={summary.soc} current={summary.current} size={props.size} />}
-        left={(props) => <Icon source="home-battery-outline" size={DEFAULT_ICON_SIZE} />}
+        left={(props) => <Icon source={theme.icons.system.source} size={theme.icons.iconSize} />}
         right={(props) => <Text>{summary.total} of {favorites.length} Batteries</Text>}
         style={theme.components.Card.Title.style}
       />
       <Card.Content
         style={{ flexDirection: 'column' }}
       >
-        <View style={theme.components.Card.Content.style as any}>
+        <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'center'}} >
           <Gauge value={summary.soc}
             maxvalue={100}
-            title="SOC"
+            // title="SOC"
             valuesuffix='%'
+            variant={theme.components.Gauge.large}
             strokecolor={strokeColor}
-            radius={radius}
           />
+          </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 12, flexWrap: 'wrap' }} >
 
           <ValueChip title="Voltage" value={Math.round(summary.voltage) / 1000} valueSuffix="V" />
           <ValueChip title="Current" value={Math.round(summary.current) / 1000} valueSuffix="A" />

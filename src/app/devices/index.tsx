@@ -6,7 +6,7 @@ import { Bluetooth } from '@/services/ble/ble-service';
 import { Device } from '@/services/ble/ble-types';
 import { uilog as log } from '@/services/log/log-service';
 import { Settings } from '@/services/settings/settings-service';
-import { PaperTheme } from '@/util/paper-theme';
+import { LightTheme } from '@/theme/theme';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useAtom } from 'jotai';
 import { useCallback, useMemo, useState } from 'react';
@@ -34,7 +34,7 @@ class FilterOption {
 
 function SortButtons({ sortBy, onSortChange }: { sortBy: SortOption, onSortChange: (value: string) => void }) {
 
-  const theme = useTheme() as typeof PaperTheme;
+  const theme = useTheme() as typeof LightTheme;
 
   return (
     <SegmentedButtons
@@ -57,7 +57,7 @@ function SortButtons({ sortBy, onSortChange }: { sortBy: SortOption, onSortChang
 }
 
 function FilterButtons({ filterBy, onFilterChange }: { filterBy: FilterOption, onFilterChange: () => void }) {
-  const theme = useTheme() as typeof PaperTheme;
+  const theme = useTheme() as typeof LightTheme;
 
   const filterIcon = filterBy.showKnownBatteryTypesOnly ? 'filter' : 'filter-off';
 

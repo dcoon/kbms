@@ -19,13 +19,10 @@ const LOG_SRC = "AppTopBar";
 
 export function BackAction({ visible }: { visible: boolean }) {
 
-  if (visible) {
     return (
-      <Appbar.BackAction onPress={() => router.back()} />
+      <Appbar.BackAction onPress={() => router.back()} style={{visibility: visible ? 'visible' : 'hidden'}}/>
     );
-  }
 
-  return null;
 }
 
 

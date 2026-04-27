@@ -1,10 +1,10 @@
-import { BatteryStatusFlags } from '@/components/ble/battery';
+import { BatteryStatusFlags, socIconSource } from '@/components/ble/battery';
 import { getDeviceName, LoadableState } from '@/services/ble/ble-types';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Device } from 'react-native-ble-plx';
 
 import React, { useCallback } from 'react';
-import { ScrollView, useWindowDimensions, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { LastSeenListItem, List } from '@/components/list/list-item';
 import { ScreenLayout } from '@/components/ui/screen-layout';
@@ -16,23 +16,25 @@ import { formatDistanceToNow } from 'date-fns';
 
 import { FavoriteAction, IsNotifyingAction } from '@/components/ui/app-topbar';
 import { uilog as log } from '@/services/log/log-service';
-import { Card, Chip, Text } from 'react-native-paper';
+import { Card, Chip, Text, useTheme } from 'react-native-paper';
 
 import { battery as batteryAtom, isBatteryConnected } from '@/services/ble/battery-service';
 
-import { colorForSoc, IconForCellDeltaV, IconForCellVoltage, SoCIcon } from '@/components/ble/battery';
+import { CellVoltageIcon, IconForCellDeltaV, SoCIcon } from '@/components/ble/battery';
 import { Gauge } from '@/components/ui/gauge';
+import { LightTheme } from '@/theme/theme';
 
 const LOG_SRC = "BatteryScreen";
 
 
 function BatteryGraph({ device }: { device: Device }) {
   const [battery] = useAtom(batteryAtom(device ? device.id : ""));
+  const theme = useTheme() as typeof LightTheme;
 
   const soc = battery ? battery.soc : undefined;
-  const socColor = colorForSoc(soc);
-  const voltage = battery ? battery.voltage / 1000 : 0;
   const current = battery ? battery.current / 1000 : 0;
+  
+  const voltage = battery ? battery.voltage / 1000 : 0;
   const temperature = battery ? battery.temperature / 100 : 0;
   const status = battery ? battery.rawStatus : "";
   const cycles = battery ? battery.cycles : 0;
@@ -41,22 +43,25 @@ function BatteryGraph({ device }: { device: Device }) {
 
   const subtitle = `${voltage}V / ${current}A`;
 
-
+  // TODO: make these settings
   const MAX_VOLTAGE = 15;
   const MAX_CURRENT = 100;
-  const { width, height } = useWindowDimensions();
-  const radius = width * 0.3;
-  const thickness = radius * 0.08;
 
 
-  const LOG_PREFIX = LOG_SRC + ": BatteryGraph";
-
+  const socIS = socIconSource({ soc, charging: current < 0, theme });
+  const strokeColor = socIS.color;
+  // const LOG_PREFIX = LOG_SRC + ": BatteryGraph";
   // log.debug(LOG_PREFIX, "Rendering BatteryGraph with data: ", { voltage, current, soc, temperature, status, cycles, lastSeen });
 
 
   return (
-    <Card>
-      <Card.Title title="State of Charge" left={(props) => <SoCIcon soc={soc} current={current} size={props.size} />} />
+    <Card theme={theme.components.PrimaryCard.theme as any}>
+      <Card.Title 
+      title="State of Charge" 
+      left={(props) => <SoCIcon soc={soc} charging={current < 0} />}
+               style={theme.components.Card.Title.style}
+    
+      />
       <Card.Content>
         <View style={{ flexDirection: 'column', }}>
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 }} >
@@ -64,14 +69,15 @@ function BatteryGraph({ device }: { device: Device }) {
               value={soc}
               maxvalue={100}
               valuesuffix='%'
-              radius={radius}
-              thickness={thickness}
-              strokecolor={socColor}
-              title="SoC" />
+              variant={theme.components.Gauge.large}
+              strokecolor={strokeColor}
+
+            />
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
             <BatteryStatusFlags status={battery?.status} showNoFlags={false} />
-            <Chip icon="clock-outline" mode="outlined" style={{ alignSelf: 'center', margin: 6, }}>{lastSeen}</Chip>
+                    <Chip icon="clock-outline" style={theme.components.Chip.style} textStyle={theme.components.Chip.textStyle} compact={true}>{lastSeen}</Chip>
+
           </View>
         </View>
       </Card.Content>
@@ -195,7 +201,7 @@ function CellDataAccordionRight({ deltav }: { deltav?: number }) {
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-      <IconForCellDeltaV deltav={deltav} size={16} />
+      <IconForCellDeltaV deltav={deltav} />
       <Text variant="bodySmall">{deltav ? deltav + "mV" : "Unknown"}</Text>
     </View>
   );
@@ -219,18 +225,18 @@ function CellDataAccordion({ device }: { device: Device }) {
   const deltav = cellMax - cellMin;
 
   return (
-    <List.Accordion 
-    title="Cell Data" id="cell-data" description="Cell Data" icon="information-outline"
-    right={<CellDataAccordionRight deltav={deltav} />}
+    <List.Accordion
+      title="Cell Data" id="cell-data" description="Cell Data" icon="information-outline"
+      right={<CellDataAccordionRight deltav={deltav} />}
     >
-      <List.StaticList 
+      <List.StaticList
         data={cells}
         keyExtractor={(item) => String(item) + Math.random()} // Use a unique key extractor for each item 
         renderItem={({ item, index }) => (
           <List.Item
             title={`Cell ${index + 1}`}
             value={item.voltage ? (item.voltage / 1000).toFixed(3) + "V" : "Unknown"}
-            left={IconForCellVoltage({ cellv: item.voltage  })}
+            left={CellVoltageIcon({ cellv: item.voltage })}
           />
         )}
       />
