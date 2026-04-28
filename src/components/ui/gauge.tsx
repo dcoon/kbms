@@ -1,4 +1,4 @@
-import { LightTheme } from "@/theme/theme";
+import { DefaultTheme } from "@/theme/theme";
 import React from "react";
 import { useTheme } from "react-native-paper";
 import { Path, Svg, Text } from 'react-native-svg';
@@ -23,7 +23,7 @@ export interface GaugeProps {
   valueprefix?: string;
   valuesuffix?: string;
   title?: string;
-  variant?: typeof LightTheme.components.Gauge.large;
+  variant?: typeof DefaultTheme.components.Gauge.large;
   // radius?: number;
   // thickness?: number;
   // startAngle?: number;
@@ -36,7 +36,7 @@ export interface GaugeProps {
 
 export const Gauge = (props: GaugeProps) => {
   const LOG_PREFIX = LOG_SRC + ": Gauge";
-  const theme = useTheme() as typeof LightTheme;
+  const theme = useTheme() as typeof DefaultTheme;
 
   const {
     value,
@@ -68,7 +68,7 @@ export const Gauge = (props: GaugeProps) => {
   const cx = variant.radius + padding;
   const cy = variant.radius + padding;
 
-
+  const valueString = `${valueprefix ?? ""}${value ?? "-"}${valuesuffix ?? ""}`;
 
   return (
     <Svg height={sizey} width={sizex} viewBox={`0 0 ${sizex} ${sizey}`} {...props}>
@@ -88,9 +88,7 @@ export const Gauge = (props: GaugeProps) => {
         fontWeight={variant.title.font.fontWeight}
         textAnchor="middle"
         alignmentBaseline="middle"
-      >
-        {valueprefix}{value ?? ""}{valuesuffix}
-      </Text>
+      >{valueString}</Text>
 
       {title && (
         <Text
@@ -101,9 +99,7 @@ export const Gauge = (props: GaugeProps) => {
           fontFamily={variant.subtitle.font.fontFamily}
           fontWeight={variant.subtitle.font.fontWeight}
           textAnchor="middle"
-        >
-          {title}
-        </Text>
+        >{title}</Text>
       )}
 
     </Svg>

@@ -8,7 +8,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme.web';
 import { uilog as log } from '@/services/log/log-service';
 import { Settings } from '@/services/settings/settings-service';
 import { appStore } from '@/services/state/jotai-store';
-import { adjustThemeForScreenSize, LightTheme } from '@/theme/theme';
+import { adjustThemeForScreenSize, DefaultTheme } from '@/theme/theme';
 import { Stack } from 'expo-router';
 import { useWindowDimensions } from 'react-native';
 
@@ -23,12 +23,11 @@ function AppContent() {
   const colorScheme = useColorScheme();
 
   const appTheme = useMemo(() => {
-    // log.info(LOG_PREFIX, "Creating theme with color scheme: ", colorScheme);
     const isDarkMode = colorScheme === 'dark';
 
-    const newTheme = adjustThemeForScreenSize(LightTheme, width, height);
+    const newTheme = adjustThemeForScreenSize(DefaultTheme, width, height);
 
-    console.log("Adjusted theme for screen size:", newTheme);
+    log.debug(LOG_PREFIX, "Calculated theme based on screen size: ", newTheme);
 
     return newTheme;
   }, [colorScheme, width, height]);
@@ -37,7 +36,7 @@ function AppContent() {
   return (
     <PaperProvider theme={appTheme}>
       <Snackbar />
-      <Stack screenOptions={{ headerShown: false }} />;
+      <Stack screenOptions={{ headerShown: false }} />
     </PaperProvider>
   );
 }

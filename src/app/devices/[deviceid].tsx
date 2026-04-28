@@ -22,14 +22,14 @@ import { battery as batteryAtom, isBatteryConnected } from '@/services/ble/batte
 
 import { CellVoltageIcon, IconForCellDeltaV, SoCIcon } from '@/components/ble/battery';
 import { Gauge } from '@/components/ui/gauge';
-import { LightTheme } from '@/theme/theme';
+import { DefaultTheme } from '@/theme/theme';
 
 const LOG_SRC = "BatteryScreen";
 
 
 function BatteryGraph({ device }: { device: Device }) {
   const [battery] = useAtom(batteryAtom(device ? device.id : ""));
-  const theme = useTheme() as typeof LightTheme;
+  const theme = useTheme() as typeof DefaultTheme;
 
   const soc = battery ? battery.soc : undefined;
   const current = battery ? battery.current / 1000 : 0;
@@ -164,6 +164,12 @@ function InformationAccordion({ device }: { device: Device }) {
         icon="information-outline"
       />
       <List.Item
+        title="ID"
+        description="Device ID of the battery"
+        value={device?.id}
+        icon="information-outline"
+      />
+      <List.Item
         title="Signal"
         description="Signal Strength dBm"
         value={device?.rssi}
@@ -281,8 +287,8 @@ function StartStopBatteryConnectedOnFocus({ deviceId }: { deviceId: string }) {
       log.info(LOG_PREFIX, "focus effect called, starting scan");
       setIsBatteryConnected(true);
       return () => {
-        log.info(LOG_PREFIX, "cleanup function called, stopping scan");
-        setIsBatteryConnected(false);
+        log.info(LOG_PREFIX, "focus effect cleanup called, but not disconnecting from battery");
+        // setIsBatteryConnected(false);
       };
     }, [])
   );

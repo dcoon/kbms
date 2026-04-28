@@ -4,20 +4,20 @@ import { battery as batteryAtom, isBatteryConnected } from '@/services/ble/batte
 import { Bluetooth } from '@/services/ble/ble-service';
 import { getDeviceName } from '@/services/ble/ble-types';
 import { Settings } from '@/services/settings/settings-service';
-import { LightTheme } from '@/theme/theme';
+import { DefaultTheme } from '@/theme/theme';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import { Card, Icon, IconButton, Menu, useTheme } from 'react-native-paper';
 import { socIconSource } from '../ble/battery';
-import { BatteryLastSeenListIconButton, ConnectionStateFromLoadable, ConnectionStateIconSource, ConnectionStateMenuText, DeviceOrFavorite, OnDevicePress } from '../ble/ble';
+import { BatteryLastSeenListIcon, ConnectionStateFromLoadable, ConnectionStateIconSource, ConnectionStateMenuText, DeviceOrFavorite, OnDevicePress } from '../ble/ble';
 import { Gauge } from './gauge';
 import { DEFAULT_ICON_SIZE } from './ui-util';
 
 
 function LeftContent({ device }: { device: DeviceOrFavorite }) {
 
-  const theme = useTheme() as typeof LightTheme;
+  const theme = useTheme() as typeof DefaultTheme;
 
   return (
     <View style={theme.components.Card.Title.leftStyle as any}>
@@ -28,13 +28,13 @@ function LeftContent({ device }: { device: DeviceOrFavorite }) {
 
 function RightContent({ device }: { device: DeviceOrFavorite }) {
 
-  const theme = useTheme() as typeof LightTheme;
+  const theme = useTheme() as typeof DefaultTheme;
   return (
     <View style={theme.components.Card.Title.rightStyle as any}>
       {/* <BatteryIcons device={device} /> */}
       {/* <RssiIcon device={device} /> */}
       {/* <BatteryIsConnectedIcon device={device} /> */}
-      <BatteryLastSeenListIconButton device={device} />
+      <BatteryLastSeenListIcon device={device} />
       {/* <Icon source="dots-vertical" size={DEFAULT_ICON_SIZE} /> */}
       <FavoriteCardMenu device={device} />
 
@@ -48,7 +48,7 @@ function FavoriteCardMenu({ device }: { device: DeviceOrFavorite }) {
   const [favorite, toggleIsFavorite] = useAtom(Settings.favorite({ id: device.id, name: "" }));
 
   const [visible, setVisible] = React.useState(false);
-  const theme = useTheme() as typeof LightTheme;
+  const theme = useTheme() as typeof DefaultTheme;
 
 
   const onOpenMenu = () => setVisible(true);
@@ -83,7 +83,7 @@ function FavoriteCardMenu({ device }: { device: DeviceOrFavorite }) {
 
 function FavoriteCardContent({ device }: { device: DeviceOrFavorite }) {
 
-  const theme = useTheme() as typeof LightTheme;
+  const theme = useTheme() as typeof DefaultTheme;
   const [battery] = useAtom(batteryAtom(device?.id));
 
   const soc = battery?.soc;
@@ -123,7 +123,7 @@ interface FavoriteCardProps {
 }
 
 export function FavoriteCard({ favorite, onDevicePress }: FavoriteCardProps) {
-  const theme = useTheme() as typeof LightTheme;
+  const theme = useTheme() as typeof DefaultTheme;
 
   const [deviceLoader] = useAtom(Bluetooth.device({ deviceId: favorite.id }));
   const device = deviceLoader.state === 'hasData' ? deviceLoader.data : favorite;

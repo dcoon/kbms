@@ -1,7 +1,7 @@
 import { TEST_CHARACTERISTIC_VALUES } from '@/services/manufacturers/kilovault/battery-data-test-data';
 import { command, option, optional, run, string } from 'cmd-ts';
 import { pipeline } from 'stream/promises';
-import { base64ToUint8, csvFormat, extractDeviceAndValues, extractOnDeviceFound, jsonFormat, splitByLines, typescriptFormat, uniqueByDeviceWithSeenRange, valuesOnly } from './log-file-parser';
+import { base64ToUint8, csvFormat, extractOnCharacteristicUpdate, extractOnDeviceFound, jsonFormat, LogRecord, splitByLines, typescriptFormat, uniqueByDeviceWithSeenRange, valuesOnly } from './log-file-parser';
 
 
 enum OutputFormat {
@@ -61,6 +61,12 @@ const cmd = command({
       description: 'Sort output by field: device or value.',
       type: optional(string),
     }),
+    query: option({
+      long: 'query',
+      short: 'q',
+      description: 'Query: devices, characteristics, values',
+      type: optional(string),
+    }),
   },
   handler: (args) => {
     // args.message; // string
@@ -104,33 +110,20 @@ const cmd = command({
         // stages.push(extractDeviceAndValues);
 
 
-    // switch (args.device) {
-    //   case 'all':
-    //   case undefined:
-    //     break; // No filtering
-    //   default:
-    //     const targetDeviceId = args.device;
-    //     const filter = async function* (source: AsyncIterable<LogRecord>) {
-    //       yield* filterByDeviceId(source, targetDeviceId);
-    //     };
-    //     stages.push(filter);
-    //     break;
-    // }
-
 
     // query 
-    switch (args.field) {
+    switch (args.query) {
       case undefined:
-        break; // No field extraction
-      case 'device':
+        // break; // No field extraction
+      case 'devices':
         stages.push(extractOnDeviceFound);
         break;
-      case 'value':
-        stages.push(extractDeviceAndValues);
-        stages.push(valuesOnly);
+      case 'values':
+        stages.push(extractOnCharacteristicUpdate);
+        // stages.push(valuesOnly);
         break;
       default:
-        console.warn(`Unknown field "${args.field}", defaulting to all fields`);
+        console.warn(`Unknown query "${args.query}", defaulting to all fields`);
     }
 
     // sort 
@@ -147,6 +140,26 @@ const cmd = command({
       console.warn(`Unknown sort field "${args.sort}", no sorting will be applied`);
     }
 
+
+    
+// filter by device
+    switch (args.device) {
+      case 'all':
+      case undefined:
+        break; // No filtering
+      default:
+        stages.push(
+          async function* (source: AsyncIterable<LogRecord>) {
+            for await (const record of source) {
+              if(record.deviceId === args.device) {
+                yield record;
+              }
+            }
+          }
+
+        );
+        break;
+    }
 
     // output format
     switch (args.format) {

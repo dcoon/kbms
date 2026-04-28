@@ -115,7 +115,7 @@ const shiftSnackbar = atom(
 
 
 // Pending cross-tab device navigation (workaround for NativeTabs Android stack reset)
-const pendingNavigateDevice = atom<DeviceId | null>(null);
+// const pendingNavigateDevice = atom<DeviceId | null>(null);
 
 export const Settings = {
   favorites,
@@ -126,5 +126,5 @@ export const Settings = {
   snackbar,
   shiftSnackbar,
   developerMode,
-  pendingNavigateDevice,
+  // pendingNavigateDevice,
 };

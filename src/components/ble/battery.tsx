@@ -1,5 +1,5 @@
 import { BatterySoCLevel, BatteryStatus, CellDeltaVLevel, CellVoltageLevel } from "@/services/ble/battery";
-import { LightTheme } from "@/theme/theme";
+import { DefaultTheme } from "@/theme/theme";
 import React from "react";
 import { View } from "react-native";
 import { Chip, Icon, useTheme } from "react-native-paper";
@@ -7,20 +7,18 @@ import { DEFAULT_ICON_SIZE } from "../ui/ui-util";
 
 
 
-export function socIconSource({ soc, charging = false, theme = LightTheme }: { soc?: number, charging?: boolean, theme?: typeof LightTheme }) {
+export function socIconSource({ soc, charging = false, theme = DefaultTheme }: { soc?: number, charging?: boolean, theme?: typeof DefaultTheme }) {
   
   const icons = charging ? theme.icons.battery.charging : theme.icons.battery;
 
   if (soc === undefined || soc === null) {
     return {source: icons.unknown.source, color: theme.colors.onSurface, size: theme.icons.iconSize};
-  } else if (soc >= BatterySoCLevel.VeryHigh) {
-    return {source: icons.high.source, color: icons.high.color, size: theme.icons.iconSize};
   } else if (soc >= BatterySoCLevel.High) {
-    return {source: icons.medium.source, color: icons.medium.color, size: theme.icons.iconSize};
+    return {source: icons.high.source, color: icons.high.color, size: theme.icons.iconSize};
   } else if (soc >= BatterySoCLevel.Medium) {
-    return {source: icons.low.source, color: icons.low.color, size: theme.icons.iconSize};
+    return {source: icons.medium.source, color: icons.medium.color, size: theme.icons.iconSize};
   } else if (soc >= BatterySoCLevel.Low) {
-    return {source: icons.empty.source, color: icons.empty.color, size: theme.icons.iconSize};
+    return {source: icons.low.source, color: icons.low.color, size: theme.icons.iconSize};
   } else {
     return {source: icons.alert.source, color: icons.alert.color, size: theme.icons.iconSize};
   }
@@ -29,14 +27,14 @@ export function socIconSource({ soc, charging = false, theme = LightTheme }: { s
 
 export function SoCIcon({ soc, charging = false }: { soc?: number, charging?: boolean }) {
 
-  const theme = useTheme() as typeof LightTheme;
+  const theme = useTheme() as typeof DefaultTheme;
   const icon = socIconSource({ soc, charging, theme });
 
   return <Icon source={icon.source} color={icon.color} size={icon.size} />;
 
 }
 
-export function CellVoltageIconSource({ cellv, theme = LightTheme }: { cellv?: number, theme?: typeof LightTheme }) {
+export function CellVoltageIconSource({ cellv, theme = DefaultTheme }: { cellv?: number, theme?: typeof DefaultTheme }) {
 
     const icons = theme.icons.battery;
 
@@ -62,7 +60,7 @@ export function CellVoltageIconSource({ cellv, theme = LightTheme }: { cellv?: n
 export function CellVoltageIcon({ cellv }: { cellv?: number }) {
 
 
-  const theme = useTheme() as typeof LightTheme;
+  const theme = useTheme() as typeof DefaultTheme;
 
   const icon = CellVoltageIconSource({ cellv, theme });
 
@@ -72,7 +70,7 @@ export function CellVoltageIcon({ cellv }: { cellv?: number }) {
 
 export function CellDeltaVIconSource({ deltav }: { deltav?: number }) {
 
-  const theme = useTheme() as typeof LightTheme;
+  const theme = useTheme() as typeof DefaultTheme;
   const icons = theme.icons.deltaV;
   if (deltav === undefined) {
     return {source: icons.unknown.source, color: icons.unknown.color, size: theme.icons.iconSize};
@@ -100,7 +98,7 @@ export function IconForCellDeltaV({ deltav, size = DEFAULT_ICON_SIZE }: { deltav
 
 export function BatteryStatusFlags({ status, showNoFlags = true }: { status: BatteryStatus | undefined, showNoFlags?: boolean }) {
 
-  const theme = useTheme() as typeof LightTheme;
+  const theme = useTheme() as typeof DefaultTheme;
 
   if (status === undefined) {
     return null;

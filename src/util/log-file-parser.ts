@@ -8,6 +8,8 @@ export type Value = string;
 
 export type LogRecord = {
     deviceId: UUID;
+    serviceUUID?: UUID;
+    characteristicUUID?: UUID;
     value: Value;
     timestamp?: string;
 };
@@ -47,21 +49,27 @@ export async function* upperCase(source: AsyncIterable<Buffer>) {
 
 
 // Inputs
-export async function* extractDeviceAndValues(source: AsyncIterable<string>): AsyncIterable<LogRecord> {
-    const bleRegex = /characteristic:\s+([A-Fa-f0-9-]{36})\s+value:\s+([A-Za-z0-9+/=]+)/;
+
+
+// 4:05:59 PM | BLE | INFO : BLEService: onCharacteristicUpdate Received update for characteristic [deviceId, serviceUUID, characteristicUUID, value]:  AB84D81A-3905-ECFA-34BF-1EAD5C7E8F66 0000ffe0-0000-1000-8000-00805f9b34fb 0000ffe4-0000-1000-8000-00805f9b34fb MDUwRDFEMEQxRTBEMjYwRA==
+export async function* extractOnCharacteristicUpdate(source: AsyncIterable<string>): AsyncIterable<LogRecord> {
+    const extractOnCharacteristicUpdateRegex = /^([^|]+?)\s*\|.*?onCharacteristicUpdate.*?\[deviceId,\s*serviceUUID,\s*characteristicUUID,\s*value\]:\s+([A-Fa-f0-9-]{36})\s+([A-Fa-f0-9-]{36})\s+([A-Fa-f0-9-]{36})\s+([A-Za-z0-9+/=]+)\s*$/;
 
     for await (const line of source) {
-        const match = bleRegex.exec(line);
+        const match = extractOnCharacteristicUpdateRegex.exec(line);
 
         if (match) {
-            const deviceId = match[1];
-            const value = match[2];
+            const timestamp = match[1]?.trim();
+            const deviceId = match[2];
+            const serviceUUID = match[3];
+            const characteristicUUID = match[4];
+            const value = match[5];
 
-            if (!deviceId || !value) {
+            if (!timestamp || !deviceId || !serviceUUID || !characteristicUUID || !value) {
                 continue;
             }
 
-            yield { deviceId, value };
+            yield { timestamp, deviceId, serviceUUID, characteristicUUID, value };
         }
         // Lines that don't match are simply ignored (filtered out)
     }

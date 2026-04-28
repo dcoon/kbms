@@ -4,8 +4,7 @@ import { blelog as log } from '@/services/log/log-service';
 // import { BleError, BleManager, Characteristic, Descriptor, Device, DeviceId, Service, State, Subscription, TransactionId, UUID } from 'react-native-ble-plx';
 import { Base64, BleError, BleManager, Characteristic, CharacteristicSubscriptionType, ConnectionPriority, Descriptor, Device, DeviceId, LogLevel, ScanOptions, Service, State, Subscription, TransactionId, UUID } from 'react-native-ble-plx';
 // import { interval } from 'rxjs';
-import { TEST_DATA_TRAVIS_2026_4_18 } from "../manufacturers/kilovault/battery-data-test-data";
-import { MockCharacteristic, MockDataGenerator, MockDevice, MockService } from './ble-manager-mock-types';
+import { MockCharacteristic, MockDataGenerator, MockDevice, MockService, TEST_BATTERY_DATA } from './ble-manager-mock-types';
 import { CharacteristicUpdateListener, DeviceUpdateListener } from './ble-types';
 
 const LOG_SRC = "MockBleService";
@@ -168,7 +167,7 @@ export class BleManagerMock implements BleManager {
   async discoverAllServicesAndCharacteristicsForDevice(deviceIdentifier: DeviceId, transactionId?: TransactionId): Promise<Device> {
 
     const device = this._devices.find(d => d.id === deviceIdentifier) as MockDevice;
-    if(device && !device._isConnected) {
+    if (device && !device._isConnected) {
       return Promise.reject(Error("Device not connected: " + deviceIdentifier));
     } else if (device) {
       return Promise.resolve(device);
@@ -256,7 +255,12 @@ export class BleManagerMock implements BleManager {
 
     characteristic.isNotifying = true;
 
-    const data = TEST_DATA_TRAVIS_2026_4_18.map(record => record.value);
+
+    // const ids = TEST_DEVICE_IDS;
+
+    const data = TEST_BATTERY_DATA
+      .filter(record => record.deviceId === deviceIdentifier)
+      .map(record => record.value);
 
     const subscription = {
 
@@ -305,7 +309,7 @@ export class BleManagerMock implements BleManager {
 
   private emitRandomDeviceUpdates(onDeviceUpdated: DeviceUpdateListener): Subscription {
 
-    const EMIT_INTERVAL_MS = 500;
+    const EMIT_INTERVAL_MS = 50;
 
     const subscription = {
       interval: setInterval(() => {

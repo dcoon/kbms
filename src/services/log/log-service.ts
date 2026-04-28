@@ -4,15 +4,22 @@ import {
   mapConsoleTransport
 } from "react-native-logs";
 
+import { Alert } from 'react-native';
+
+
 import * as FileSystem from 'expo-file-system/legacy';
 
-const logDir =  FileSystem.cacheDirectory || "";
+export const LOG_DIR = FileSystem.cacheDirectory || "";
+export const LOG_FILE_PREFIX = "kbms_logs";
+export const LOG_FILE_EXTENSION = "txt";
 
-if(logDir === "") {
+if(LOG_DIR === "") {
   console.warn("LogService: No valid directory for log files. File logging will be disabled.");
+  Alert.alert("LogService: No valid directory for log files. File logging will be disabled.");
+
 }
 
-const transport = logDir !== "" ? [mapConsoleTransport, fileAsyncTransport] : [mapConsoleTransport];
+const transport = LOG_DIR !== "" ? [mapConsoleTransport, fileAsyncTransport] : [mapConsoleTransport];
 
 const BLE = "BLE";
 const UI = "UI";
@@ -36,8 +43,8 @@ export const log = logger.createLogger({
       error: "error",
     },
     FS: FileSystem,
-    fileName: `blex_logs_{date-today}.txt`, // Creates a new file daily
-    filePath: logDir, // Standard Expo storage path
+    fileName: `${LOG_FILE_PREFIX}_{date-today}.${LOG_FILE_EXTENSION}`, // Creates a new file daily
+    filePath: LOG_DIR, // Standard Expo storage path
     fileNameDateType: "iso", // Formats date as YYYY-MM-DD
     }
 });
@@ -49,4 +56,4 @@ export const utillog = log.extend(UTIL);
 
 export default log;
 
-utillog.info("LogService: Logger initialized ", log.getSeverity(), logDir);
+utillog.info("LogService: Logger initialized ", log.getSeverity(), LOG_DIR, transport.length);

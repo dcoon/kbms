@@ -1,4 +1,5 @@
 import { Base64, BleError, Characteristic, CharacteristicSubscriptionType, ConnectionOptions, Descriptor, Device, Service, Subscription, TransactionId, UUID } from 'react-native-ble-plx';
+import { TEST_BATTERY_DATA as TEST_BATTERY_DATA_RAW, TEST_DEVICES as TEST_DEVICES_RAW } from '../manufacturers/kilovault/battery-data-test-data';
 import { KV_BATTERY_NOTIFY_UUID, KV_BATTERY_SERVICE_UUID } from '../manufacturers/kilovault/battery-data-types';
 
 const LOG_SRC = "MockBleManager";
@@ -271,9 +272,13 @@ export class MockDescriptor implements Descriptor {
 
 
 
+export const TEST_DEVICES = [... new Set(TEST_DEVICES_RAW)];
+export const TEST_DEVICE_IDS = TEST_DEVICES.map(device => device.deviceId);
+export const TEST_BATTERY_DATA = TEST_BATTERY_DATA_RAW;
 
 // Generate mock data
 export class MockDataGenerator {
+
 
   public static getLastDigitOfUUID(uuid: UUID): number {
     const lastDigit = uuid.split(':').slice(-1)[0];
@@ -283,7 +288,7 @@ export class MockDataGenerator {
 
   public static shouldBeBattery(uuid: UUID): boolean {
     const lastDigit = this.getLastDigitOfUUID(uuid);
-    return lastDigit <= 9; // 80% of devices will be batteries, 20% will be non-batteries that should fail connection
+    return TEST_DEVICES.some(device => device.deviceId === uuid) || lastDigit <= 9; // 80% of devices will be batteries, 20% will be non-batteries that should fail connection
   }
 
   public static shouldFail(id: UUID): boolean {
@@ -294,10 +299,11 @@ export class MockDataGenerator {
 
   public initMockData(): Device[] {
 
-    const deviceIds = this.generateMockUUIDs(10);
     // this._devices = this.generateMockDevices(deviceIds);
+    // return this.generateMockDevices(deviceIds);
 
-    return this.generateMockDevices(deviceIds);
+    const devices = TEST_DEVICES.map((device) => this.generateMockDevice(device.deviceId, device.value, /^\d{3}/.test(device.value)));
+    return devices;
 
   }
 
@@ -335,13 +341,14 @@ export class MockDataGenerator {
     });
     return serviceData;
   }
-  private generateMockDevice(id: UUID): Device {
 
-    const shouldFail = MockDataGenerator.shouldFail(id);
-    const shouldBeBattery = MockDataGenerator.shouldBeBattery(id);
+  private generateMockDevice(id: UUID, name?: string, isBattery: boolean = MockDataGenerator.shouldBeBattery(id)): Device {
+
+    const shouldFail = false; //MockDataGenerator.shouldFail(id);
+    // const shouldBeBattery = MockDataGenerator.shouldBeBattery(id);
 
     const serviceUUIDs = this.generateMockUUIDs(3);
-    if (shouldBeBattery) {
+    if (isBattery) {
       serviceUUIDs.push(KV_BATTERY_SERVICE_UUID);
     }
     const services = this.generateMockServices(id, serviceUUIDs);
@@ -364,7 +371,9 @@ export class MockDataGenerator {
 
     });
 
-    device.name = `${shouldBeBattery ? "Battery" : "Device"} ${device.id} ${shouldFail ? "(will cause connection error)" : ""}`;
+    const mockName = `${isBattery ? "Battery" : "Device"} ${device.id} ${shouldFail ? "(will cause connection error)" : ""}`;
+
+    device.name = name || mockName;
     device.localName = device.name + " (local name)";
 
 

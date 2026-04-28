@@ -5,8 +5,7 @@ import { ScreenLayout } from '@/components/ui/screen-layout';
 import { Bluetooth } from '@/services/ble/ble-service';
 import { Device } from '@/services/ble/ble-types';
 import { uilog as log } from '@/services/log/log-service';
-import { Settings } from '@/services/settings/settings-service';
-import { LightTheme } from '@/theme/theme';
+import { DefaultTheme } from '@/theme/theme';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useAtom } from 'jotai';
 import { useCallback, useMemo, useState } from 'react';
@@ -34,7 +33,7 @@ class FilterOption {
 
 function SortButtons({ sortBy, onSortChange }: { sortBy: SortOption, onSortChange: (value: string) => void }) {
 
-  const theme = useTheme() as typeof LightTheme;
+  const theme = useTheme() as typeof DefaultTheme;
 
   return (
     <SegmentedButtons
@@ -57,7 +56,7 @@ function SortButtons({ sortBy, onSortChange }: { sortBy: SortOption, onSortChang
 }
 
 function FilterButtons({ filterBy, onFilterChange }: { filterBy: FilterOption, onFilterChange: () => void }) {
-  const theme = useTheme() as typeof LightTheme;
+  const theme = useTheme() as typeof DefaultTheme;
 
   const filterIcon = filterBy.showKnownBatteryTypesOnly ? 'filter' : 'filter-off';
 
@@ -230,24 +229,24 @@ function StartStopScanningOnFocus({deviceId}: {deviceId?: string}) {
   return null;
 }
 
-function NavigateToPendingDevice() {
-  const router = useRouter();
-  const [pendingDevice, setPendingDevice] = useAtom(Settings.pendingNavigateDevice);
+// function NavigateToPendingDevice() {
+//   const router = useRouter();
+//   const [pendingDevice, setPendingDevice] = useAtom(Settings.pendingNavigateDevice);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (pendingDevice) {
-        const id = pendingDevice;
-        setPendingDevice(null);
-        router.push({
-          pathname: '/devices/[deviceid]',
-          params: { deviceid: id },
-        });
-      }
-    }, [pendingDevice])
-  );
-  return null;
-}
+//   useFocusEffect(
+//     useCallback(() => {
+//       if (pendingDevice) {
+//         const id = pendingDevice;
+//         setPendingDevice(null);
+//         router.push({
+//           pathname: '/devices/[deviceid]',
+//           params: { deviceid: id },
+//         });
+//       }
+//     }, [pendingDevice])
+//   );
+//   return null;
+// }
 
 export default function DevicesScreen() {
 
@@ -257,7 +256,7 @@ export default function DevicesScreen() {
       actions={<AppBarActions />}
     >
       <StartStopScanningOnFocus />
-      <NavigateToPendingDevice />
+      {/* <NavigateToPendingDevice /> */}
       <DeviceList />
     </ScreenLayout>
 

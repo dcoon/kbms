@@ -1,5 +1,4 @@
 import { List } from '@/components/list/list-item';
-import { shareLogFile } from '@/components/ui/file-share';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import { LogLevel, LogLevelOptions, Settings } from '@/services/settings/settings-service';
 import * as Updates from 'expo-updates';
@@ -9,6 +8,7 @@ import { ScrollView } from 'react-native';
 import { IconButton, Switch, useTheme } from 'react-native-paper';
 import { Dropdown } from 'react-native-paper-dropdown';
 
+import { shareLogFile } from '@/components/ui/file-share';
 import * as Application from 'expo-application';
 
 
@@ -90,6 +90,7 @@ export default function SettingsScreen() {
 
     const shareLogFileCallback = useCallback(() => {
       shareLogFile();
+      // pickAndShareFile();
     }, []);
 
     return (

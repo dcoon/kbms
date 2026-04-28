@@ -1,4 +1,4 @@
-import { utillog as log } from '@/services/log/log-service';
+import { utillog as log, LOG_DIR, LOG_FILE_EXTENSION, LOG_FILE_PREFIX } from '@/services/log/log-service';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -49,7 +49,7 @@ export async function shareLogFile() {
         const logFileUri = await getLatestLogFile();
 
         if (logFileUri) {
-            log.debug(LOG_PREFIX, "Sharing log file:", logFileUri);
+            log.info(LOG_PREFIX, "Sharing log file:", logFileUri);
 
             await shareFile(logFileUri);
         } else {
@@ -61,28 +61,35 @@ export async function shareLogFile() {
 
 };
 
+
 export async function getLatestLogFile(): Promise<string | null> {
 
-    const logDir = FileSystem.cacheDirectory;
-    // const logName = `blex_logs_${new Date().toISOString().split('T')[0]}.txt`;
-    // const fileUri = logDir + logName;
+    const LOG_PREFIX = LOG_SRC + "getLatestLogFile";
 
-    const files = await FileSystem.readDirectoryAsync(logDir!);
+    const files = await FileSystem.readDirectoryAsync(LOG_DIR);
 
-    const logFiles = files.filter(file => file.startsWith("blex_logs_") && file.endsWith(".txt"));
+    const logFiles = files.filter(file => file.startsWith(LOG_FILE_PREFIX));
+
+    log.info(LOG_PREFIX, "Found log files: ", LOG_DIR, logFiles);
 
     if (logFiles.length === 0) {
         return null;
     }
 
-    const latestFiles = logFiles.sort((a, b) => {
-        const dateA = new Date(a.substring(10, 20));
-        const dateB = new Date(b.substring(10, 20));
-        return dateB.getTime() - dateA.getTime();
+
+    const latest = logFiles.reduce((latest, file) => {
+        const latestTime = new Date(parseLogFileDate(latest)).getTime();
+        const fileTime = new Date(parseLogFileDate(file)).getTime();
+        return fileTime > latestTime ? file : latest;
     });
 
-    return logDir + latestFiles[0];
+    return LOG_DIR + latest;
 
+}
+
+
+function parseLogFileDate(latest: string): string | number | Date {
+    return latest.split(LOG_FILE_PREFIX)[1].split(`.${LOG_FILE_EXTENSION}`)[0];
 }
 
 export async function shareFile(fileUri: string) {

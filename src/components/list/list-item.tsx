@@ -1,8 +1,9 @@
 import { uilog as log } from '@/services/log/log-service';
+import { ThemeType } from '@/theme/theme';
 import { formatDistanceToNow } from 'date-fns';
 import { Children, default as React, useEffect, useState } from 'react';
 import { ListRenderItem, View } from 'react-native';
-import { List as PaperList, Switch, Text, TextInput } from 'react-native-paper';
+import { List as PaperList, Switch, Text, TextInput, useTheme } from 'react-native-paper';
 
 
 const LOG_SRC = "ListItemComponent";
@@ -289,6 +290,23 @@ export function LastSeenListItem({ lastUpdated }: { lastUpdated?: Date; }) {
   );
 }
 
+
+function Section({ title, description, children, id = title }: { title: string; description?: string; children?: React.ReactNode, id?: string }) {
+
+  const theme = useTheme() as ThemeType;
+  return (
+    <View id={id} >
+    <View style={theme.components.section.headerStyle}>
+      <Text variant="titleMedium">{title}</Text>
+      <Text variant="bodyMedium">{description}</Text>
+      </View>
+      <View style={theme.components.section.contentStyle}>
+        {children}
+      </View>
+    </View>
+  );
+}
+
 export const List = {
   Item: ListItem,
   Accordion: ListAccordion,
@@ -297,7 +315,7 @@ export const List = {
   LastSeenListItem,
   Icon: PaperList.Icon,
   AccordionGroup: PaperList.AccordionGroup,
-  Section: PaperList.Section,
+  Section,
   Subheader: PaperList.Subheader,
 
 }

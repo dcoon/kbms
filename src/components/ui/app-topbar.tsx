@@ -4,12 +4,13 @@ import { Bluetooth } from '@/services/ble/ble-service';
 import { LoadableState } from '@/services/ble/ble-types';
 import log from '@/services/log/log-service';
 import { Favorite, Settings } from '@/services/settings/settings-service';
+import { ThemeType } from '@/theme/theme';
 import { getIconForBleState } from '@/util/util';
-import { router, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { DeviceId, UUID } from 'react-native-ble-plx';
-import { Appbar } from 'react-native-paper';
+import { Appbar, useTheme } from 'react-native-paper';
 import { SnackbarMessage } from './snackbar';
 
 
@@ -19,8 +20,11 @@ const LOG_SRC = "AppTopBar";
 
 export function BackAction({ visible }: { visible: boolean }) {
 
+  const router = useRouter();
+
+  const onPress = visible ? () => router.back() : undefined;
     return (
-      <Appbar.BackAction onPress={() => router.back()} style={{visibility: visible ? 'visible' : 'hidden'}}/>
+      <Appbar.BackAction onPress={onPress} style={{visibility: visible ? 'visible' : 'hidden'}}/>
     );
 
 }
@@ -166,9 +170,10 @@ interface FavoriteActionProps {
 export function FavoriteAction({ deviceId, name }: FavoriteActionProps) {
   const favorite = { id: deviceId, name: name } as Favorite;
   const [isFavorite, setIsFavorite] = useAtom(Settings.favorite(favorite));
+  const theme = useTheme() as ThemeType;
 
   return (
-    <Appbar.Action icon={isFavorite ? "heart" : "heart-outline"} onPress={() => { setIsFavorite(favorite) }} />
+    <Appbar.Action icon={isFavorite ? theme.icons.favorite.true.source : theme.icons.favorite.false.source} onPress={() => { setIsFavorite(favorite) }} />
   );
 
 }

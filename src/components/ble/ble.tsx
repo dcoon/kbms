@@ -1,10 +1,11 @@
 import { battery as batteryAtom, isBatteryConnected } from "@/services/ble/battery-service";
 import { Favorite } from "@/services/settings/settings-service";
+import { DefaultTheme, ThemeType } from "@/theme/theme";
 import { useAtom } from "jotai";
 import { default as React, useEffect, useState } from "react";
 import { Pressable } from "react-native";
 import { Device } from "react-native-ble-plx";
-import { Icon } from "react-native-paper";
+import { Icon, useTheme } from "react-native-paper";
 import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
 import { DEFAULT_ICON_SIZE } from "../ui/ui-util";
 
@@ -26,7 +27,7 @@ export enum ConnectionState {
 
 
 
-export function IconForScanningState({ isScanning, size = DEFAULT_ICON_SIZE }: { isScanning: boolean, size?: number }) {
+export function ScanningStateIcon({ isScanning, size = DEFAULT_ICON_SIZE }: { isScanning: boolean, size?: number }) {
 
     if (isScanning) {
         return (<Icon source="stop" size={size} />);
@@ -48,29 +49,30 @@ export function ConnectionStateMenuText(state: ConnectionState): string {
         case ConnectionState.Error:
             return "Retry";
         default:
-            return "Unknown State";
+            return "Unknown";
     }   
 }
 
-export function ConnectionStateIconSource(isDeviceConnected: ConnectionState): IconSource {
+export function ConnectionStateIconSource(isDeviceConnected: ConnectionState, theme: ThemeType = DefaultTheme): IconSource {
     switch (isDeviceConnected) {
         case ConnectionState.Connected:
-            return { source: "stop" } as IconSource;
+            return theme.icons.connectionState.connected as IconSource;
         case ConnectionState.Connecting:
-            return { source: "progress-clock" } as IconSource;
+            return theme.icons.connectionState.connecting as IconSource;
         case ConnectionState.Disconnected:
-            return { source: "refresh" } as IconSource;
+            return theme.icons.connectionState.disconnected as IconSource;
         case ConnectionState.Error:
-            return { source: "progress-circle", color: "red" } as IconSource;
+            return theme.icons.connectionState.error as IconSource;
         default:
-            return { source: "progress-question" } as IconSource; // unknown state
+            return theme.icons.connectionState.unknown as IconSource; // unknown state
     }
 
 }
 
 export function ConnectionStateIcon({ isDeviceConnected, size = DEFAULT_ICON_SIZE, onPress }: { isDeviceConnected: ConnectionState, onPress?: () => void, size?: number }) {
 
-    return IconFromIconSource({ source: ConnectionStateIconSource(isDeviceConnected), size });
+    const theme = useTheme() as ThemeType;
+    return IconFromIconSource({ source: ConnectionStateIconSource(isDeviceConnected, theme), theme });
 
 }
 
@@ -110,20 +112,20 @@ export function RssiIconSource(rssi?: number): IconSource {
 
 }
 
-export function IconFromIconSource({ source, size = DEFAULT_ICON_SIZE }: { source: IconSource, size?: number }) {
+export function IconFromIconSource({ source, theme = DefaultTheme }: { source: IconSource, theme: ThemeType }) {
 
     if (typeof source === 'string') {
-        return <Icon source={source} size={size} />;
+        return <Icon source={source} size={theme.icons.iconSize} />;
     } else if (typeof source === 'object' && 'source' in source) {
-        return <Icon source={(source as any).source} color={(source as any).color} size={size} />;
+        return <Icon source={(source as any).source} color={(source as any).color} size={theme.icons.iconSize} />;
     } else {
         return null; // invalid source
     }
 }
 
 export function RssiIcon({ rssi, size = DEFAULT_ICON_SIZE }: { rssi?: number | null, size?: number }) {
-
-    return IconFromIconSource({ source: RssiIconSource(rssi ? rssi : undefined), size });
+    const theme = useTheme() as ThemeType;
+    return IconFromIconSource({ source: RssiIconSource(rssi ? rssi : undefined), theme });
 
 }
 export type OnDevicePress = (device: DeviceOrFavorite) => void;
@@ -143,41 +145,47 @@ export function ConnectionStateFromLoadable({ loader }: { loader: any; }): Conne
 
 }
 
-export function BatteryLastSeenIconSource(lastUpdated?: Date): IconSource {
+enum LastSeenStatus {
+    Recent = 60 * 1, // seen within the last 1 minute
+    Moderate = 60 * 2, // seen within the last 2 minutes
+    Old = 60 * 5, // seen within the last 5 minutes
+    Never = Infinity,
+    Unknown = -1
+}
+
+export function BatteryLastSeenIconSource(lastUpdated?: Date, theme: ThemeType = DefaultTheme): IconSource {
 
     if (lastUpdated === undefined || lastUpdated === null) {
-        return { source: "clock-alert-outline", color: "gray" } as IconSource; // never seen
+        return theme.icons.lastSeen.unknown as IconSource; // never seen
     } else {
         const secondsSinceLastUpdate = (Date.now() - lastUpdated.getTime()) / 1000;
 
-        if (secondsSinceLastUpdate < 2) {
-            return { source: "clock-check-outline", color: "green" } as IconSource;
-        } else if (secondsSinceLastUpdate < 4) {
-            return { source: "clock-time-seven-outline", color: "orange" } as IconSource;
-        } else if (secondsSinceLastUpdate < 6) {
-            return { source: "clock-time-ten-outline", color: "orange" } as IconSource;
-        } else if (secondsSinceLastUpdate < 10) {
-            return { source: "update", color: "red" } as IconSource;
+        if (secondsSinceLastUpdate <= LastSeenStatus.Recent) {
+            return theme.icons.lastSeen.recent as IconSource;
+        } else if (secondsSinceLastUpdate <= LastSeenStatus.Moderate) {
+            return theme.icons.lastSeen.moderate as IconSource;
+        } else if (secondsSinceLastUpdate <= LastSeenStatus.Old) {
+            return theme.icons.lastSeen.old as IconSource;
         } else {
-            return { source: "clock-alert-outline", color: "red" } as IconSource;
+            return theme.icons.lastSeen.never as IconSource;
         }
 
     }
 
 }
 
-export function BatteryLastSeenIcon({ lastUpdated }: { lastUpdated?: Date }) {
-    return IconFromIconSource({ source: BatteryLastSeenIconSource(lastUpdated) });
-}
 
-export function BatteryLastSeenListIconButton({ device, onPress }: { device: DeviceOrFavorite, onPress?: () => void }) {
+export function BatteryLastSeenListIcon({ device, onPress }: { device: DeviceOrFavorite, onPress?: () => void }) {
 
     const [lastRefreshed, setLastRefreshed] = useState(Date.now());
-    const [, setIsBatteryConnected] = useAtom(isBatteryConnected(device.id));
+    // const [, setIsBatteryConnected] = useAtom(isBatteryConnected(device.id));
     const [battery] = useAtom(batteryAtom(device.id));
+
+    const theme = useTheme() as ThemeType;
 
     const lastUpdated = battery?.lastUpdated;
 
+    const icon = BatteryLastSeenIconSource(lastUpdated, theme);
 
     const INTERVAL_DURATION = 60000;
 
@@ -199,9 +207,7 @@ export function BatteryLastSeenListIconButton({ device, onPress }: { device: Dev
 
 
     return (
-        <Pressable onPress={onPress}>
-            <BatteryLastSeenIcon lastUpdated={battery?.lastUpdated} />
-        </Pressable>
+        <IconFromIconSource source={icon} theme={theme} />
 
     );
 
