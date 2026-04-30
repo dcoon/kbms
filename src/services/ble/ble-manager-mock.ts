@@ -4,8 +4,8 @@ import { blelog as log } from '@/services/log/log-service';
 // import { BleError, BleManager, Characteristic, Descriptor, Device, DeviceId, Service, State, Subscription, TransactionId, UUID } from 'react-native-ble-plx';
 import { Base64, BleError, BleManager, Characteristic, CharacteristicSubscriptionType, ConnectionPriority, Descriptor, Device, DeviceId, LogLevel, ScanOptions, Service, State, Subscription, TransactionId, UUID } from 'react-native-ble-plx';
 // import { interval } from 'rxjs';
+import { CharacteristicUpdateListener, DeviceUpdateListener } from './ble';
 import { MockCharacteristic, MockDataGenerator, MockDevice, MockService, TEST_BATTERY_DATA } from './ble-manager-mock-types';
-import { CharacteristicUpdateListener, DeviceUpdateListener } from './ble-types';
 
 const LOG_SRC = "MockBleService";
 

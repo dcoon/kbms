@@ -2,7 +2,7 @@
 import { StyleSheet, View } from 'react-native';
 import { Appbar } from 'react-native-paper';
 
-import { BackAction, BleStateAction } from '@/components/ui/app-topbar';
+import { BackAction, BleStateAction } from '@/components/ui/topbar-actions';
 import { useRouter } from 'expo-router';
 import { IconSource } from 'react-native-paper/lib/typescript/components/Icon';
 

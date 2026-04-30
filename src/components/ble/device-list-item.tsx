@@ -1,17 +1,16 @@
 
 import { List } from '@/components/list/list-item';
-import { Device, getDeviceName } from '@/services/ble/ble-types';
-import { Favorite } from '@/services/settings/settings-service';
+import { Device } from '@/services/ble/ble';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { View } from 'react-native';
-import { Text } from 'react-native-paper';
-import { FavoriteIcon } from '../ui/favorite-icon';
 
-import * as Battery from '@/services/ble/battery-service';
+import { FavoriteIcon } from '@/components/battery/icons';
+import * as Battery from '@/services/battery/battery-service';
 import log from '@/services/log/log-service';
-import { RssiIcon } from './ble';
-
+import { ThemeType } from '@/theme/theme';
+import { Card, useTheme } from 'react-native-paper';
+import { RssiIcon } from "./icons";
 
 
 type OnDevicePress = (device: Device) => void;
@@ -19,56 +18,18 @@ type OnDevicePress = (device: Device) => void;
 
 function LeftContent({ device }: { device: Device }) {
   // return <List.Icon icon="devices" />;
-  return (<FavoriteIcon favorite={device as Favorite} />);
+  return (<FavoriteIcon device={device} />);
 }
 
 
 function DeviceIcons({ device }: { device: Device }) {
 
-  const rssi = device.rssi;
-
   return (
-    <RssiIcon rssi={rssi} />
+    <RssiIcon device={device} />
   );
 }
 
 
-// function BatteryIsConnectedIcon({ device }: { device: Device }) {
-
-//   const [isConnectedLoadable, setIsConnected] = useAtom(Battery.isBatteryConnected(device?.id));
-//     const isConnected = ConnectionStateFromLoadable({ loader: isConnectedLoadable });
-
-
-//   return (
-//     <ButtonForConnectionState isDeviceConnected={isConnected} onPress={() => setIsConnected(!isConnected)} />
-//   );
-// }
-
-// function BatterySocIcon({ device }: { device: Device }) {
-
-//   const [battery] = useAtom(Battery.battery(device?.id));
-
-//   return (
-//     <IconForSoC soc={battery?.soc} />
-//   );
-// }
-
-// function BatteryIcons({ device }: { device: Device }) {
-
-//   const [isKnownBatteryTypeLoadable] = useAtom(Battery.isKnownBatteryType(device?.id));
-//   const isKnownBatteryType = isKnownBatteryTypeLoadable.state === 'hasData' && isKnownBatteryTypeLoadable.data === true;
-
-//   if (!isKnownBatteryType) {
-//     return null;
-//   }
-
-//   return (
-//     <View style={{ flexDirection: 'row' }}>
-//       <BatteryIsConnectedIcon device={device} />
-//       <BatterySocIcon device={device} />
-//     </View>
-//   );
-// }
 
 function RightContent({ device }: { device: Device }) {
 
@@ -94,19 +55,25 @@ interface DeviceListItemProps {
 
 
 function DeviceListItemImpl({ device, onDevicePress, hideIfUnknownBatteryType }: DeviceListItemProps) {
-  const deviceName = getDeviceName(device);
+
+  const theme = useTheme() as ThemeType;
 
   return (
-    <List.Item
-      title={deviceName}
-      description={device.id}
-      left={<LeftContent device={device} />}
-      right={<RightContent device={device} />}
-      value={undefined}
-      onPress={() => { onDevicePress?.(device as Device) }}
+    <Card  
+          style={theme.components.Card.style as any}
+          onPress={() => onDevicePress && onDevicePress(device)}
+    
     >
-      <Text>foobar money</Text>
-    </List.Item>
+      <Card.Title
+        title={device.name || "Unknown Device"}
+        subtitle={device.id}
+        left={(props) => <LeftContent device={device} />}
+        right={(props) => <RightContent device={device} />}
+        style={theme.components.Card.Title.style}
+        leftStyle={theme.components.Card.Title.leftStyle as any}
+        rightStyle={theme.components.Card.Title.rightStyle as any}
+      />
+    </Card> 
   );
 }
 

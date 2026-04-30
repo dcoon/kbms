@@ -1,90 +1,28 @@
-import { BatteryStatusFlags, socIconSource } from '@/components/ble/battery';
-import { getDeviceName, LoadableState } from '@/services/ble/ble-types';
+import { getDeviceName } from '@/services/ble/ble';
+import { LoadableState } from '@/util/util';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Device } from 'react-native-ble-plx';
 
 import React, { useCallback } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView } from 'react-native';
 
 import { LastSeenListItem, List } from '@/components/list/list-item';
 import { ScreenLayout } from '@/components/ui/screen-layout';
-import { Bluetooth } from '@/services/ble/ble-service';
+import * as Bluetooth from '@/services/ble/ble-service';
 import { KV_BATTERY_NOTIFY_UUID, KV_BATTERY_SERVICE_UUID } from '@/services/manufacturers/kilovault/battery-data-types';
 import { useAtom } from 'jotai';
 
-import { formatDistanceToNow } from 'date-fns';
 
-import { FavoriteAction, IsNotifyingAction } from '@/components/ui/app-topbar';
+import { FavoriteAction, IsNotifyingAction } from '@/components/ui/topbar-actions';
 import { uilog as log } from '@/services/log/log-service';
-import { Card, Chip, Text, useTheme } from 'react-native-paper';
 
-import { battery as batteryAtom, isBatteryConnected } from '@/services/ble/battery-service';
+import { battery as batteryAtom, isBatteryConnected } from '@/services/battery/battery-service';
 
-import { CellVoltageIcon, IconForCellDeltaV, SoCIcon } from '@/components/ble/battery';
-import { Gauge } from '@/components/ui/gauge';
-import { DefaultTheme } from '@/theme/theme';
+import { BatteryCardLarge } from "@/components/battery/battery-card-large";
+import { BatteryDeltaVIcon, BatteryStatusFlags, CellVoltageIcon } from '@/components/battery/icons';
 
 const LOG_SRC = "BatteryScreen";
 
-
-function BatteryGraph({ device }: { device: Device }) {
-  const [battery] = useAtom(batteryAtom(device ? device.id : ""));
-  const theme = useTheme() as typeof DefaultTheme;
-
-  const soc = battery ? battery.soc : undefined;
-  const current = battery ? battery.current / 1000 : 0;
-  
-  const voltage = battery ? battery.voltage / 1000 : 0;
-  const temperature = battery ? battery.temperature / 100 : 0;
-  const status = battery ? battery.rawStatus : "";
-  const cycles = battery ? battery.cycles : 0;
-  const lastSeen = battery?.lastUpdated ? formatDistanceToNow(battery.lastUpdated, { addSuffix: true }) : "Unknown";
-
-
-  const subtitle = `${voltage}V / ${current}A`;
-
-  // TODO: make these settings
-  const MAX_VOLTAGE = 15;
-  const MAX_CURRENT = 100;
-
-
-  const socIS = socIconSource({ soc, charging: current < 0, theme });
-  const strokeColor = socIS.color;
-  // const LOG_PREFIX = LOG_SRC + ": BatteryGraph";
-  // log.debug(LOG_PREFIX, "Rendering BatteryGraph with data: ", { voltage, current, soc, temperature, status, cycles, lastSeen });
-
-
-  return (
-    <Card theme={theme.components.PrimaryCard.theme as any}>
-      <Card.Title 
-      title="State of Charge" 
-      left={(props) => <SoCIcon soc={soc} charging={current < 0} />}
-               style={theme.components.Card.Title.style}
-    
-      />
-      <Card.Content>
-        <View style={{ flexDirection: 'column', }}>
-          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 }} >
-            <Gauge
-              value={soc}
-              maxvalue={100}
-              valuesuffix='%'
-              variant={theme.components.Gauge.large}
-              strokecolor={strokeColor}
-
-            />
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <BatteryStatusFlags status={battery?.status} showNoFlags={false} />
-                    <Chip icon="clock-outline" style={theme.components.Chip.style} textStyle={theme.components.Chip.textStyle} compact={true}>{lastSeen}</Chip>
-
-          </View>
-        </View>
-      </Card.Content>
-    </Card>
-
-  );
-}
 
 
 function BatteryDataAccordion({ device, children }: { device: Device, children?: React.ReactNode }) {
@@ -143,6 +81,8 @@ function BatteryDataAccordion({ device, children }: { device: Device, children?:
 function InformationAccordion({ device }: { device: Device }) {
 
   const [battery] = useAtom(batteryAtom(device ? device.id : ""));
+  const [rssiLoadable] = useAtom(Bluetooth.rssi(device.id));
+  const rssi = rssiLoadable.state === "hasData" ? rssiLoadable.data : device.rssi;
 
   return (
     <List.Accordion
@@ -172,7 +112,7 @@ function InformationAccordion({ device }: { device: Device }) {
       <List.Item
         title="Signal"
         description="Signal Strength dBm"
-        value={device?.rssi}
+        value={rssi}
         icon="signal-cellular-outline"
       />
       <List.Item
@@ -206,10 +146,7 @@ function InformationAccordion({ device }: { device: Device }) {
 function CellDataAccordionRight({ deltav }: { deltav?: number }) {
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-      <IconForCellDeltaV deltav={deltav} />
-      <Text variant="bodySmall">{deltav ? deltav + "mV" : "Unknown"}</Text>
-    </View>
+      <BatteryDeltaVIcon deltav={deltav} />
   );
 
 }
@@ -297,11 +234,12 @@ function StartStopBatteryConnectedOnFocus({ deviceId }: { deviceId: string }) {
 
 function BatteryView({ device }: { device: Device }) {
 
+  const [battery] = useAtom(batteryAtom(device.id));
 
   return (
     <ScrollView>
       <StartStopBatteryConnectedOnFocus deviceId={device.id} />
-      <BatteryGraph device={device} />
+      <BatteryCardLarge battery={battery} />
       <List.AccordionGroup>
         <BatteryDataAccordion device={device} />
         <CellDataAccordion device={device} />

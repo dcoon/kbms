@@ -1,7 +1,7 @@
 
 import { SnackbarMessage } from '@/components/ui/snackbar';
-import { Loadable, LoadableState } from '@/services/ble/ble-types';
 import { uilog as log } from '@/services/log/log-service';
+import { Loadable, LoadableState } from '@/util/util';
 import { View } from 'react-native';
 import { IconButton, Text } from 'react-native-paper';
 

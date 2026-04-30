@@ -1,16 +1,16 @@
 import { DeviceListItem } from '@/components/ble/device-list-item';
-import { IsScanningAction } from '@/components/ui/app-topbar';
 import { LoadableGuard } from '@/components/ui/loadable';
 import { ScreenLayout } from '@/components/ui/screen-layout';
+import { IsScanningAction } from '@/components/ui/topbar-actions';
+import { Device } from '@/services/ble/ble';
 import { Bluetooth } from '@/services/ble/ble-service';
-import { Device } from '@/services/ble/ble-types';
 import { uilog as log } from '@/services/log/log-service';
 import { DefaultTheme } from '@/theme/theme';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useAtom } from 'jotai';
-import { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, View } from 'react-native';
-import { Button, IconButton, SegmentedButtons, Text, useTheme } from 'react-native-paper';
+import { Button, SegmentedButtons, Text, useTheme } from 'react-native-paper';
 
 const LOG_SRC = "DevicesScreen";
 
@@ -26,6 +26,7 @@ const sortButtons = [
   { value: 'id', label: 'ID' },
 ];
 
+
 class FilterOption {
   showKnownBatteryTypesOnly: boolean = true;
 }
@@ -40,7 +41,7 @@ function SortButtons({ sortBy, onSortChange }: { sortBy: SortOption, onSortChang
       value={sortBy.value}
       onValueChange={value => { }}
       density={theme.components.SegmentedButtons.density as any}
-      style={theme.components.SegmentedButtons.style}
+      // style={{ width: '70%' }}
       theme={theme}
       buttons={
         sortButtons.map(button => ({
@@ -48,7 +49,7 @@ function SortButtons({ sortBy, onSortChange }: { sortBy: SortOption, onSortChang
           value: button.value,
           icon: sortBy.value === button.value ? (sortBy.ascending ? 'arrow-up' : 'arrow-down') : undefined,
           onPress: () => onSortChange(button.value),
-          labelStyle: theme.components.SegmentedButtons.buttonStyle,
+          labelStyle: theme.components.SegmentedButtons.labelStyle,
         }))
       }
     />
@@ -62,18 +63,24 @@ function FilterButtons({ filterBy, onFilterChange }: { filterBy: FilterOption, o
 
   return (
     // TODO: fix filter logic
-    <IconButton icon={filterIcon} onPress={() => onFilterChange()}  />
+    // <IconButton icon={filterIcon} onPress={() => onFilterChange()}  />
+    <Button 
+      mode="outlined" 
+      onPress={() => onFilterChange()} 
+      icon={filterIcon}
+      labelStyle={{ fontSize: theme.fonts.labelMedium.fontSize, padding: 0 }}
+      >Filter</Button>
   );
 
 }
 
 function ListHeaderComponent({ sortBy, onSortChange, filterBy, onFilterChange }: { sortBy: SortOption, onSortChange: (value: string) => void, filterBy: FilterOption, onFilterChange: () => void }) {
   return (
-
-
-    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', padding: 8}}>
+    <View style={{ width: '70%', flex: 1, flexDirection: 'row', alignItems: 'center', columnGap: '2%', marginLeft: '2%', marginRight: '2%', marginTop: '2%', marginBottom: '2%' }}>
       <FilterButtons filterBy={filterBy} onFilterChange={onFilterChange} />
+
       <SortButtons sortBy={sortBy} onSortChange={onSortChange} />
+
     </View>
   );
 
@@ -126,7 +133,7 @@ function AppBarActions({ children }: { children?: React.ReactNode }) {
 function DeviceList() {
   const router = useRouter();
   const [devices] = useAtom(Bluetooth.devices);
-  
+
   const [sortBy, setSortBy] = useState<SortOption>(new SortOption());
 
   const [filterBy, setFilterBy] = useState<FilterOption>(new FilterOption());
@@ -212,10 +219,10 @@ function DeviceList() {
 
 }
 
-function StartStopScanningOnFocus({deviceId}: {deviceId?: string}) {
+function StartStopScanningOnFocus({ deviceId }: { deviceId?: string }) {
   const [, setIsScanning] = useAtom(Bluetooth.scanning);
 
-  useFocusEffect( 
+  useFocusEffect(
     useCallback(() => {
       const LOG_PREFIX = LOG_SRC + ": StartStopScanningOnFocus";
       log.info(LOG_PREFIX, "focus effect called, starting scan");

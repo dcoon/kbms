@@ -79,7 +79,8 @@ export enum CellDeltaVLevel {
 
 
 export interface BatteryData {
-    deviceId: string;
+    id: string;
+    name?: string;
     batteryType?: number;
     get batteryTypeName(): string;
     rawStatus?: number; // {HV, LV, OCC, OCD, LTD, LTC, HTD, HTC};   
@@ -92,7 +93,8 @@ export interface BatteryData {
     soc: number;
     cycles: number;
     temperature: number;
-    lastUpdated: Date;
+    lastUpdated: Date | undefined;
+    deltav?: number;
 
     cells: CellData[];
 }
@@ -106,7 +108,8 @@ enum BatteryCapacityLevel {
 }
 
 export class BatteryDataBase implements BatteryData {
-    deviceId: string = "";
+    id: string = "";
+    name?: string;
     batteryType?: number;
     get batteryTypeName(): string {
         if(this.capacity < BatteryCapacityLevel.HLX1200) {
@@ -129,9 +132,18 @@ export class BatteryDataBase implements BatteryData {
     soc: number = 0;
     cycles: number = 0;
     temperature: number = 0;
-    lastUpdated: Date = new Date();
+    lastUpdated: Date | undefined = undefined;
 
     cells: CellData[] = [];
+
+    get deltav(): number | undefined {
+
+        return this.cells.reduce((max, cell) => cell.voltage !== undefined && cell.voltage > max ? cell.voltage : max, 0) - this.voltage / this.cells.length;
+    }
+
+    constructor(init?: Partial<BatteryData>) {
+        Object.assign(this, init);
+    }
 
 
 }
@@ -142,4 +154,10 @@ export enum BatterySoCLevel {
     Low = 20,
     VeryLow = 0
 }
-
+export enum LastSeenStatus {
+    Recent = 60 * 1,// seen within the last 1 minute
+    Moderate = 60 * 2,// seen within the last 2 minutes
+    Old = 60 * 5,// seen within the last 5 minutes
+    Never = Infinity,
+    Unknown = -1
+}

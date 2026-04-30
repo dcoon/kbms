@@ -3,17 +3,72 @@ import { ThemeType } from '@/theme/theme';
 import { formatDistanceToNow } from 'date-fns';
 import { Children, default as React, useEffect, useState } from 'react';
 import { ListRenderItem, View } from 'react-native';
-import { List as PaperList, Switch, Text, TextInput, useTheme } from 'react-native-paper';
+import { Icon, List as PaperList, Switch, Text, TextInput, TouchableRipple, useTheme } from 'react-native-paper';
+import { Dropdown, Option } from 'react-native-paper-dropdown';
+import { IconSource } from 'react-native-paper/lib/typescript/components/Icon';
 
 
 const LOG_SRC = "ListItemComponent";
 
+interface ListItemProps {
+  title: string;
+  value?: any;
+  icon?: IconSource;
+  valueIcon?: IconSource;
+  description?: string;
+  editable?: boolean;
+  onPress?: (value: any) => void;
+  left?: React.ReactNode;
+  right?: React.ReactNode;
+  children?: React.ReactNode;
+}
 
-function TextValue({ value, editable, onChange, children }: { value: string, editable: boolean, onChange?: (value: any) => void, children?: React.ReactNode }) {
+
+
+function DropdownValue(props: ListItemProps) {
+
+  const { title, value, onPress } = props as any;
+
+  const arr = value as any[];
+  const selectedValue = value[0] as string;
+  const options = value.slice(1) as Option[]; // assuming value is a tuple of [currentValue, options]
+
+  return (
+    <View
+    style={{ width: "40%" }}
+    >
+    <Dropdown
+      label={title}
+
+      // placeholder={"Select " + title}
+      options={options}
+      value={selectedValue}
+      onSelect={onPress}
+    />
+    </View>
+    // <Text>{JSON.stringify(options)}</Text>
+  );
+
+}
+
+function ButtonValue(props: ListItemProps) {
+
+  const theme = useTheme() as ThemeType;
+  const name = (props.valueIcon as { source: string }).source as string;
+  return (
+    <TouchableRipple onPress={props.onPress} >
+      <Icon source={name} size={theme.icons.iconSize} color={theme.colors.onSurface} />
+    </TouchableRipple>
+  );
+}
+
+function TextValue(props: ListItemProps) {
+
+  const { value, editable, onPress } = props as any;
 
   if (editable) {
     return (
-      <TextInput mode="outlined" value={value} onChangeText={onChange} editable={true} />
+      <TextInput mode="outlined" value={value} onChangeText={onPress} editable={true} />
     );
   } else {
     return (
@@ -22,11 +77,13 @@ function TextValue({ value, editable, onChange, children }: { value: string, edi
   }
 }
 
-function BooleanValue({ value, editable, onChange, children }: { value: boolean, editable: boolean, onChange?: (value: any) => void, children?: React.ReactNode }) {
+function BooleanValue(props: ListItemProps) {
+
+  const { value, editable, onPress } = props as any;
 
   if (editable) {
     return (
-      <Switch value={value} onValueChange={onChange} />
+      <Switch value={value} onValueChange={onPress} />
     );
   } else {
     return (
@@ -36,84 +93,68 @@ function BooleanValue({ value, editable, onChange, children }: { value: boolean,
 }
 
 
-interface ListItemProps {
-  title: string;
-  value?: any;
-  icon?: string;
-  description?: string;
-  editable?: boolean;
-  onPress?: (value: any) => void;
-  onChange?: (value: any) => void;
-  left?: React.ReactNode;
-  right?: React.ReactNode;
-  children?: React.ReactNode;
+
+
+
+function LeftSideContent({ icon }: ListItemProps) {
+
+
+  const theme = useTheme() as ThemeType;
+  const name = (icon as { source: string }).source as string;
+  const color = theme.colors.onSurface;
+
+  if (icon) {
+    return (
+      <PaperList.Icon icon={name} color={color} />
+    );
+
+  } else {
+    return null;
+  }
 }
 
-function ListItem({ title, description, icon, value, editable = false, left, right, onPress, onChange, children }: ListItemProps) {
 
+function RightSideContent(props: ListItemProps) {
 
-  function ValueContent() {
-    if (right) {
-      return null;
-    } else if (value === undefined || value === null) {
-      return null;
-    } else if (typeof value === "boolean") {
-      return (<BooleanValue value={value} editable={editable} onChange={onChange} />);
-    } else if (typeof value === "number") {
-      return (<TextValue value={String(value)} editable={editable} onChange={onChange} />);
-    } else if (typeof value === "string") {
-      return (<TextValue value={value} editable={editable} onChange={onChange} />);
-    } else {
-      const json = JSON.stringify(value);
-      return (<Text>{json}</Text>);
-    }
+  const { right, value, onPress, editable } = props;
 
+  if (right) {
+    return null;
+  } else if (onPress !== undefined && value === undefined) {
+    return (<ButtonValue {...props} />);
+  } else if (value === undefined) {
+    return null;
+  } else if (Array.isArray(value)) {
+    return (<DropdownValue {...props} />);
+  } else if (typeof value === "boolean") {
+    return (<BooleanValue {...props} />);
+  } else if (typeof value === "number") {
+    return (<TextValue {...props} />);
+  } else if (typeof value === "string") {
+    return (<TextValue {...props} />);
+  } else {
+    const json = JSON.stringify(value);
+    return (<Text>{json}</Text>);
   }
 
 
-  function RightSideContent() {
-
-    return (
-      <View>
-        <ValueContent />
-        {right}
-      </View>
-    );
-
-  }
-
-  function LeftSideContent() {
+}
 
 
-    function IconButtonMaybe(props: any) {
+export function ListItem(props: ListItemProps) {
 
-      if (icon) {
-        return (
-          <List.Icon icon={icon} {...props} />
-        );
-      } else {
-        return <View />;
-      }
-    }
-
-
-    return (
-      <View>
-        <IconButtonMaybe />
-        {left}
-      </View>
-    );
-  }
-
+  const { title, description, value, icon, editable = false, onPress, left, right } = props;
 
   return (
     <PaperList.Item
       title={title}
       description={description}
-      left={LeftSideContent}
-      right={RightSideContent}
+      left={() => <LeftSideContent {...props} />}
+      right={() => <RightSideContent {...props} />}
       onPress={onPress}
       titleNumberOfLines={0}
+      style={{ paddingLeft: 8 }}
+
     />
   );
 }
@@ -296,9 +337,9 @@ function Section({ title, description, children, id = title }: { title: string; 
   const theme = useTheme() as ThemeType;
   return (
     <View id={id} >
-    <View style={theme.components.section.headerStyle}>
-      <Text variant="titleMedium">{title}</Text>
-      <Text variant="bodyMedium">{description}</Text>
+      <View style={theme.components.section.header.style}>
+        <Text style={theme.components.section.header.titleStyle}>{title}</Text>
+        <Text style={theme.components.section.header.descriptionStyle}>{description}</Text>
       </View>
       <View style={theme.components.section.contentStyle}>
         {children}

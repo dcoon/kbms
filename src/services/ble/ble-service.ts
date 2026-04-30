@@ -6,9 +6,9 @@ import { atomFamily, atomWithLazy, atomWithRefresh, loadable } from 'jotai/utils
 
 import { withHistory } from 'jotai-history';
 import { BleManager, Characteristic, Device, DeviceId, State, Subscription, UUID } from 'react-native-ble-plx';
+import { CharacteristicIdentifier, CharacteristicValueType, DeviceIdentifier, isBluetoothAvailable as isBluetoothAvailableFn, ServiceIdentifier } from './ble';
 import { BleManagerMock } from './ble-manager-mock';
 import { requestPermission } from './ble-permissions';
-import { CharacteristicIdentifier, CharacteristicValueType, DeviceIdentifier, isBluetoothAvailable as isBluetoothAvailableFn, ServiceIdentifier } from './ble-types';
 import { loadableWithSetter } from './jotai-util';
 
 
@@ -182,15 +182,13 @@ function onDeviceFound(error: Error | null, device: Device | null, set: Setter) 
   const LOG_PREFIX = LOG_SRC + ": onDeviceFound";
 
   if (device) {
-    log.debug(LOG_PREFIX, ": onDeviceFound called with device: [id, name, rssi]", device.id, device.name, device.rssi);
+    log.info(LOG_PREFIX, ": [id, name, rssi]", device.id, device.name, device.rssi);
 
-    // const [devices, setDevices] = useAtom(mergedDevices);
-    // setDevices([device]);
     set(mergedDevices, [device]);
 
   } else if (error) {
-    log.error(LOG_PREFIX, ": onDeviceFound called with error: ", error.message);
-    set(isScanning, false);
+    log.error(LOG_PREFIX, ": Error: ", error.message);
+    // set(isScanning, false);
     set(Settings.snackbar, error.message);
   } else {
     log.warn(LOG_PREFIX, ": onDeviceFound called with no device or error");
@@ -252,7 +250,15 @@ const device = atomFamily(({ deviceId }: { deviceId: DeviceId }) => loadable(dev
 //   async (get) => null,
 // ), (a, b) => a === b);
 
+const rssiAsync = atomFamily((deviceId: DeviceId) => atomWithRefresh(
+  async (get) => {
+    const manager = get(ble);
+    const updatedDevice = await manager?.readRSSIForDevice(deviceId);
+    return updatedDevice?.rssi ?? null;
+  }
+), (a, b) => a === b);
 
+export const rssi = atomFamily((deviceId: DeviceId) => loadableWithSetter(rssiAsync(deviceId)), (a, b) => a === b);
 
 const connectedDeviceAsync = atomFamily((id: DeviceId) => atomWithRefresh(
   async (get) => {
@@ -281,7 +287,7 @@ const connectedDeviceAsync = atomFamily((id: DeviceId) => atomWithRefresh(
   }
 ), (a, b) => a === b);
 
-const connectedDevice = atomFamily((id: DeviceId) => loadable(connectedDeviceAsync(id)), (a, b) => a === b);
+export const connectedDevice = atomFamily((id: DeviceId) => loadable(connectedDeviceAsync(id)), (a, b) => a === b);
 
 const isDeviceConnectedAsync = atomFamily((id: DeviceId) => atomWithRefresh(
   async (get) => await get(ble)?.isDeviceConnected(id),
@@ -291,6 +297,11 @@ const isDeviceConnectedAsync = atomFamily((id: DeviceId) => atomWithRefresh(
 
     log.debug(LOG_PREFIX, ": called with id: ", id, " value: ", value);
 
+    // toggle if value is undefined
+    if(value === undefined) {
+      const isConnected = await get(isDeviceConnectedAsync(id));
+      value = !isConnected;
+    }
 
 
     if (value) {
@@ -390,8 +401,13 @@ export const deviceHasServiceAndCharacteristicAsync = atomFamily(
   ({ deviceId, serviceUUID, characteristicUUID }: CharacteristicIdentifier) => atom(
     async (get) => {
       try {
-        const characteristics = await get(characteristicsAsync({ deviceId, serviceUUID }));
-        return characteristics.some(c => c.uuid === characteristicUUID);
+        // const characteristics = await get(characteristicsAsync({ deviceId, serviceUUID }));
+        // return characteristics.some(c => c.uuid === characteristicUUID);
+
+        // TODO: experiment to see if we can speed up device scanning with filters
+        const device = await get(deviceInternal({deviceId: deviceId}));
+        return device?.serviceUUIDs?.includes(serviceUUID) ?? false;
+
       } catch (error) {
         const LOG_PREFIX = LOG_SRC + ": deviceHasServiceAndCharacteristicAsync";
         log.debug(LOG_PREFIX, ": Error checking for service and characteristic: ", error);
@@ -526,14 +542,26 @@ function isCharacteristicChangedOtherThanValue(oldChar: Characteristic | null, n
 }
 
 
+// 7:28:12 PM | BLE | ERROR : BLEService: onCharacteristicUpdate : onCharacteristicUpdate called with error:  Device 01A3F34C-407B-86F2-D5B8-A508F76CE907 was disconnected 
+
 async function onCharacteristicUpdate(error: Error | null, characteristic: Characteristic | null, get: Getter, set: Setter) {
 
   const LOG_PREFIX = LOG_SRC + ": onCharacteristicUpdate";
 
   if (error) {
+
+    // TODO: find better way to detect expected disconnection errors vs unexpected errors. We don't want to spam the log or user with expected disconnection errors that can happen during normal operation, but we do want to log unexpected errors and show them to the user.
     const msg = error.message;
     if (msg.includes("Operation was cancelled")) {
       log.warn(LOG_PREFIX, "Operation was cancelled", msg);
+    } else if (msg.includes("was disconnected")) {
+      const deviceId = msg.split(" ")[1]; 
+      log.warn(LOG_PREFIX, "Device was disconnected", deviceId, msg);
+      try {
+        set(isDeviceConnectedAsync(deviceId), false);
+      } catch (error) {
+        log.error(LOG_PREFIX, "Failed to update device connection state: ", error);
+      }
     } else {
       log.error(LOG_PREFIX, ": onCharacteristicUpdate called with error: ", error.message);
       set(Settings.snackbar, error.message);
@@ -612,6 +640,7 @@ export const Bluetooth = {
   bleState,
   devices,
   device,
+  rssi,
   isDeviceConnected,
   connectedDevice,
   scanning,

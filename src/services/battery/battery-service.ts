@@ -5,12 +5,12 @@ import { atom } from "jotai";
 import { atomFamily, loadable } from "jotai/utils";
 import { DeviceId } from "react-native-ble-plx";
 
-import { BatteryData, BatteryIdentifier } from "@/services/ble/battery";
+import { BatteryData, BatteryIdentifier } from "@/services/battery/battery";
+import { CharacteristicIdentifier } from "@/services/ble/ble";
 import { characteristicIsNotifyingAsync, characteristicValueHistory, characteristicValueLastUpdate, deviceHasServiceAndCharacteristicAsync } from "@/services/ble/ble-service";
 import { KV_BATTERY_NOTIFY_UUID, KV_BATTERY_SERVICE_UUID } from "@/services/manufacturers/kilovault/battery-data-types";
 import log from "../log/log-service";
 import { base64ArrayToByteArray, BatteryDataParser } from "../manufacturers/kilovault/BatteryDataParser";
-import { CharacteristicIdentifier } from "./ble-types";
 
 // battery
 const LOG_SRC = "BatteryService";

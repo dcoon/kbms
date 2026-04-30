@@ -1,11 +1,11 @@
 
-import * as Battery from '@/services/ble/battery-service';
+import * as Battery from '@/services/battery/battery-service';
 import { Bluetooth } from '@/services/ble/ble-service';
-import { LoadableState } from '@/services/ble/ble-types';
+import { BluetoothStateIconSource } from '@/services/ble/icons';
 import log from '@/services/log/log-service';
 import { Favorite, Settings } from '@/services/settings/settings-service';
 import { ThemeType } from '@/theme/theme';
-import { getIconForBleState } from '@/util/util';
+import { LoadableState } from '@/util/util';
 import { useRouter } from 'expo-router';
 import { useAtom } from 'jotai';
 import React from 'react';
@@ -149,7 +149,7 @@ export function BleStateAction() {
 
   const [bleState] = useAtom(Bluetooth.bleState);
   const [, snackbar] = useAtom(Settings.snackbar);
-  const icon = getIconForBleState(bleState);
+  const icon = BluetoothStateIconSource(bleState);
 
   function onPress() {
     snackbar(`Bluetooth state: ${bleState}`);

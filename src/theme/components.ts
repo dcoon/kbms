@@ -65,7 +65,7 @@ export const components = {
       borderColor: colors.background, // Green border for Card
       borderWidth: 2,
       margin: DEFAULT_MARGINS.margin,
-      padding: DEFAULT_MARGINS.margin,
+      padding: 0,
     },
     Title: {
       style: {
@@ -73,21 +73,24 @@ export const components = {
       },
       leftStyle: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginLeft: DEFAULT_MARGINS.marginLeft,
+        // justifyContent: 'space-between',
+        alignItems: 'left',
+        margin: 0,
+        padding: 0,
+        marginRight: 0,
       },
       titleStyle: {
         fontSize: fonts.titleSmall.fontSize,
         fontWeight: 'bold',
-        marginLeft: DEFAULT_MARGINS.marginLeft,
-        alignItems: 'baseline',
+        margins: 0,
+        padding: 0,
       },
       rightStyle: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginRight: DEFAULT_MARGINS.marginRight,
+        padding: 0,
         columnGap: 0,
       },
     },
@@ -108,11 +111,11 @@ export const components = {
     },
   },
   SegmentedButtons: {
-    density: "small",
+    density: "compact",
     style: {
       backgroundColor: 'transparent', // Transparent background for SegmentedButtons
     },
-    buttonStyle: {
+    labelStyle: {
       fontSize: 12,
     },
   },
@@ -143,12 +146,21 @@ export const components = {
     },
   },
   section: {
-    headerStyle: {
-      // paddingVertical: DEFAULT_MARGINS.marginVertical,
-      paddingHorizontal: DEFAULT_MARGINS.marginHorizontal,
-      backgroundColor: colors.background, // Light gray background for sections
-      // borderRadius: 5,
-      marginVertical: DEFAULT_MARGINS.marginVertical * 2,
+    header: {
+      style: {
+        backgroundColor: colors.background, // Light gray background for sections
+        padding: 16,
+        marginBottom: 2,
+      },
+      titleStyle: {
+        color: colors.primary, // Dark text for section headers
+        fontSize: fonts.bodyMedium.fontSize,
+        // fontWeight: 'bold',
+      },
+      descriptionStyle: {
+        color: colors.onSurfaceVariant, // Dark text for section description
+        fontSize: fonts.bodySmall.fontSize,
+      },
     },
     contentStyle: {
       // marginTop: DEFAULT_MARGINS.marginTop,

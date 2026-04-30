@@ -68,7 +68,7 @@ export const Gauge = (props: GaugeProps) => {
   const cx = variant.radius + padding;
   const cy = variant.radius + padding;
 
-  const valueString = `${valueprefix ?? ""}${value ?? "-"}${valuesuffix ?? ""}`;
+  const valueString = `${valueprefix ?? ""}${value ?? "--"}${valuesuffix ?? ""}`;
 
   return (
     <Svg height={sizey} width={sizex} viewBox={`0 0 ${sizex} ${sizey}`} {...props}>

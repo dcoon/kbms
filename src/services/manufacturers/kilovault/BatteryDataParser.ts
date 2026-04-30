@@ -1,5 +1,5 @@
-import { BatteryData, BatteryDataBase } from "@/services/ble/battery";
-import { CharacteristicValueType } from '@/services/ble/ble-types';
+import { BatteryData, BatteryDataBase } from "@/services/battery/battery";
+import { CharacteristicValueType } from '@/services/ble/ble';
 import log from "@/services/log/log-service";
 import base64 from "react-native-base64";
 
@@ -141,7 +141,7 @@ export class BatteryDataParser {
 
 
         const battery = new BatteryDataBase();
-        battery.deviceId = "";
+        battery.id = "";
         battery.voltage = voltage;
         battery.current = current;
         battery.capacity = capacity;

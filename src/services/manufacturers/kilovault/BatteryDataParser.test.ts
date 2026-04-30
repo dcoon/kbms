@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { BatteryData } from '@/services/ble/battery';
+import { BatteryData } from '@/services/battery/battery';
 import { log } from '@/services/log/log-service';
 import { describe, expect, it } from '@jest/globals';
 import { act, renderHook } from '@testing-library/react';

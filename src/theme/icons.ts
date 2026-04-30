@@ -3,8 +3,13 @@ import { colors } from './colors';
 
 export const icons = {
   iconSize: 24,
+  alert: { source: 'alert-circle-outline', color: colors.warning },
+  ok: { source: 'check-circle-outline', color: colors.ok },
   home: { source: 'home-outline', color: colors.primary },
   system: { source: 'home-battery-outline' },
+  delete: { source: 'delete', color: colors.onSurface },
+  log: { source: 'file-code-outline', color: colors.onSurface },
+  share: { source: 'share', color: colors.onSurface },
   battery: {
     unknown: { source: 'battery-unknown', color: colors.onSurface },
     alert: { source: 'battery-alert', color: colors.error },
@@ -43,12 +48,23 @@ export const icons = {
   },
   favorite: {
     true: {
-      source: 'heart',
+      source: 'heart-remove',
       color: colors.onSurface,
     },
     false: {
-      source: 'heart-outline',
+      source: 'heart-plus-outline',
       color: colors.onSurface,
     },
+  },
+  rssi: {
+    excellent: { source: 'signal-cellular-4-bar', color: colors.ok },
+    good: { source: 'signal-cellular-3-bar', color: colors.ok },
+    fair: { source: 'signal-cellular-2-bar', color: colors.warning },
+    weak: { source: 'signal-cellular-1-bar', color: colors.error },
+    unknown: { source: 'signal-cellular-outline', color: colors.onSurface },
+  },
+  scanning: {
+    refresh: { source: 'refresh', color: colors.onSurface },
+    stop: { source: 'stop', color: colors.onSurface },
   },
 };

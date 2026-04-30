@@ -1,17 +1,25 @@
-import { LoadableState, State } from '@/services/ble/ble-types';
+import { DefaultTheme, ThemeType } from "@/theme/theme";
+import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
 
 
+// loadable helpers
+export enum LoadableState {
+  hasData = 'hasData',
+  hasError = 'hasError',
+  loading = 'loading'
+} 
+
+export type Loadable<T> = { state: 'loading'; } |
+{ state: 'hasData'; data: Awaited<T>; } |
+{ state: 'hasError'; error: unknown; };
 
 
-export enum BleDeviceTypeIcons {
-    Device = 'devices',
-    Service = 'wrench-outline',
-    Characteristic = 'tag-multiple-outline',
-    Descriptor = 'tag-multiple-outline',
-    Loading = 'loading'
+export enum ConnectionState {
+    Connected = "connected",
+    Connecting = "connecting",
+    Disconnected = "disconnected",
+    Error = "error"
 }
-
-
 
 
 export function getIconForLoadableState(state: LoadableState, hasDataIcon: string = 'unknown'): string {
@@ -27,26 +35,38 @@ export function getIconForLoadableState(state: LoadableState, hasDataIcon: strin
     }
 
 }
-
-
-
-export function getIconForBleState(state: State) {
+export function ConnectionStateMenuText(state: ConnectionState): string {
 
     switch (state) {
-        case State.PoweredOn:
-            return 'bluetooth';
-        case State.PoweredOff:
-            return 'bluetooth-off';
-        case State.Resetting:
-            return 'bluetooth-connect';
-        case State.Unauthorized:
-            return 'bluetooth-settings';
-        case State.Unsupported:
-            return 'bluetooth-off';
-        case State.Unknown:
-            return 'bluetooth-off';
+        case ConnectionState.Connected:
+            return "Disconnect";
+        case ConnectionState.Connecting:
+            return "Connecting...";
+        case ConnectionState.Disconnected:
+            return "Connect";
+        case ConnectionState.Error:
+            return "Retry";
         default:
-            return 'bluetooth-off';
+            return "Unknown";
+    }
+}
+
+export function ConnectionStateIconSource(isDeviceConnected: ConnectionState, theme: ThemeType = DefaultTheme): IconSource {
+    switch (isDeviceConnected) {
+        case ConnectionState.Connected:
+            return theme.icons.connectionState.connected as IconSource;
+        case ConnectionState.Connecting:
+            return theme.icons.connectionState.connecting as IconSource;
+        case ConnectionState.Disconnected:
+            return theme.icons.connectionState.disconnected as IconSource;
+        case ConnectionState.Error:
+            return theme.icons.connectionState.error as IconSource;
+        default:
+            return theme.icons.connectionState.unknown as IconSource; // unknown state
     }
 
 }
+
+
+
+

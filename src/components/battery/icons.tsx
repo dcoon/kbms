@@ -1,0 +1,247 @@
+import { BatteryData, BatteryStatus } from "@/services/battery/battery";
+import { batteryLastSeenIconSource, cellDeltaVIconSource, CellVoltageIconSource, socIconSource } from "@/services/battery/icons";
+import { DeviceId, DeviceOrFavorite } from "@/services/ble/ble";
+import { log } from "@/services/log/log-service";
+import { Favorite, Settings } from "@/services/settings/settings-service";
+import { DefaultTheme, ThemeType } from "@/theme/theme";
+import { useAtom } from "jotai";
+import { useEffect, useState } from "react";
+import { View } from "react-native";
+import { Chip, Icon, Menu, Text, TouchableRipple, useTheme } from "react-native-paper";
+import { IconFromIconSource } from "../ble/icons";
+import { ConnectionStateFromLoadable } from "../util/util";
+
+import { formatDistanceToNow } from "date-fns";
+
+import * as Battery from '@/services/battery/battery-service';
+import { ConnectionStateIconSource, ConnectionStateMenuText } from "@/util/util";
+
+export enum IconMenuOrButton {
+    Icon = "icon",
+    Menu = "menu",
+    Button = "button",
+    Chip = "chip"
+}
+
+export function favoriteIconSource(isFavorite: boolean, theme: ThemeType) {
+    return isFavorite ? theme.icons.favorite.true : theme.icons.favorite.false;
+}
+
+export function FavoriteIcon({ device, onPress, iconMenuOrButton = IconMenuOrButton.Button }: { device: DeviceOrFavorite, onPress?: () => void, iconMenuOrButton?: IconMenuOrButton }) {
+
+    const LOG_PREFIX = "FavoriteIcon";
+
+
+    const [isFavorite, setIsFavorite] = useAtom(Settings.favorite({ id: device.id } as Favorite));
+    const theme = useTheme() as ThemeType;
+    const icon = favoriteIconSource(isFavorite, theme);
+
+
+    function onPressDefault() {
+        log.info(LOG_PREFIX, "Toggling favorite for device ID: ", device.id);
+        setIsFavorite({ id: device.id, name: device.name } as Favorite);
+
+        if (onPress) {
+            onPress();
+        }
+    }
+
+
+    if (iconMenuOrButton === IconMenuOrButton.Menu) {
+
+        const text = isFavorite ? "Remove" : "Add";
+
+        return (
+            <Menu.Item onPress={onPressDefault} title={text} leadingIcon={icon.source} />
+        );
+
+    } else if (iconMenuOrButton === IconMenuOrButton.Icon) {
+        return (
+            <Icon source={icon.source} size={DefaultTheme.icons.iconSize} />
+        );
+    } else {
+        return (
+            <TouchableRipple onPress={onPressDefault} >
+                <Icon source={icon.source} size={DefaultTheme.icons.iconSize} color={icon.color} />
+            </TouchableRipple>
+        );
+    }
+}
+
+export function BatterySocIcon({ soc, charging = false, theme = DefaultTheme }: { soc?: number, charging?: boolean, theme?: ThemeType }) {
+
+    const icon = socIconSource({ soc, charging, theme });
+
+    return <Icon source={icon.source} color={icon.color} size={icon.size} />;
+
+}
+
+function BatteryLastSeen({ battery, onPress, showChip = false }: { battery: BatteryData | undefined; onPress?: () => void; showChip: boolean }) {
+
+    const [lastRefreshed, setLastRefreshed] = useState(Date.now());
+
+    const theme = useTheme() as ThemeType;
+
+
+
+    const INTERVAL_DURATION = 60000;
+
+    const refreshEveryMinute = useEffect(() => {
+        const interval = setInterval(() => {
+            setLastRefreshed(Date.now());
+        }, INTERVAL_DURATION);
+        return () => clearInterval(interval);
+    }, []);
+
+
+    if (onPress === undefined || onPress === null) {
+        onPress = onPressDefault;
+    }
+
+    function onPressDefault() {
+        // setIsBatteryConnected(true);
+    }
+
+    const lastUpdated = battery?.lastUpdated;
+    const icon = batteryLastSeenIconSource(lastUpdated, theme);
+    const lastSeenText = lastUpdated ? formatDistanceToNow(lastUpdated, { addSuffix: true }) : "Unknown";
+
+    if (showChip) {
+
+        return (
+            <Chip
+                icon={(props) => <IconFromIconSource source={icon} theme={theme} />}
+                onPress={onPress} style={theme.components.Chip.style}
+                textStyle={theme.components.Chip.textStyle}
+                compact={true}
+            >{lastSeenText}</Chip>
+        );
+    } else {
+        return (
+            <IconFromIconSource source={icon} theme={theme} />
+        );
+    }
+
+
+}
+
+export function BatteryLastSeenChip({ battery, onPress }: { battery: BatteryData | undefined; onPress?: () => void; }) {
+
+    return (<BatteryLastSeen battery={battery} onPress={onPress} showChip={true} />);
+}
+
+
+export function BatteryLastSeenListIcon({ battery, onPress }: { battery: BatteryData | undefined; onPress?: () => void; }) {
+    return <BatteryLastSeen battery={battery} onPress={onPress} showChip={false} />;
+}
+
+export function BatteryIsConnectedIcon({ battery, onPress, iconMenuOrButton = IconMenuOrButton.Icon }: { battery: { id: DeviceId }; onPress?: () => void; iconMenuOrButton?: IconMenuOrButton }) {
+
+    const theme = useTheme() as ThemeType;
+    const deviceId = battery.id;
+    const [isConnectedLoadable, setIsConnected] = useAtom(Battery.isBatteryConnected(deviceId));
+    const connectedState = ConnectionStateFromLoadable({ loader: isConnectedLoadable });
+    const icon = ConnectionStateIconSource(connectedState);
+
+    const onPressDefault = () => {
+        const isConnected = isConnectedLoadable.state === 'hasData' && isConnectedLoadable.data === true;
+        setIsConnected(!isConnected);
+
+        if (onPress) {
+            onPress();
+        }
+    };
+
+    if (iconMenuOrButton === IconMenuOrButton.Menu) {
+
+        const text = ConnectionStateMenuText(connectedState);
+        const name = (icon as { source: string }).source as string;
+
+        return (
+            <Menu.Item onPress={onPressDefault} title={text} leadingIcon={name} />
+        );
+
+    } else if (iconMenuOrButton === IconMenuOrButton.Button) {
+        return (
+            <TouchableRipple onPress={onPressDefault}>
+                <IconFromIconSource source={icon} theme={theme} />
+            </TouchableRipple>
+        );
+    } else {
+        return (
+            <IconFromIconSource source={icon} theme={theme} />
+        );
+    }
+}
+
+export function CellVoltageIcon({ cellv }: { cellv?: number }) {
+
+
+    const theme = useTheme() as typeof DefaultTheme;
+
+    const icon = CellVoltageIconSource({ cellv, theme });
+
+    return <Icon source={icon.source} color={icon.color} size={icon.size} />;
+}
+
+export function BatteryDeltaVIcon({ deltav  }: { deltav?: number }) {
+
+    const theme = useTheme() as typeof DefaultTheme;
+    const icon = cellDeltaVIconSource({ deltav });
+
+
+    if(deltav === undefined || deltav === null || isNaN(deltav)) {
+        return null;
+    }
+
+    const deltavText = deltav  ? Math.round(deltav) + "mV" : "";
+
+        return (
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center' }}>
+                <IconFromIconSource source={icon} theme={theme} />
+                <Text variant="bodySmall" style={{ marginRight: 10 }}>{deltavText}</Text>
+            </View>
+        );
+
+}
+
+export function BatteryStatusFlags({ status, showNoFlags }: { status: BatteryStatus | undefined, showNoFlags?: boolean }) {
+
+    const theme = useTheme() as typeof DefaultTheme;
+
+
+    if (!status) {
+        return null;
+    }
+
+    const icon = theme.icons.battery.alert;
+    const flags = ["HV", "LV", "OCC", "OCD", "LTD", "LTC", "HTD", "HTC"] as const;
+
+
+    const activeFlags = flags.filter(flag => status[flag]);
+
+    if (activeFlags.length === 0) {
+        return showNoFlags ? (<Chip key="OK"
+            icon={() => (<Icon source={theme.icons.ok.source} color={theme.icons.ok.color} size={theme.icons.iconSize} />)}
+            mode="outlined"
+            style={theme.components.Chip.style}
+            textStyle={theme.components.Chip.textStyle}
+            compact={true}
+        >OK</Chip>) : null;
+    }
+
+    return (
+        <View style={{ flexDirection: 'row', }}>
+            {activeFlags.map(flag => (
+                <Chip key={flag}
+                    icon={() => (<Icon source={theme.icons.alert.source} color={theme.icons.alert.color} size={theme.icons.iconSize} />)}
+                    mode="outlined"
+                    style={theme.components.Chip.style}
+                    textStyle={theme.components.Chip.textStyle}
+                    compact={true}
+                >{flag}</Chip>
+            ))}
+        </View>
+    );
+}
+
