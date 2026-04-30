@@ -35,16 +35,16 @@ function DropdownValue(props: ListItemProps) {
 
   return (
     <View
-    style={{ width: "40%" }}
+      style={{ width: "40%" }}
     >
-    <Dropdown
-      label={title}
+      <Dropdown
+        label={title}
 
-      // placeholder={"Select " + title}
-      options={options}
-      value={selectedValue}
-      onSelect={onPress}
-    />
+        // placeholder={"Select " + title}
+        options={options}
+        value={selectedValue}
+        onSelect={onPress}
+      />
     </View>
     // <Text>{JSON.stringify(options)}</Text>
   );
@@ -96,18 +96,20 @@ function BooleanValue(props: ListItemProps) {
 
 
 
-function LeftSideContent({ icon }: ListItemProps) {
+function LeftSideContent({ icon, left }: ListItemProps) {
 
 
   const theme = useTheme() as ThemeType;
-  const name = (icon as { source: string }).source as string;
-  const color = theme.colors.onSurface;
 
-  if (icon) {
+  if (left !== undefined) {
+    return (left);
+  } else if (icon) {
+    const name = (icon as { source: string }).source as string;
+    const color = theme.colors.onSurface;
+
     return (
       <PaperList.Icon icon={name} color={color} />
     );
-
   } else {
     return null;
   }
@@ -119,7 +121,7 @@ function RightSideContent(props: ListItemProps) {
   const { right, value, onPress, editable } = props;
 
   if (right) {
-    return null;
+    return (right);
   } else if (onPress !== undefined && value === undefined) {
     return (<ButtonValue {...props} />);
   } else if (value === undefined) {

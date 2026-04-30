@@ -64,12 +64,14 @@ export const components = {
       backgroundColor: colors.background, // White background for Card
       borderColor: colors.background, // Green border for Card
       borderWidth: 2,
-      margin: DEFAULT_MARGINS.margin,
+      margin: 2,
       padding: 0,
     },
     Title: {
       style: {
-        marginHorizontal: DEFAULT_MARGINS.marginHorizontal,
+        marginHorizontal: 4,
+        paddingVertical: 0,
+        minHeight: 36,
       },
       leftStyle: {
         flexDirection: 'row',
@@ -80,8 +82,9 @@ export const components = {
         marginRight: 0,
       },
       titleStyle: {
-        fontSize: fonts.titleSmall.fontSize,
+        fontSize: fonts.titleMedium.fontSize,
         fontWeight: 'bold',
+        // alignSelf: 'left',
         margins: 0,
         padding: 0,
       },
@@ -100,8 +103,10 @@ export const components = {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginHorizontal: DEFAULT_MARGINS.marginHorizontal,
-        // marginBottom: DEFAULT_MARGINS.marginBottom,
+        marginHorizontal: 4,
+        paddingVertical: 4,
+        paddingTop: 0,
+        paddingBottom: 4,
       },
     },
   },

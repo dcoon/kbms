@@ -1,6 +1,6 @@
 
 import { ValueChip } from '@/components/ui/value-chip';
-import { BatteryData, BatteryDataBase } from "@/services/battery/battery";
+import { BatteryData } from "@/services/battery/battery";
 import * as Battery from '@/services/battery/battery-service';
 import { socIconSource } from "@/services/battery/icons";
 import { Device, DeviceId } from '@/services/ble/ble';
@@ -11,6 +11,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { Card, Icon, IconButton, Menu, Text, useTheme } from 'react-native-paper';
 import { OnDevicePress } from '../ble/ble';
+import { IconFromIconSource } from '../ble/icons';
 import { Gauge } from '../ui/gauge';
 import { BatteryIsConnectedIcon, BatteryLastSeenListIcon, FavoriteIcon, IconMenuOrButton } from "./icons";
 
@@ -18,10 +19,12 @@ import { BatteryIsConnectedIcon, BatteryLastSeenListIcon, FavoriteIcon, IconMenu
 function LeftContent({ battery }: { battery: BatteryData }) {
 
   const theme = useTheme() as typeof DefaultTheme;
+  const soc = battery.soc; //battery.soc;
+  const icon = socIconSource({ soc: soc, theme });
 
   return (
     <View style={theme.components.Card.Title.leftStyle as any}>
-      <Icon source={theme.icons.battery.high.source} size={theme.icons.iconSize} />
+      <IconFromIconSource source={icon} theme={theme} />
     </View>
   );
 }
@@ -67,13 +70,14 @@ function BatteryCardMenu({ battery }: { battery: BatteryData }) {
 }
 
 
-function BatteryCardContent({ battery }: { battery?: BatteryData }) {
+function BatteryCardContent({ battery }: { battery?: Partial<BatteryData>}) {
 
   const theme = useTheme() as typeof DefaultTheme;
 
   const soc = battery?.soc;
-  const socIC = soc !== undefined ? socIconSource({ soc, theme }) : theme.icons.battery.unknown;
-  const strokeColor = socIC.color;
+  const socIS = soc !== undefined ? socIconSource({ soc, theme }) : theme.icons.battery.soc.unknown;
+
+  const strokeColor = (socIS as {source: string; color: string; size: number}).color;
   const voltage = battery?.voltage != undefined ? battery.voltage / 1000 : undefined;
   const current = battery?.current !== undefined ? battery.current / 1000 : undefined;
   const watts = voltage && current !== undefined ? voltage * current : undefined;
@@ -120,7 +124,7 @@ export function BatteryCard({ deviceOrFavorite, onDevicePress }: BatteryCardProp
 
   const [discoveredBattery] = useAtom(Battery.battery(deviceId));
 
-  const battery = discoveredBattery ? discoveredBattery : new BatteryDataBase({ id: deviceId, name: name });
+  const battery = discoveredBattery ? discoveredBattery : { id: deviceId, name: name } as BatteryData;
 
   // TODO: ensure batteries have deviceId
   battery.id = deviceId;
@@ -161,7 +165,7 @@ export function BatteryCardEmpty({ onDevicePress }: { onDevicePress?: OnDevicePr
       theme={theme.components.PrimaryCard.theme as any}>
       <Card.Title
         title="No Batteries"
-        left={(props) => <Icon source={theme.icons.battery.unknown.source} size={theme.icons.iconSize} />}
+        left={(props) => <Icon source={theme.icons.battery.soc.unknown.source} size={theme.icons.iconSize} />}
         style={theme.components.Card.Title.style}
       />
       <Card.Content>

@@ -19,7 +19,7 @@ import { uilog as log } from '@/services/log/log-service';
 import { battery as batteryAtom, isBatteryConnected } from '@/services/battery/battery-service';
 
 import { BatteryCardLarge } from "@/components/battery/battery-card-large";
-import { BatteryDeltaVIcon, BatteryStatusFlags, CellVoltageIcon } from '@/components/battery/icons';
+import { BatteryDeltaVIcon, BatteryStatusIcon, CellVoltageIcon } from '@/components/battery/icons';
 
 const LOG_SRC = "BatteryScreen";
 
@@ -63,9 +63,9 @@ function BatteryDataAccordion({ device, children }: { device: Device, children?:
 
       <List.Item
         title="Status"
-        description="HV: High Voltage, LV: Low Voltage, OCC: Over Current Charge, OCD: Over Current Discharge, LTD: Long Term Disable, LTC: Long Term Charge, HTD: High Temperature Disable, HTC: High Temperature Charge"
+        // description="HV: High Voltage, LV: Low Voltage, OCC: Over Current Charge, OCD: Over Current Discharge, LTD: Long Term Disable, LTC: Long Term Charge, HTD: High Temperature Disable, HTC: High Temperature Charge"
         icon="alert-outline"
-        right={<BatteryStatusFlags status={battery?.status} />}
+        right={<BatteryStatusIcon status={battery?.status} showNoFlags={true} />}
       />
 
 
@@ -178,8 +178,8 @@ function CellDataAccordion({ device }: { device: Device }) {
         renderItem={({ item, index }) => (
           <List.Item
             title={`Cell ${index + 1}`}
-            value={item.voltage ? (item.voltage / 1000).toFixed(3) + "V" : "Unknown"}
-            left={CellVoltageIcon({ cellv: item.voltage })}
+            value={item.voltage ? (item.voltage / 1000).toFixed(2) + "V" : "Unknown"}
+            left={<CellVoltageIcon cellv={item.voltage} />}
           />
         )}
       />

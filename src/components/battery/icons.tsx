@@ -1,5 +1,5 @@
 import { BatteryData, BatteryStatus } from "@/services/battery/battery";
-import { batteryLastSeenIconSource, cellDeltaVIconSource, CellVoltageIconSource, socIconSource } from "@/services/battery/icons";
+import { batteryLastSeenIconSource, cellDeltaVIconSource, cellVoltageIconSource, socIconSource } from "@/services/battery/icons";
 import { DeviceId, DeviceOrFavorite } from "@/services/ble/ble";
 import { log } from "@/services/log/log-service";
 import { Favorite, Settings } from "@/services/settings/settings-service";
@@ -15,6 +15,7 @@ import { formatDistanceToNow } from "date-fns";
 
 import * as Battery from '@/services/battery/battery-service';
 import { ConnectionStateIconSource, ConnectionStateMenuText } from "@/util/util";
+import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
 
 export enum IconMenuOrButton {
     Icon = "icon",
@@ -72,7 +73,7 @@ export function BatterySocIcon({ soc, charging = false, theme = DefaultTheme }: 
 
     const icon = socIconSource({ soc, charging, theme });
 
-    return <Icon source={icon.source} color={icon.color} size={icon.size} />;
+    return <IconFromIconSource source={icon} theme={theme} />;
 
 }
 
@@ -178,54 +179,54 @@ export function CellVoltageIcon({ cellv }: { cellv?: number }) {
 
 
     const theme = useTheme() as typeof DefaultTheme;
+    const icon = cellVoltageIconSource({ cellv, theme });
 
-    const icon = CellVoltageIconSource({ cellv, theme });
+    return <IconFromIconSource source={icon} theme={theme} />;
 
-    return <Icon source={icon.source} color={icon.color} size={icon.size} />;
+
 }
 
-export function BatteryDeltaVIcon({ deltav  }: { deltav?: number }) {
+export function BatteryDeltaVIcon({ deltav }: { deltav?: number }) {
 
     const theme = useTheme() as typeof DefaultTheme;
     const icon = cellDeltaVIconSource({ deltav });
+    // const { source, color, size } = icon as { source: string; color: string; size: number };
 
 
-    if(deltav === undefined || deltav === null || isNaN(deltav)) {
+    if (deltav === undefined || deltav === null || isNaN(deltav)) {
         return null;
     }
 
-    const deltavText = deltav  ? Math.round(deltav) + "mV" : "";
+    const deltavText = deltav ? Math.round(deltav) + "mV" : "";
 
-        return (
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center' }}>
-                <IconFromIconSource source={icon} theme={theme} />
-                <Text variant="bodySmall" style={{ marginRight: 10 }}>{deltavText}</Text>
-            </View>
-        );
+    return (
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center' }}>
+            <IconFromIconSource source={icon} theme={theme} />
+            <Text variant="bodySmall" style={{ marginRight: 10 }}>{deltavText}</Text>
+        </View>
+    );
 
 }
 
-export function BatteryStatusFlags({ status, showNoFlags }: { status: BatteryStatus | undefined, showNoFlags?: boolean }) {
+export function BatteryStatusIcon({ status, showNoFlags }: { status: BatteryStatus | undefined, showNoFlags?: boolean }) {
 
     const theme = useTheme() as typeof DefaultTheme;
 
-
-    if (!status) {
-        return null;
-    }
-
-    const icon = theme.icons.battery.alert;
+    const icon = theme.icons.battery.status.alert;
     const flags = ["HV", "LV", "OCC", "OCD", "LTD", "LTC", "HTD", "HTC"] as const;
 
+    if(status === undefined) {
+        status = new BatteryStatus();
+    }
 
     const activeFlags = flags.filter(flag => status[flag]);
 
     if (activeFlags.length === 0) {
         return showNoFlags ? (<Chip key="OK"
-            icon={() => (<Icon source={theme.icons.ok.source} color={theme.icons.ok.color} size={theme.icons.iconSize} />)}
+            icon={icon as IconSource}
             mode="outlined"
             style={theme.components.Chip.style}
-            textStyle={theme.components.Chip.textStyle}
+            textStyle={{ ...theme.components.Chip.textStyle, color: theme.icons.ok.color }}
             compact={true}
         >OK</Chip>) : null;
     }
@@ -234,10 +235,10 @@ export function BatteryStatusFlags({ status, showNoFlags }: { status: BatterySta
         <View style={{ flexDirection: 'row', }}>
             {activeFlags.map(flag => (
                 <Chip key={flag}
-                    icon={() => (<Icon source={theme.icons.alert.source} color={theme.icons.alert.color} size={theme.icons.iconSize} />)}
+                    icon={icon as IconSource}
                     mode="outlined"
                     style={theme.components.Chip.style}
-                    textStyle={theme.components.Chip.textStyle}
+                    textStyle={{ ...theme.components.Chip.textStyle, color: theme.icons.alert.color }}
                     compact={true}
                 >{flag}</Chip>
             ))}

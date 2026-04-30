@@ -4,9 +4,10 @@ import { LogLevel, LogLevelOptions, Settings } from '@/services/settings/setting
 import * as Updates from 'expo-updates';
 import { useAtom } from 'jotai';
 import React, { useCallback } from 'react';
-import { ScrollView } from 'react-native';
-import { useTheme } from 'react-native-paper';
+import { Alert, Platform, ScrollView, View } from 'react-native';
+import { Text, TouchableRipple, useTheme } from 'react-native-paper';
 
+import { IconFromIconSource } from '@/components/ble/icons';
 import { shareLogFile } from '@/components/ui/file-share';
 import { ThemeType } from '@/theme/theme';
 import * as Application from 'expo-application';
@@ -81,25 +82,94 @@ export default function SettingsScreen() {
     );
   }
 
-  // function AdvancedAccordion() {
 
-  //   const [developerMode, setDeveloperMode] = useAtom(Settings.developerMode);
+  function alert(title: string, message?: string, onConfirmed?: () => void) {
+    if (Platform.OS === 'web') {
+      const text = message ? `${title}\n\n${message}` : title;
+      if (onConfirmed === undefined) {
+        window.alert(text);
+      } else {
+        const confirmed = window.confirm(text);
+        if (confirmed && onConfirmed) {
+          onConfirmed();
+        }
+      }
+    } else {
+      Alert.alert(title, message, [{ text: 'OK', onPress: onConfirmed }]);
+    }
+  }
+
+  function UpdateAvailableIcon() {
+
+    const [updateResult, setUpdateResult] = React.useState<Updates.UpdateCheckResult | undefined>(undefined);
+    const theme = useTheme() as ThemeType;
+    const icon = theme.icons.settings.app.update as IconSource;
 
 
-  //   return (
-  //     <List.Accordion id="advanced" title="Advanced" description="Advanced settings">
-  //       <List.Item title="Developer Mode" description="Enable developer mode for debugging" icon="dev-to"
-  //         editable={true}
-  //         value={developerMode}
-  //         onPress={(value) => setDeveloperMode(value)}
-  //       />
-  //     </List.Accordion>
-  //   );
-  // }
+    function isDevelopmentBuild() {
+      // __DEV__ is true when running from Metro; Updates.isEnabled is false in environments
+      // where OTA updates are not available (e.g. Expo Go/dev runtime).
+      return __DEV__ || !Updates.isEnabled;
+    }
+
+    const fetchUpdates = useCallback(async () => {
+      const fetchUpdate = await Updates.fetchUpdateAsync();
+      alert('Update downloaded!', 'Restarting app...', async () => {
+        await Updates.reloadAsync();
+      });
+    }, []);
+
+
+    const checkForUpdates = useCallback(async () => {
+
+      if (isDevelopmentBuild()) {
+        return { isAvailable: false };
+      }
+
+      const result = await Updates.checkForUpdateAsync();
+      setUpdateResult(result);
+
+      return result;
+    }, []);
+
+    // const checkForUpdatesAtStartup = useEffect(() => {
+    //   checkForUpdates();
+    // }, [checkForUpdates]);
+
+    const checkIfUserWantsToUpdate = useCallback(() => {
+      alert('An update is available! Do you want to download and install it now?', undefined, fetchUpdates);
+    }, [updateResult, fetchUpdates]);
+
+    const onPressCheckForUpdates = useCallback(async () => {
+      if (isDevelopmentBuild()) {
+        alert('You are running a development build. Update checks are not available.');
+        return;
+      }
+
+      const update = await checkForUpdates();
+      if (update.isAvailable) {
+        checkIfUserWantsToUpdate();
+      } else {
+        alert('Your app is up to date!');
+      }
+    }, []);
+
+
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center', columnGap: 4 }}>
+        <TouchableRipple onPress={onPressCheckForUpdates} >
+          <IconFromIconSource source={icon} theme={theme} />
+        </TouchableRipple>
+        <Text>{Updates.createdAt?.toLocaleDateString()}</Text>
+      </View>
+    );
+
+  }
+
 
   function AboutAccordion() {
 
-    const theme = useTheme();
+    const theme = useTheme() as ThemeType;
 
 
     function appReleaseTypeToDescription(releaseType: Application.ApplicationReleaseType | undefined): string {
@@ -123,22 +193,21 @@ export default function SettingsScreen() {
       <List.Accordion id="about" title="About" description="Learn more about the app and its developers">
 
         <List.Section title="App Information" >
-          <List.Item title="Version" value={Application.nativeApplicationVersion} icon="information" />
-          <List.Item title="Build" value={Application.nativeBuildVersion} icon="information" />
-          {/* <List.Item title="Release Type" value={appReleaseTypeToDescription(Application.)} icon="information" /> */}
-          <List.Item title="Application ID" value={Application.applicationId} icon="information" />
-          <List.Item title="Application Name" value={Application.applicationName} icon="information" />
-          <List.Item title="Android ID" value={Application.getAndroidId} icon="information" />
+          <List.Item title="Version" value={Application.nativeApplicationVersion} icon={theme.icons.settings.app.version as IconSource} />
+          <List.Item title="Build" value={Application.nativeBuildVersion} icon={theme.icons.settings.app.build as IconSource} />
+          <List.Item title="Updated" icon={theme.icons.settings.app.updated as IconSource} right={<UpdateAvailableIcon />} />
+          <List.Item title="License" description="MIT License" icon={theme.icons.settings.app.license as IconSource} />
+          <List.Item title="Contact Support" description="https://github.com/dcoon/kbms" icon={theme.icons.settings.app.contact as IconSource} />
+
         </List.Section>
 
         <List.Section title="Runtime Information">
-          <List.Item title="Channel" value={Updates.channel} icon="information" />
-          <List.Item title="Runtime" value={Updates.runtimeVersion} icon="information" />
-          <List.Item title="Updated" value={Updates.createdAt} icon="information" />
-          <List.Item title="Check Updates" value={Updates.checkAutomatically} icon="information" />
-          <List.Item title="Theme Version" icon="github" value={theme.version} />
-          <List.Item title="License" description="MIT License" icon="file-document" />
-          <List.Item title="Contact Support" description="https://github.com/dcoon/kbms" icon="lifebuoy" />
+          <List.Item title="Application ID" value={Application.applicationId} icon={theme.icons.settings.app.id as IconSource} />
+          <List.Item title="Android ID" value={Application.getAndroidId} icon={theme.icons.settings.app.id as IconSource} />
+          <List.Item title="Application Name" value={Application.applicationName} icon={theme.icons.settings.app.name as IconSource} />
+          <List.Item title="Channel" value={Updates.channel} icon={theme.icons.settings.app.channel as IconSource} />
+          <List.Item title="Runtime" value={Updates.runtimeVersion} icon={theme.icons.settings.app.runtime as IconSource} />
+          <List.Item title="Theme Version" icon={theme.icons.settings.app.version as IconSource} value={theme.version} />
         </List.Section>
       </List.Accordion>
     );
