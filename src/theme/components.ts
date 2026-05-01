@@ -147,7 +147,7 @@ export const components = {
     },
     valueStyle: {
       // color: colors.onSurface, // Green text for Chips
-      fontSize: fonts.labelLarge.fontSize,
+      fontSize: fonts.titleMedium.fontSize,
     },
   },
   section: {
