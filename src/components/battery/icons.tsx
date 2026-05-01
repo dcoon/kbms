@@ -5,16 +5,16 @@ import { log } from "@/services/log/log-service";
 import { Favorite, Settings } from "@/services/settings/settings-service";
 import { DefaultTheme, ThemeType } from "@/theme/theme";
 import { useAtom } from "jotai";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { View } from "react-native";
 import { Chip, Icon, Menu, Text, TouchableRipple, useTheme } from "react-native-paper";
 import { IconFromIconSource } from "../ble/icons";
 import { ConnectionStateFromLoadable } from "../util/util";
 
-import { formatDistanceToNow } from "date-fns";
 
 import * as Battery from '@/services/battery/battery-service';
 import { ConnectionStateIconSource, ConnectionStateMenuText } from "@/util/util";
+import { formatDistance, formatDistanceStrict } from "date-fns";
 import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
 
 export enum IconMenuOrButton {
@@ -80,12 +80,13 @@ export function BatterySocIcon({ soc, charging = false, theme = DefaultTheme }: 
 function BatteryLastSeen({ battery, onPress, showChip = false }: { battery: BatteryData | undefined; onPress?: () => void; showChip: boolean }) {
 
     const [lastRefreshed, setLastRefreshed] = useState(Date.now());
+    const [,pushSnackbar] = useAtom(Settings.snackbar);
 
     const theme = useTheme() as ThemeType;
 
 
 
-    const INTERVAL_DURATION = 60000;
+    const INTERVAL_DURATION = 10 * 1000;  // refresh every 10 seconds
 
     const refreshEveryMinute = useEffect(() => {
         const interval = setInterval(() => {
@@ -95,31 +96,50 @@ function BatteryLastSeen({ battery, onPress, showChip = false }: { battery: Batt
     }, []);
 
 
+    const getIcon = useCallback(() => {
+        const lastUpdated = battery?.lastUpdated;
+        return batteryLastSeenIconSource(lastRefreshed, lastUpdated, theme);
+    }, [battery, theme, lastRefreshed]);
+
+    const getLastSeenText = useCallback((strict = false) => {
+        const lastUpdated = battery?.lastUpdated;
+        const now = Math.max(lastRefreshed, Date.now());
+
+        if (lastUpdated === undefined || lastUpdated === null) {
+            return "Unknown";
+        } else if (strict) {
+            return formatDistanceStrict(lastUpdated, now, { addSuffix: true });
+        } else {
+            return formatDistance(lastUpdated, now, { addSuffix: true });
+        }
+        
+    }, [battery, lastRefreshed]);
+
     if (onPress === undefined || onPress === null) {
         onPress = onPressDefault;
     }
 
     function onPressDefault() {
         // setIsBatteryConnected(true);
+        const lastSeenText = getLastSeenText(true);
+        pushSnackbar(`Battery last seen ${lastSeenText}`);
     }
-
-    const lastUpdated = battery?.lastUpdated;
-    const icon = batteryLastSeenIconSource(lastUpdated, theme);
-    const lastSeenText = lastUpdated ? formatDistanceToNow(lastUpdated, { addSuffix: true }) : "Unknown";
 
     if (showChip) {
 
         return (
             <Chip
-                icon={(props) => <IconFromIconSource source={icon} theme={theme} />}
+                icon={(props) => <IconFromIconSource source={getIcon()} theme={theme} />}
                 onPress={onPress} style={theme.components.Chip.style}
                 textStyle={theme.components.Chip.textStyle}
                 compact={true}
-            >{lastSeenText}</Chip>
+            >{getLastSeenText()}</Chip>
         );
     } else {
         return (
-            <IconFromIconSource source={icon} theme={theme} />
+            <TouchableRipple onPress={onPress}>
+                 <IconFromIconSource source={getIcon()} theme={theme} />
+            </TouchableRipple>
         );
     }
 

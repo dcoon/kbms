@@ -155,9 +155,9 @@ export enum BatterySoCLevel {
     VeryLow = 0
 }
 export enum LastSeenStatus {
-    Recent = 60 * 1,// seen within the last 1 minute
-    Moderate = 60 * 2,// seen within the last 2 minutes
-    Old = 60 * 5,// seen within the last 5 minutes
+    Recent = 1 * 60,// seen within the last 1 minute
+    Moderate = 2 * 60,// seen within the last 2 minutes
+    Old = 5 * 60,// seen within the last 5 minutes
     Never = Infinity,
     Unknown = -1
 }

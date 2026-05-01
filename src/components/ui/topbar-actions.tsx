@@ -177,7 +177,7 @@ function FavoriteActionNotUndefined({ device }: { device: DeviceOrFavorite }) {
   const appBarTheme = getAppBarTheme(theme);
 
   return (
-    <Appbar.Action icon={isFavorite ? theme.icons.favorite.true.source : theme.icons.favorite.false.source} onPress={() => { setIsFavorite(favorite) }} theme={appBarTheme} />
+    <Appbar.Action icon={isFavorite ? theme.icons.favorite.true.source : theme.icons.favorite.false.source} color={appBarTheme.colors.onSurface} onPress={() => { setIsFavorite(favorite) }} theme={appBarTheme} />
   );
 
 }

@@ -20,12 +20,13 @@ export function socIconSource({ soc, charging = false, theme = DefaultTheme }: {
     return { source: icons.alert.source, color: icons.alert.color, size: theme.icons.iconSize } as IconSource;
   }
 
-}export function batteryLastSeenIconSource(lastUpdated?: Date, theme: ThemeType = DefaultTheme): IconSource {
+}export function batteryLastSeenIconSource(now: number, lastUpdated?: Date, theme: ThemeType = DefaultTheme): IconSource {
 
     if (lastUpdated === undefined || lastUpdated === null) {
         return theme.icons.battery.lastSeen.unknown as IconSource; // never seen
     } else {
-        const secondsSinceLastUpdate = (Date.now() - lastUpdated.getTime()) / 1000;
+        const msSinceLastUpdate = now - lastUpdated.getTime();
+        const secondsSinceLastUpdate = msSinceLastUpdate / 1000;
 
         if (secondsSinceLastUpdate <= LastSeenStatus.Recent) {
             return theme.icons.battery.lastSeen.recent as IconSource;
