@@ -61,6 +61,10 @@ export const icons = {
       source: 'heart-plus-outline',
       color: colors.onSurface,
     },
+    unknown: {
+      source: 'heart-off-outline',
+      color: colors.onSurface,
+    },
   },
   rssi: {
     excellent: { source: 'signal-cellular-4-bar', color: colors.ok },

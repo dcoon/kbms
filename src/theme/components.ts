@@ -127,11 +127,11 @@ export const components = {
   Chip: {
     style: {
       backgroundColor: 'transparent', // Transparent background for Chips
-      borderColor: colors.onSurface, // Green border for Chips
+      borderColor: colors.onSurfaceVariant, // Green border for Chips
       borderWidth: 1,
     },
     textStyle: {
-      color: colors.onSurface, // Green text for Chips
+      color: colors.onSurfaceVariant, // Green text for Chips
       fontSize: 12,
     },
   },
@@ -175,4 +175,12 @@ export const components = {
       // padding: DEFAULT_MARGINS.margin,
     },
   },
+  appBar: {
+    theme: {
+      colors: {
+        surface: colors.primary, // Green background for AppBar
+        onSurface: colors.onPrimary, // Green background for AppBar
+      },
+    },
+  }
 };

@@ -9,11 +9,10 @@ import { ScrollView } from 'react-native';
 import { LastSeenListItem, List } from '@/components/list/list-item';
 import { ScreenLayout } from '@/components/ui/screen-layout';
 import * as Bluetooth from '@/services/ble/ble-service';
-import { KV_BATTERY_NOTIFY_UUID, KV_BATTERY_SERVICE_UUID } from '@/services/manufacturers/kilovault/battery-data-types';
 import { useAtom } from 'jotai';
 
 
-import { FavoriteAction, IsNotifyingAction } from '@/components/ui/topbar-actions';
+import { FavoriteAction, IsBatteryConnectedAction } from '@/components/ui/topbar-actions';
 import { uilog as log } from '@/services/log/log-service';
 
 import { battery as batteryAtom, isBatteryConnected } from '@/services/battery/battery-service';
@@ -200,14 +199,10 @@ function SettingsAccordion({ device }: { device: Device }) {
 
 function AppBarActions({ device }: { device?: Device }) {
 
-  if (!device) {
-    return null;
-  }
-
   return (
     <>
-      <FavoriteAction deviceId={device.id} name={device.name || ""} />
-      <IsNotifyingAction deviceId={device.id} serviceUUID={KV_BATTERY_SERVICE_UUID} characteristicUUID={KV_BATTERY_NOTIFY_UUID} />
+      <FavoriteAction device={device} />
+      <IsBatteryConnectedAction device={device} />
     </>
 
   );

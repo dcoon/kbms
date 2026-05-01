@@ -1,9 +1,11 @@
 
-import { StyleSheet, View } from 'react-native';
-import { Appbar } from 'react-native-paper';
+import { View } from 'react-native';
+import { Appbar, useTheme } from 'react-native-paper';
 
-import { BackAction, BleStateAction } from '@/components/ui/topbar-actions';
+import { BleStateAction, getAppBarTheme } from '@/components/ui/topbar-actions';
+import { ThemeType } from '@/theme/theme';
 import { useRouter } from 'expo-router';
+import React from 'react';
 import { IconSource } from 'react-native-paper/lib/typescript/components/Icon';
 
 
@@ -12,7 +14,7 @@ interface ScreenLayoutProps {
     title: string;
     subtitle?: string;
     icon?: IconSource;
-    showBackAction?: boolean ;
+    showBackAction?: boolean;
     onPressIcon?: () => void;
     onPressBack?: () => void;
     actions?: React.ReactNode;
@@ -24,6 +26,8 @@ export function ScreenLayout({ children, title, subtitle, icon, onPressIcon,
     onPressBack,
     actions, showBackAction = true }: ScreenLayoutProps) {
 
+    const theme = useTheme() as ThemeType;
+    const appBarTheme = getAppBarTheme(theme);
     const router = useRouter();
 
     if (!onPressBack) {
@@ -32,12 +36,14 @@ export function ScreenLayout({ children, title, subtitle, icon, onPressIcon,
 
     // TODO: switch back to using AppTopBar
     return (
-        <View style={styles.container}>
+        <View>
 
-            <Appbar.Header>
-                <BackAction visible={showBackAction} />
-                <Appbar.Content title={title} />
-                <Appbar.Content title={subtitle} />
+            <Appbar.Header
+                theme={appBarTheme} // Use onSurfaceVariant for AppBar text
+            >
+                <BackAction visible={showBackAction} theme={appBarTheme} />
+                <Appbar.Content title={title}
+                />
                 <BleStateAction />
                 {actions}
             </Appbar.Header>
@@ -52,11 +58,17 @@ export function ScreenLayout({ children, title, subtitle, icon, onPressIcon,
 }
 
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1, // Ensures the view takes up the whole screen
-    },
-    scrollContent: {
-        paddingBottom: 20, // Prevents the last item from being cut off
-    },
-});
+function BackAction({ visible, theme }: { visible: boolean; theme: ThemeType; }) {
+
+    const router = useRouter();
+
+    if (!visible) {
+        return <View style={{ width: 52 }} />; // Placeholder to keep title centered
+    } else {
+        return (
+            <Appbar.BackAction onPress={() => router.back()}
+                theme={theme} />
+        );
+    }
+
+}
