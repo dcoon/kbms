@@ -82,7 +82,7 @@ export const components = {
         marginRight: 0,
       },
       titleStyle: {
-        fontSize: fonts.titleMedium.fontSize,
+        fontSize: fonts.titleLarge.fontSize,
         fontWeight: 'bold',
         // alignSelf: 'left',
         margins: 0,
@@ -142,12 +142,12 @@ export const components = {
       // rowGap: 1
     },
     titleStyle: {
-      color: colors.onSurface, // Green text for Chips
-      fontSize: fonts.labelSmall.fontSize,
+      // color: colors.primary, // Green text for Chips
+      fontSize: fonts.bodySmall.fontSize,
     },
     valueStyle: {
-      color: colors.onSurface, // Green text for Chips
-      fontSize: fonts.titleMedium.fontSize,
+      // color: colors.onSurface, // Green text for Chips
+      fontSize: fonts.labelLarge.fontSize,
     },
   },
   section: {

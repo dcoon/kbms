@@ -70,14 +70,14 @@ function BatteryCardMenu({ battery }: { battery: BatteryData }) {
 }
 
 
-function BatteryCardContent({ battery }: { battery?: Partial<BatteryData>}) {
+function BatteryCardContent({ battery }: { battery?: Partial<BatteryData> }) {
 
   const theme = useTheme() as typeof DefaultTheme;
 
   const soc = battery?.soc;
   const socIS = soc !== undefined ? socIconSource({ soc, theme }) : theme.icons.battery.soc.unknown;
 
-  const strokeColor = (socIS as {source: string; color: string; size: number}).color;
+  const strokeColor = (socIS as { source: string; color: string; size: number }).color;
   const voltage = battery?.voltage != undefined ? battery.voltage / 1000 : undefined;
   const current = battery?.current !== undefined ? battery.current / 1000 : undefined;
   const watts = voltage && current !== undefined ? voltage * current : undefined;
@@ -87,7 +87,7 @@ function BatteryCardContent({ battery }: { battery?: Partial<BatteryData>}) {
   const voltageText = voltage?.toFixed(2);
   const currentText = current?.toFixed(2);
   const wattsText = watts ? Math.round(watts) : undefined;
-  const deltavText = deltav  ? Math.round(deltav) : undefined;
+  const deltavText = deltav ? Math.round(deltav) : undefined;
 
   const radius = theme.components.Gauge.small.radius;
 
@@ -95,8 +95,8 @@ function BatteryCardContent({ battery }: { battery?: Partial<BatteryData>}) {
     <Card.Content
       style={theme.components.Card.Content.style as any}
     >
-      <Gauge 
-      value={soc}
+      <Gauge
+        value={soc}
         maxvalue={100}
         title="SOC"
         valuesuffix='%'
@@ -162,16 +162,25 @@ export function BatteryCardEmpty({ onDevicePress }: { onDevicePress?: OnDevicePr
     <Card
       key="empty"
       onPress={() => { onDevicePress?.("") }}
-      theme={theme.components.PrimaryCard.theme as any}>
+      theme={theme.components.Card.theme as any}
+      style={theme.components.Card.style as any}
+
+    >
       <Card.Title
         title="No Batteries"
         left={(props) => <Icon source={theme.icons.battery.soc.unknown.source} size={theme.icons.iconSize} />}
         style={theme.components.Card.Title.style}
+        leftStyle={theme.components.Card.Title.leftStyle as any}
+        rightStyle={theme.components.Card.Title.rightStyle as any}
+        titleStyle={theme.components.Card.Title.titleStyle as any}
       />
-      <Card.Content>
-        <View style={{ flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, paddingVertical: 24 }} >
+      <Card.Content
+        style={theme.components.Card.Content.style as any}
+
+      >
+        {/* <View style={{ flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, paddingVertical: 24 }} > */}
           <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>You have no saved batteries yet. Click here to add a battery.</Text>
-        </View>
+        {/* </View> */}
       </Card.Content>
     </Card>
   );

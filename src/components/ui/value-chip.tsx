@@ -7,8 +7,12 @@ export function ValueChip({ value, valueSuffix, title }: { value?: number | stri
   const theme = useTheme() as typeof DefaultTheme;
   return (
     <View style={theme.components.valueChip.style as any}>
-      <Text variant="labelLarge">{value !== undefined ? value : '--'}{valueSuffix}</Text>
-      <Text variant="labelSmall">{title}</Text>
+      <Text
+        style={theme.components.valueChip.valueStyle as any}
+        >{value !== undefined ? value : '--'}{valueSuffix}</Text>
+      <Text
+        style={theme.components.valueChip.titleStyle as any}
+      >{title}</Text>
     </View>
   );
 }

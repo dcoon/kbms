@@ -54,7 +54,7 @@ function FavoritesAccordion() {
     <List.Section
       id="favorites"
       title="Batteries"
-      description="Your favorite batteries for quick access"
+      // description="Saved batteries"
     >
       <List.StaticList 
         data={favorites}
