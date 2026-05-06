@@ -36,7 +36,7 @@ export function ScreenLayout({ children, title, subtitle, icon, onPressIcon,
 
     // TODO: switch back to using AppTopBar
     return (
-        <View>
+        <View style={{ flex: 1 }}>
 
             <Appbar.Header
                 theme={appBarTheme} // Use onSurfaceVariant for AppBar text

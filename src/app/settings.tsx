@@ -9,16 +9,17 @@ import { Text, TouchableRipple, useTheme } from 'react-native-paper';
 
 import { IconFromIconSource } from '@/components/ble/icons';
 import { shareLogFile } from '@/components/ui/file-share';
+import * as Bluetooth from '@/services/ble/ble-service';
 import { ThemeType } from '@/theme/theme';
 import * as Application from 'expo-application';
 import { IconSource } from 'react-native-paper/lib/typescript/components/Icon';
 
 
 
-
+// TODO: refactor to remove embedded components.
 export default function SettingsScreen() {
 
-
+  const theme = useTheme() as ThemeType;
 
 
 
@@ -68,6 +69,8 @@ export default function SettingsScreen() {
 
   function DataAccordion() {
     const [favorites, setFavorites] = useAtom(Settings.favorites);
+    const [demoMode, setDemoMode] = useAtom(Bluetooth.demoMode);
+
     const theme = useTheme() as ThemeType;
 
     const onClearFavorites = useCallback(() => {
@@ -78,6 +81,11 @@ export default function SettingsScreen() {
       <List.Accordion id="data" title="Data" description="Manage your stored data" >
         {/* <ButtonItem title="Clear Settings" description="Clear ALL settings" icon="cog" onPress={() => { }}  /> */}
         <List.Item title="Clear Favorites" description="Clear your list of favorite devices" icon={theme.icons.favorite.true as IconSource} valueIcon={theme.icons.delete as IconSource} onPress={onClearFavorites} />
+        <List.Item title="Demo Mode" description="Enable demo mode with mock data and no external connections"
+          icon={theme.icons.demo as IconSource}
+          value={demoMode} 
+          onPress={() => setDemoMode(!demoMode)} 
+          editable={true} />
       </List.Accordion>
     );
   }
@@ -216,9 +224,10 @@ export default function SettingsScreen() {
   return (
     <ScreenLayout
       title="Settings"
-    // actions={<AppBarActions />}
     >
-      <ScrollView>
+      <ScrollView
+        contentContainerStyle={theme.components.scrollView.contentContainerStyle}
+      >
         <List.AccordionGroup>
           {/* <NotificationsAccordion /> */}
           <LogAccordion />

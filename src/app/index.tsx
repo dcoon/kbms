@@ -12,7 +12,7 @@ import { BatteryDataBase, BatteryStatus } from '@/services/battery/battery';
 import { batteries, isBatteryConnected } from '@/services/battery/battery-service';
 import { DeviceId, isBluetoothAvailable } from "@/services/ble/ble";
 import log from '@/services/log/log-service';
-import { DefaultTheme } from '@/theme/theme';
+import { DefaultTheme, ThemeType } from '@/theme/theme';
 import { useCallback } from 'react';
 
 import { BatteryCardLarge } from '@/components/battery/battery-card-large';
@@ -53,7 +53,7 @@ function FavoritesAccordion() {
 
     <List.Section
       id="favorites"
-      title="Batteries"
+      title="System Batteries"
       // description="Saved batteries"
     >
       <List.StaticList 
@@ -143,12 +143,11 @@ function HelpOnBluetoothUnsupportedDevices() {
   }
 
   return (
-    <List.Accordion title="Bluetooth Unavailable" id="help" description="Bluetooth is not supported on this device. Showing mock data instead." >
-      <List.Item title="Using Mock Data" description="Using mock data for testing purposes only" icon="help-circle-outline" />
+    <List.Accordion title="Bluetooth Unavailable" id="help" description="Bluetooth is not supported on this device. Using demo mode." >
+      <List.Item title="Using Demo Data" description="Using demo data for testing purposes only" icon="help-circle-outline" />
       <List.Item title="Battery" description="Devices named Battery can return battery data" icon="battery" />
-      <List.Item title="Devices" description="Devices named Device are not batteries and will cause connection errors for testing" icon="devices" />
+      <List.Item title="Devices" description="Other devices are not batteries and will cause connection errors for testing" icon="devices" />
       <List.Item title="Connection Errors" description="Clicking on devices with (will cause connection errors) in their name will intentionally cause connection errors for testing" icon="alert-circle" />
-
     </List.Accordion>
   );
 }
@@ -181,8 +180,14 @@ function StartStopFavoritesConnectedOnFocus() {
 }
 
 export function HomeView() {
+
+  const theme = useTheme() as ThemeType;
+
   return (
-    <ScrollView>
+    <ScrollView
+      contentContainerStyle={theme.components.scrollView.contentContainerStyle}
+      
+      >
       <HomeSummaryAccordion />
       <List.AccordionGroup>
         <FavoritesAccordion />
@@ -208,7 +213,7 @@ function AppBarActions({ children }: { children?: React.ReactNode }) {
 export default function HomeScreen() {
 
   return (
-    <ScreenLayout title="Home" showBackAction={false} actions={<AppBarActions />}>
+    <ScreenLayout title="KBMS" showBackAction={false} actions={<AppBarActions />}>
       <HomeView />
     </ScreenLayout>
   );

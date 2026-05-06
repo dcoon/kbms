@@ -5,7 +5,7 @@ import { IsScanningAction } from '@/components/ui/topbar-actions';
 import { Device } from '@/services/ble/ble';
 import { Bluetooth } from '@/services/ble/ble-service';
 import { uilog as log } from '@/services/log/log-service';
-import { DefaultTheme } from '@/theme/theme';
+import { DefaultTheme, ThemeType } from '@/theme/theme';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useAtom } from 'jotai';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -64,12 +64,12 @@ function FilterButtons({ filterBy, onFilterChange }: { filterBy: FilterOption, o
   return (
     // TODO: fix filter logic
     // <IconButton icon={filterIcon} onPress={() => onFilterChange()}  />
-    <Button 
-      mode="outlined" 
-      onPress={() => onFilterChange()} 
+    <Button
+      mode="outlined"
+      onPress={() => onFilterChange()}
       icon={filterIcon}
       labelStyle={{ fontSize: theme.fonts.labelMedium.fontSize, padding: 0 }}
-      >Filter</Button>
+    >Filter</Button>
   );
 
 }
@@ -137,6 +137,8 @@ function DeviceList() {
   const [sortBy, setSortBy] = useState<SortOption>(new SortOption());
 
   const [filterBy, setFilterBy] = useState<FilterOption>(new FilterOption());
+  const theme = useTheme() as ThemeType;
+
 
 
   const sortedDevices = useMemo(() => {
@@ -187,7 +189,6 @@ function DeviceList() {
   function onDevicePress(device: Device): void {
 
     const LOG_PREFIX = LOG_SRC + ": onDevicePress";
-
     log.debug(LOG_PREFIX, "called with device: ", device.id);
 
     if (device.id) {
@@ -213,6 +214,7 @@ function DeviceList() {
       ListEmptyComponent={() => (
         <ListEmptyComponent />
       )}
+      contentContainerStyle={theme.components.scrollView.contentContainerStyle}
     />
 
   );

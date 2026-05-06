@@ -19,6 +19,9 @@ import { battery as batteryAtom, isBatteryConnected } from '@/services/battery/b
 
 import { BatteryCardLarge } from "@/components/battery/battery-card-large";
 import { BatteryDeltaVIcon, BatteryStatusIcon, CellVoltageIcon } from '@/components/battery/icons';
+import { ThemeType } from '@/theme/theme';
+import { useTheme } from 'react-native-paper';
+
 
 const LOG_SRC = "BatteryScreen";
 
@@ -145,7 +148,7 @@ function InformationAccordion({ device }: { device: Device }) {
 function CellDataAccordionRight({ deltav }: { deltav?: number }) {
 
   return (
-      <BatteryDeltaVIcon deltav={deltav} />
+    <BatteryDeltaVIcon deltav={deltav} />
   );
 
 }
@@ -230,9 +233,11 @@ function StartStopBatteryConnectedOnFocus({ deviceId }: { deviceId: string }) {
 function BatteryView({ device }: { device: Device }) {
 
   const [battery] = useAtom(batteryAtom(device.id));
-
+  const theme = useTheme() as ThemeType;
   return (
-    <ScrollView>
+    <ScrollView
+      contentContainerStyle={theme.components.scrollView.contentContainerStyle}
+    >
       <StartStopBatteryConnectedOnFocus deviceId={device.id} />
       <BatteryCardLarge battery={battery} />
       <List.AccordionGroup>

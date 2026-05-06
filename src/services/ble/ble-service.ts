@@ -55,37 +55,31 @@ const bleState = atom(
   (get) => get(ble) ? get(_bleStateInternal) : State.Unknown
 );
 
-const bleManager = atomWithLazy<BleManager>(() => {
+const bleManagerInit = atomWithLazy<BleManager>(() => {
   const bleManager = new BleManager();
   log.debug(LOG_SRC, "BleManager created");
 
   return bleManager;
 });
 
-const bleManagerMock = atomWithLazy<BleManager>(() => {
+const bleManagerMockInit = atomWithLazy<BleManager>(() => {
   const bleManager = new BleManagerMock();
   log.debug(LOG_SRC, "Mock BleManager created");
   return bleManager;
 });
 
-
 const bleManagerInUse = atom<BleManager | null>(null);
 
-/**
- * Creates an atom that lazily initializes a BleManager instance.
- * When the atom is first accessed, it will create a new BleManager instance.
- * The BleManager instance is then cached and returned on subsequent accesses.
- * @returns {atom<BleManager>} An atom that lazily initializes a BleManager instance.
- */
-const bleManagerForPlatform = atom(
-  (get) => {
-    if (get(isBluetoothAvailable)) {
-      return get(bleManager);
-    } else {
-      return get(bleManagerMock);
-    }
+
+const demoModeInternal = atom(false);
+
+export const demoMode = atom(
+  (get) => get(demoModeInternal),
+  (get, set, value: boolean) => {
+    set(demoModeInternal, value);
+    set(ble, 'init');
   }
-)
+);
 
 /**
  * Creates an atom that lazily initializes a BleManager instance.
@@ -97,41 +91,39 @@ type BleAction = 'init' | BleManager | ((prev: BleManager) => BleManager);
 const ble = atom(
   (get) => get(bleManagerInUse),
   (get, set, action) => {
+    const LOG_PREFIX = LOG_SRC + ": " + action;
+
     if (action === 'init') {
 
-      const LOG_PREFIX = LOG_SRC + ": init";
+      log.info(LOG_PREFIX, ": Initializing BleManager");
 
-
-      const alreadyInitialized = get(bleManagerInUse) !== null;
-      if (alreadyInitialized) {
-        log.debug(LOG_PREFIX, ": Already initialized");
-      } else {
-        log.info(LOG_PREFIX, ": Initializing BleManager");
-
-        const hasPermission = get(userPermissionToUseBluetooth);
-        if (!hasPermission) {
-          log.warn(LOG_PREFIX, ": Permission to use Bluetooth was not granted");
-          set(Settings.snackbar, "Permission to use Bluetooth was not granted.");
-        }
-
-
-        const manager = get(bleManagerForPlatform);
-        set(bleManagerInUse, manager);
-
-        // subscribe to ble state changes
-        manager?.onStateChange((state) => {
-          log.warn(LOG_PREFIX, ": Ble state changed: ", state);
-          set(_bleStateInternal, state);
-          // set(Settings.snackbar, "Ble state changed: " + state);
-        }, true)
-
-        // 
-        if (!get(isBluetoothAvailable)) {
-          set(Settings.snackbar, "Bluetooth is not available on this device. Using mock data.");
-        }
+      // check permissions first
+      // TODO: move this to perms setter
+      const hasPermission = get(userPermissionToUseBluetooth);
+      if (!hasPermission) {
+        log.warn(LOG_PREFIX, ": Permission to use Bluetooth was not granted");
+        set(Settings.snackbar, "Permission to use Bluetooth was not granted.");
       }
-    }
 
+
+      const isRealOrDemoMode = get(isBluetoothAvailable) && !get(demoMode);
+      const manager = isRealOrDemoMode ? get(bleManagerInit) : get(bleManagerMockInit);
+      set(bleManagerInUse, manager);
+      set(demoModeInternal, !isRealOrDemoMode);
+
+      if (!isRealOrDemoMode) {
+        set(Settings.snackbar, "Bluetooth is not available on this device. Using demo mode.");
+
+      }
+
+      // subscribe to ble state changes
+      manager?.onStateChange((state) => {
+        log.info(LOG_PREFIX, ": onStateChange: ", state);
+        set(_bleStateInternal, state);
+      }, true)
+
+      // 
+    }
   }
 );
 
@@ -298,7 +290,7 @@ const isDeviceConnectedAsync = atomFamily((id: DeviceId) => atomWithRefresh(
     log.debug(LOG_PREFIX, ": called with id: ", id, " value: ", value);
 
     // toggle if value is undefined
-    if(value === undefined) {
+    if (value === undefined) {
       const isConnected = await get(isDeviceConnectedAsync(id));
       value = !isConnected;
     }
@@ -405,7 +397,7 @@ export const deviceHasServiceAndCharacteristicAsync = atomFamily(
         // return characteristics.some(c => c.uuid === characteristicUUID);
 
         // TODO: experiment to see if we can speed up device scanning with filters
-        const device = await get(deviceInternal({deviceId: deviceId}));
+        const device = await get(deviceInternal({ deviceId: deviceId }));
         return device?.serviceUUIDs?.includes(serviceUUID) ?? false;
 
       } catch (error) {
@@ -555,7 +547,7 @@ async function onCharacteristicUpdate(error: Error | null, characteristic: Chara
     if (msg.includes("Operation was cancelled")) {
       log.warn(LOG_PREFIX, "Operation was cancelled", msg);
     } else if (msg.includes("was disconnected")) {
-      const deviceId = msg.split(" ")[1]; 
+      const deviceId = msg.split(" ")[1];
       log.warn(LOG_PREFIX, "Device was disconnected", deviceId, msg);
       try {
         set(isDeviceConnectedAsync(deviceId), false);

@@ -27,11 +27,10 @@ interface ListItemProps {
 
 function DropdownValue(props: ListItemProps) {
 
-  const { title, value, onPress } = props as any;
+  const { title, value, onPress } = props;
 
-  const arr = value as any[];
-  const selectedValue = value[0] as string;
-  const options = value.slice(1) as Option[]; // assuming value is a tuple of [currentValue, options]
+  const selectedValue = Array.isArray(value) ? value[0] as string : '';
+  const options = Array.isArray(value) ? value.slice(1) as Option[] : []; // assuming value is a tuple of [currentValue, options]
 
   return (
     <View
@@ -43,7 +42,7 @@ function DropdownValue(props: ListItemProps) {
         // placeholder={"Select " + title}
         options={options}
         value={selectedValue}
-        onSelect={onPress}
+        onSelect={(next) => onPress?.(next)}
       />
     </View>
     // <Text>{JSON.stringify(options)}</Text>
@@ -56,7 +55,7 @@ function ButtonValue(props: ListItemProps) {
   const theme = useTheme() as ThemeType;
   const name = (props.valueIcon as { source: string }).source as string;
   return (
-    <TouchableRipple onPress={props.onPress} >
+    <TouchableRipple onPress={() => props.onPress?.(props.value)} >
       <Icon source={name} size={theme.icons.iconSize} color={theme.colors.onSurface} />
     </TouchableRipple>
   );
@@ -64,30 +63,32 @@ function ButtonValue(props: ListItemProps) {
 
 function TextValue(props: ListItemProps) {
 
-  const { value, editable, onPress } = props as any;
+  const { value, editable, onPress } = props;
+  const stringValue = typeof value === 'string' ? value : String(value ?? '');
 
   if (editable) {
     return (
-      <TextInput mode="outlined" value={value} onChangeText={onPress} editable={true} />
+      <TextInput mode="outlined" value={stringValue} onChangeText={(next) => onPress?.(next)} editable={true} />
     );
   } else {
     return (
-      <Text variant="labelMedium">{value}</Text>
+      <Text variant="labelMedium">{stringValue}</Text>
     );
   }
 }
 
 function BooleanValue(props: ListItemProps) {
 
-  const { value, editable, onPress } = props as any;
+  const { value, editable, onPress } = props;
+  const booleanValue = value === true;
 
   if (editable) {
     return (
-      <Switch value={value} onValueChange={onPress} />
+      <Switch value={booleanValue} onValueChange={(next) => onPress?.(next)} />
     );
   } else {
     return (
-      <PaperList.Icon icon={value ? "check" : "close"} />
+      <PaperList.Icon icon={booleanValue ? "check" : "close"} />
     );
   }
 }
@@ -118,7 +119,7 @@ function LeftSideContent({ icon, left }: ListItemProps) {
 
 function RightSideContent(props: ListItemProps) {
 
-  const { right, value, onPress, editable } = props;
+  const { right, value, onPress } = props;
 
   if (right) {
     return (right);
@@ -153,7 +154,7 @@ export function ListItem(props: ListItemProps) {
       description={description}
       left={() => <LeftSideContent {...props} />}
       right={() => <RightSideContent {...props} />}
-      onPress={onPress}
+      onPress={onPress ? () => onPress(value) : undefined}
       titleNumberOfLines={0}
       style={{ paddingLeft: 8 }}
 

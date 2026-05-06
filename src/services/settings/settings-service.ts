@@ -78,8 +78,10 @@ const logLevel = atom(
     return stored;
   },
   (get, set, value: LogLevel) => {
+    const LOG_PREFIX = "SettingsService : logLevel atom : ";
     set(logLevelInStorage, value);
     log.setSeverity(value);
+    log.info(LOG_PREFIX, "Log level set to: ", value);
   }
 );
 

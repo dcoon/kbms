@@ -9,6 +9,7 @@ export const icons = {
   system: { source: 'home-battery-outline' },
   delete: { source: 'delete', color: colors.onSurface },
   log: { source: 'file-code-outline', color: colors.onSurface },
+  demo: { source: 'monitor-dashboard', color: colors.onSurface },
   share: { source: 'share', color: colors.onSurface },
   battery: {
     soc: {

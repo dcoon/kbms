@@ -8,7 +8,7 @@
     "scheme": "kbms",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "io.github.dcoon.kbms",
+      "bundleIdentifier": "l",
       "buildNumber": "1",
       "supportsTablet": true,
       "icon": {
@@ -206,6 +206,14 @@
           "android": {
             "enabled": true
           }
+        }
+      ],
+      [
+        "expo-asset",
+        {
+          "assets": [
+            "./assets/adi-registration.properties"
+          ]
         }
       ],
       "expo-image",

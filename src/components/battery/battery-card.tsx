@@ -105,7 +105,7 @@ function BatteryCardContent({ battery }: { battery?: Partial<BatteryData> }) {
       />
       <ValueChip value={voltageText} valueSuffix="V" title="Voltage" />
       <ValueChip value={currentText} valueSuffix="A" title="Current" />
-      <ValueChip value={wattsText} valueSuffix="W" title="Watts" />
+      {/* <ValueChip value={wattsText} valueSuffix="W" title="Watts" /> */}
       <ValueChip value={deltavText} valueSuffix="mV" title="Delta V" />
     </Card.Content>
   );

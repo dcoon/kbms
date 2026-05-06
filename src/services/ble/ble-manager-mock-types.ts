@@ -302,7 +302,7 @@ export class MockDataGenerator {
     // this._devices = this.generateMockDevices(deviceIds);
     // return this.generateMockDevices(deviceIds);
 
-    const devices = TEST_DEVICES.map((device) => this.generateMockDevice(device.deviceId, device.value, /^\d{3}/.test(device.value)));
+    const devices = TEST_DEVICES.map((device) => this.generateMockDevice(device.deviceId, device.value, /^Battery/.test(device.value)));
     return devices;
 
   }

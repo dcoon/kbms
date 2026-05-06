@@ -182,5 +182,10 @@ export const components = {
         onSurface: colors.onPrimary, // Green background for AppBar
       },
     },
-  }
+  },
+  scrollView: {
+    contentContainerStyle: {
+      paddingBottom: 100, // Add extra padding at the bottom of the ScrollView
+    },
+  },
 };
