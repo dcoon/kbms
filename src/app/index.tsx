@@ -145,9 +145,9 @@ function HelpOnBluetoothUnsupportedDevices() {
   return (
     <List.Accordion title="Bluetooth Unavailable" id="help" description="Bluetooth is not supported on this device. Using demo mode." >
       <List.Item title="Using Demo Data" description="Using demo data for testing purposes only" icon="help-circle-outline" />
-      <List.Item title="Battery" description="Devices named Battery can return battery data" icon="battery" />
-      <List.Item title="Devices" description="Other devices are not batteries and will cause connection errors for testing" icon="devices" />
-      <List.Item title="Connection Errors" description="Clicking on devices with (will cause connection errors) in their name will intentionally cause connection errors for testing" icon="alert-circle" />
+      <List.Item title="Battery" description="Batteries 001 and 004 return valid battery data" icon="battery" />
+      <List.Item title="Devices" description="Other devices will cause errors for testing" icon="devices" />
+      {/* <List.Item title="Connection Errors" description="Clicking on devices with (will cause connection errors) in their name will intentionally cause connection errors for testing" icon="alert-circle" /> */}
     </List.Accordion>
   );
 }

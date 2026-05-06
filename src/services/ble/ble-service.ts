@@ -110,6 +110,7 @@ const ble = atom(
       const manager = isRealOrDemoMode ? get(bleManagerInit) : get(bleManagerMockInit);
       set(bleManagerInUse, manager);
       set(demoModeInternal, !isRealOrDemoMode);
+      set(devices, []); // clear devices when re-initializing manager
 
       if (!isRealOrDemoMode) {
         set(Settings.snackbar, "Bluetooth is not available on this device. Using demo mode.");
