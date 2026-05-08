@@ -4,7 +4,12 @@ KBMS is a mobile app to monitor and configure KiloVault HLX+ LiFePO4 batteries. 
 
 
 <div align="center">
-  <img src="assets/images/screenshot-battery-ipad.png" alt="screenshot" width="200">
+  <img src="/assets/store/app-screenshots/iOS/English%20(en-US)/iPad_Pro_12.9_(Legacy)/Hero_iPad_Pro_12.9_(Legacy).jpeg" alt="hero" width="20%"/>
+<img src="/assets/store/app-screenshots/iOS/English%20(en-US)/iPad_Pro_12.9_(Legacy)/System_Summary_iPad_Pro_12.9_(Legacy).jpeg" alt="system-summary" width="20%"/>
+  <img src="/assets/store/app-screenshots/iOS/English%20(en-US)/iPad_Pro_12.9_(Legacy)/Health_Checks_iPad_Pro_12.9_(Legacy).jpeg" alt="smart-health-checks" width="20%"/>
+  <img src="/assets/store/app-screenshots/iOS/English%20(en-US)/iPad_Pro_12.9_(Legacy)/Open_Source_iPad_Pro_12.9_(Legacy).jpeg" alt="free-and-open-source" width="20%"/>
+
+ 
 </div>
 
 
