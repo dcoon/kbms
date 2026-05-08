@@ -18,9 +18,13 @@ KBMS is still in its early stages and hasn't been submitted to app stores yet. B
 
 KBMS is in TestFlight Internal.  If you want to help test, DM me with your contact info. Hopefully, we'll get to TF External within the next week or so.
 
+- ***2026-5-8*** Submitted to TF External. The Beta should be open to everyone within a day or two.  Check the [beta download](https://testflight.apple.com/join/bK6SGRHe) 
+
 ### Android
 
 1. Install the Android test build
+
+- ***2026-5-7*** Submitted to Play Store Beta. The Beta should be open to everyone within a few days. Check back here for updates. For now the test build is useable but please don't submit issues until the Beta is available.
 
 ![Text Build QR Code](assets/images/test-build-qr-code-b1.png)
 https://expo.dev/accounts/davidcoon/projects/kbms/builds/5f55b7f9-63d9-475f-8f14-18316e3afdcd
