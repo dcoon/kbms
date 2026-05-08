@@ -27,9 +27,10 @@ KBMS is in TestFlight Internal.  If you want to help test, DM me with your conta
 
 ### Android
 
-1. Install the Android test build
+1. Join the Android Beta testing team
 
    - Sign up for the [Android Play Internal Testing Team](https://play.google.com/apps/internaltest/4700981018896200088)
+   - Sign up for the Android Closed Testing Team: [Android device](https://play.google.com/store/apps/details?id=io.github.dcoon.kbms) [Web](https://play.google.com/apps/testing/io.github.dcoon.kbms)
    - Follow instructions to download and install the v1.0.0 (b2) Beta
    - Check for app updates in Settings->About->Updated
 
