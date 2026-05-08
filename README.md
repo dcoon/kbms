@@ -29,12 +29,9 @@ KBMS is in TestFlight Internal.  If you want to help test, DM me with your conta
 
 1. Install the Android test build
 
-- ***2026-5-7*** Submitted to Play Store Beta. The Beta should be open to everyone within a few days. Check back here for updates. For now the test build is useable but please don't submit issues until the Beta is available.
-
-![Text Build QR Code](assets/images/test-build-qr-code-b1.png)
-https://expo.dev/accounts/davidcoon/projects/kbms/builds/5f55b7f9-63d9-475f-8f14-18316e3afdcd
-
-Click Install on the build page to download; open with apk installer;  then say Yes or Allow to all the prompts. Be aware, you'll be side loading an app on your device without review by Google. Make sure you trust this project first.
+   - Sign up for the [Android Play Internal Testing Team](https://play.google.com/apps/internaltest/4700981018896200088)
+   - Follow instructions to download and install the v1.0.0 (b2) Beta
+   - Check for app updates in Settings->About->Updated
 
  2. Run the app
 
