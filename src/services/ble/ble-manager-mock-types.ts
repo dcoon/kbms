@@ -1,6 +1,7 @@
 import { Base64, BleError, Characteristic, CharacteristicSubscriptionType, ConnectionOptions, Descriptor, Device, Service, Subscription, TransactionId, UUID } from 'react-native-ble-plx';
 import { TEST_BATTERY_DATA as TEST_BATTERY_DATA_RAW, TEST_DEVICES as TEST_DEVICES_RAW } from '../manufacturers/kilovault/battery-data-test-data';
 import { KV_BATTERY_NOTIFY_UUID, KV_BATTERY_SERVICE_UUID } from '../manufacturers/kilovault/battery-data-types';
+import { RssiLevel } from './ble';
 
 const LOG_SRC = "MockBleManager";
 
@@ -358,7 +359,7 @@ export class MockDataGenerator {
       name: null,
       localName: null,
       _isTestDeviceThatShouldFailConnection: shouldFail,
-      rssi: this.randomRssi(),
+      rssi: RssiLevel.Strong, // this.randomRssi(),
       manufacturerData: Math.random().toString(),
 
       _services: services,
