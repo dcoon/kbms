@@ -2,27 +2,53 @@
 
 KBMS is a mobile app to monitor and configure KiloVault HLX+ LiFePO4 batteries. It is a replacement for the now defunct KiloVault app. It is free and open source. KBMS 
 
-KBMS is still in its early stages and hasn't been submitted to app stores yet. But there is an early preview build available for testing (Android only).
+KBMS is still in its early stages and hasn't been released to the general public yet but there are test versions available if you'd like to help with testing.
 
-## Get the app
+<div align="center">
+  <img src="/assets/store/app-screenshots/iOS/English%20(en-US)/iPad_Pro_12.9_(Legacy)/Hero_iPad_Pro_12.9_(Legacy).jpeg" alt="hero" width="20%"/>
+<img src="/assets/store/app-screenshots/iOS/English%20(en-US)/iPad_Pro_12.9_(Legacy)/System_Summary_iPad_Pro_12.9_(Legacy).jpeg" alt="system-summary" width="20%"/>
+  <img src="/assets/store/app-screenshots/iOS/English%20(en-US)/iPad_Pro_12.9_(Legacy)/Health_Checks_iPad_Pro_12.9_(Legacy).jpeg" alt="smart-health-checks" width="20%"/>
+  <img src="/assets/store/app-screenshots/iOS/English%20(en-US)/iPad_Pro_12.9_(Legacy)/Open_Source_iPad_Pro_12.9_(Legacy).jpeg" alt="free-and-open-source" width="20%"/>
 
-1. Install the Android test build
-
-![[Pasted image 20260408134912.png|257]]
-https://expo.dev/accounts/davidcoon/projects/kbms/builds/db17118e-b45d-47b0-86ef-d49a5e648566
-
- 2. Run the app
-
-![[icon.png|59]]
+ 
+</div>
 
 
-On the Devices press the play icon in the upper right corner to start scanning for nearby batteries.  Click on a KiloVault battery. You MAY need to press play again to connect to the battery.  Graphs and data should appear within a few seconds.
+## Get the App
 
-3. Troubleshooting
+### Apple
 
-Information and error messages will popup at the bottom of the screen.  The two most common are Bluetooth isn't on and Can't connect to device.  If you can't connect to a nearby battery or it doesn't show up when scanning on the Devices tab, try turning Bluetooth off and on again. 
+The app is currently in Test Flight which is invite only. 
+
+1. Ask to be added to the Test Flight tester list
+	* Either by contacting the development team or posting to [Discussions](https://github.com/dcoon/kbms/discussions)
+2. Install Test Flight on your device
+3. Once added to the list, you should see an option to install the app in Test Flight.
+### Android
+
+The app currently is in Closed Testing which is invite only.  We're waiting for review to move to Open testing. ETA mid August 2026.
+
+1. Ask to be added to the testers list
+	* https://play.google.com/apps/testing/io.github.dcoon.kbms
+	* 
+2. Install the Android test build
+	* You will receive a link to download and install the application using the Google Play Store.
+
+ 3. Run the app
+	 * On first startup, you will be prompted to Allow Bluetooth Location Services which is needed for the app to connect to a battery.  We do not collect location information.
+	 * 
+	* ![[icon.png|59]]
+
+## Troubleshooting
+
+Information and error messages will popup at the bottom of the screen.  The two most common are Bluetooth is Unavailable and Can't connect to device.  If you can't connect to a nearby battery or it doesn't show up when scanning on the Devices tab, try turning Bluetooth off and on again. 
 
 If all else fails, go to Settings, change the Log Level to Info or Debug, reproduce the error, and Share the logs on the [discussion group](https://github.com/dcoon/kbms/discussions).
+
+### Sharing the log
+
+TBD
+
 ## Contribute
 
 1. Artwork
