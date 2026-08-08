@@ -43,11 +43,13 @@ The app currently is in Closed Testing which is invite only.  We're waiting for 
 
 Information and error messages will popup at the bottom of the screen.  The two most common are Bluetooth is Unavailable and Can't connect to device.  If you can't connect to a nearby battery or it doesn't show up when scanning on the Devices tab, try turning Bluetooth off and on again. 
 
-If all else fails, go to Settings, change the Log Level to Info or Debug, reproduce the error, and Share the logs on the [discussion group](https://github.com/dcoon/kbms/discussions).
 
 ### Sharing the log
 
-TBD
+If all else fails, go to Settings, change the Log Level to Info or Debug, reproduce the error, and Share the logs on the [discussion group](https://github.com/dcoon/kbms/discussions).  Screenshots of the issue also help a lot!
+
+
+![271](Screenshot_2026-08-08-13-44-37-51_c31b32364ce19ca8fcd150a417ecce58.jpg)
 
 ## Contribute
 
