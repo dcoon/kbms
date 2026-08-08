@@ -4,7 +4,7 @@ import { LogLevel, LogLevelOptions, Settings } from '@/services/settings/setting
 import * as Updates from 'expo-updates';
 import { useAtom } from 'jotai';
 import React, { useCallback } from 'react';
-import { Alert, Platform, ScrollView, View } from 'react-native';
+import { Alert, ScrollView, View } from 'react-native';
 import { Text, TouchableRipple, useTheme } from 'react-native-paper';
 
 import { IconFromIconSource } from '@/components/ble/icons';
@@ -83,28 +83,22 @@ export default function SettingsScreen() {
         <List.Item title="Clear Favorites" description="Clear your list of favorite devices" icon={theme.icons.favorite.true as IconSource} valueIcon={theme.icons.delete as IconSource} onPress={onClearFavorites} />
         <List.Item title="Demo Mode" description="Enable demo mode with mock data and no external connections"
           icon={theme.icons.demo as IconSource}
-          value={demoMode} 
-          onPress={() => setDemoMode(!demoMode)} 
+          value={demoMode}
+          onPress={() => setDemoMode(!demoMode)}
           editable={true} />
       </List.Accordion>
     );
   }
 
 
-  function alert(title: string, message?: string, onConfirmed?: () => void) {
-    if (Platform.OS === 'web') {
-      const text = message ? `${title}\n\n${message}` : title;
-      if (onConfirmed === undefined) {
-        window.alert(text);
-      } else {
-        const confirmed = window.confirm(text);
-        if (confirmed && onConfirmed) {
-          onConfirmed();
-        }
-      }
-    } else {
-      Alert.alert(title, message, [{ text: 'OK', onPress: onConfirmed }]);
-    }
+  function alert(title: string, message?: string, onOK?: () => void, onCancel = undefined) {
+
+
+    const buttons = [
+      { text: 'OK', onPress: onOK },
+      { text: 'Cancel', onPress: onCancel, style: 'cancel' as const }
+    ]
+    Alert.alert(title, message, buttons);
   }
 
   function UpdateAvailableIcon() {
@@ -122,7 +116,7 @@ export default function SettingsScreen() {
 
     const fetchUpdates = useCallback(async () => {
       const fetchUpdate = await Updates.fetchUpdateAsync();
-      alert('Update downloaded!', 'Restarting app...', async () => {
+      alert('Update Downloaded', 'Restarting app...', async () => {
         await Updates.reloadAsync();
       });
     }, []);
@@ -131,13 +125,14 @@ export default function SettingsScreen() {
     const checkForUpdates = useCallback(async () => {
 
       if (isDevelopmentBuild()) {
-        return { isAvailable: false };
+        return { ...updateResult, isAvailable: false };
+      } else {
+
+        const result = await Updates.checkForUpdateAsync();
+        setUpdateResult(result);
+
+        return result;
       }
-
-      const result = await Updates.checkForUpdateAsync();
-      setUpdateResult(result);
-
-      return result;
     }, []);
 
     // const checkForUpdatesAtStartup = useEffect(() => {
@@ -145,20 +140,16 @@ export default function SettingsScreen() {
     // }, [checkForUpdates]);
 
     const checkIfUserWantsToUpdate = useCallback(() => {
-      alert('An update is available! Do you want to download and install it now?', undefined, fetchUpdates);
+      alert('Update Available', 'Do you want to download and install it now?', fetchUpdates);
     }, [updateResult, fetchUpdates]);
 
     const onPressCheckForUpdates = useCallback(async () => {
-      if (isDevelopmentBuild()) {
-        alert('You are running a development build. Update checks are not available.');
-        return;
-      }
 
       const update = await checkForUpdates();
       if (update.isAvailable) {
         checkIfUserWantsToUpdate();
       } else {
-        alert('Your app is up to date!');
+        alert('Your app is up to date');
       }
     }, []);
 
