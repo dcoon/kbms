@@ -22,8 +22,12 @@ The app is currently in Test Flight which is invite only.
 
 1. Ask to be added to the Test Flight tester list
 	* Either by contacting the development team or posting to [Discussions](https://github.com/dcoon/kbms/discussions)
-2. Install Test Flight on your device
+2. Install Apple Test Flight on your device
 3. Once added to the list, you should see an option to install the app in Test Flight.
+
+   > [!TIP]
+   > Sometimes, after you accept the invitation, Apple doesn't automatically add you to the current build. We usually catch it and manually add your account but if the app doesn't show up in Test Flight within a few hours post a follow-up asking us to double check your new account settings.
+   
 ### Android
 
 The app currently is in Closed Testing which is invite only.  We're waiting for review to move to Open testing. ETA mid August 2026.
