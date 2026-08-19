@@ -18,15 +18,14 @@ KBMS is still in its early stages and hasn't been released to the general public
 
 ### Apple
 
-The app is currently in Test Flight which is invite only. 
+The app is now available on Apple Test Flight for public testing. 
 
-1. Ask to be added to the Test Flight tester list
-	* Either by contacting the development team or posting to [Discussions](https://github.com/dcoon/kbms/discussions)
-2. Install Apple Test Flight on your device
-3. Once added to the list, you should see an option to install the app in Test Flight.
+1. Install Apple [Test Flight](https://apps.apple.com/us/app/testflight/id899247664) on your iOS device
+2. On your device, [add yourself to the tester team](https://testflight.apple.com/join/bK6SGRHe)
+3. Once you accept, Test Flight will install the latest version of KBMS
 
    > [!TIP]
-   > Sometimes, after you accept the invitation, Apple doesn't automatically add you to the current build. We usually catch it and manually add your account but if the app doesn't show up in Test Flight within a few hours post a follow-up asking us to double check your new account settings.
+   > If you have any questions or feedback please post to [Discussions](https://github.com/dcoon/kbms/discussions)
    
 ### Android
 
