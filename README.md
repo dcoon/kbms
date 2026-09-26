@@ -46,6 +46,7 @@ The app currently is in Closed Testing which is invite only.  We're waiting for 
 
 Information and error messages will popup at the bottom of the screen.  The two most common are Bluetooth is Unavailable and Can't connect to device.  If you can't connect to a nearby battery or it doesn't show up when scanning on the Devices tab, try turning Bluetooth off and on again. 
 
+If you still need help, try reading the [Discussions](https://github.com/dcoon/kbms/discussions) for answers to similar questions. If all else fails, post a question to [Discussions](https://github.com/dcoon/kbms/discussions) and attach your log.
 
 ### Sharing the log
 
@@ -72,9 +73,8 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
 Join our community of developer~~s~~ and battery owners.
 
-- [Wiki]([https://docs.expo.dev/develop/development-builds/introduction/](https://github.com/dcoon/kbms/wiki))
 - [Discussions](https://github.com/dcoon/kbms/discussions)
-- [Issues]([https://docs.expo.dev/workflow/ios-simulator/](https://github.com/dcoon/kbms/issues))
+- [Issues](https://github.com/dcoon/kbms/issues)
 
 
 
