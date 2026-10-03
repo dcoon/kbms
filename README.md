@@ -69,6 +69,9 @@ Internationalization is on the short term roadmap. We'll need help translating t
 3. Development
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app) and written in Typescript. Pull the repo and build using standard Expo tools. Submit a pull request with new features and fixes. If you need help with architecture, post questions in the discussions. 
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/dcoon/kbms)
+
 ## Join the community
 
 Join our community of developer~~s~~ and battery owners.
