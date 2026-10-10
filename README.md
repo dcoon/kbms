@@ -31,7 +31,7 @@ The app is now available on Apple Test Flight for public testing.
 
 The app currently is in Closed Testing which is invite only.  We're waiting for review to move to Open testing. ETA mid August 2026.
 
-1. Ask to be added to the testers list
+1. Add  yourself to the testers list
 	* https://play.google.com/apps/testing/io.github.dcoon.kbms
 	* 
 2. Install the Android test build
