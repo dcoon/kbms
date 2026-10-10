@@ -32,12 +32,12 @@ The app is now available on Apple Test Flight for public testing.
 The app currently is in Closed Testing which is invite only.  We're waiting for review to move to Open testing. ETA mid August 2026.
 
 1. Add  yourself to the testers list
-	* https://play.google.com/apps/testing/io.github.dcoon.kbms
-	* 
-2. Install the Android test build
+    * [Android Phone](https://play.google.com/store/apps/details?id=io.github.dcoon.kbms)
+	* [Web](https://play.google.com/apps/testing/io.github.dcoon.kbms)
+3. Install the Android test build
 	* You will receive a link to download and install the application using the Google Play Store.
 
- 3. Run the app
+ 4. Run the app
 	 * On first startup, you will be prompted to Allow Bluetooth Location Services which is needed for the app to connect to a battery.  We do not collect location information.
 	 * 
 	* ![[icon.png|59]]
